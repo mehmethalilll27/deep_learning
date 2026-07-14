@@ -1,0 +1,16 @@
+deney,conv_channels,conv_katman_sayisi,dropout,accuracy,loss,sure_sn,cihaz,notlar
+CNN_dropout_0,"(16, 32)",2,0.0,98.85,0.035,39.92,GPU,Dropout yok - baz
+CNN_dropout_0.1,"(16, 32)",2,0.1,98.97,0.0313,39.51,GPU,Dusuk dropout
+CNN_dropout_0.3,"(16, 32)",2,0.3,98.77,0.0337,46.78,GPU,Orta dropout
+CNN_dropout_0.5,"(16, 32)",2,0.5,98.91,0.0344,42.74,GPU,Yuksek dropout
+CNN_kanal_8_16,"(8, 16)",2,0.0,98.48,0.0435,44.02,GPU,Az kanal
+CNN_kanal_16_32,"(16, 32)",2,0.0,98.85,0.0321,37.83,GPU,Orta kanal
+CNN_kanal_32_64,"(32, 64)",2,0.0,99.05,0.0296,40.01,GPU,Cok kanal
+CNN_2conv,"(16, 32)",2,0.0,98.59,0.04,38.71,GPU,2 conv katman
+CNN_3conv,"(16, 32, 64)",3,0.0,99.0,0.0323,40.25,GPU,3 conv katman
+CNN_16_32_d0.3,"(16, 32)",2,0.3,98.95,0.0334,38.51,GPU,Orta kanal + orta dropout
+CNN_32_64_d0.3,"(32, 64)",2,0.3,99.13,0.0272,40.31,GPU,Cok kanal + orta dropout
+CNN_32_64_d0.5,"(32, 64)",2,0.5,98.86,0.033,39.76,GPU,Cok kanal + yuksek dropout
+CNN_2conv_d0.1,"(16, 32)",2,0.1,98.96,0.0289,40.64,GPU,2 conv + d0.1
+CNN_3conv_d0.3,"(16, 32, 64)",3,0.3,98.83,0.0356,40.64,GPU,3 conv + d0.3
+CNN_3conv_d0.5,"(16, 32, 64)",3,0.5,99.04,0.028,37.98,GPU,3 conv + d0.5

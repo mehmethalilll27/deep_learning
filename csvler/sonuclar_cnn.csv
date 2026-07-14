@@ -1,0 +1,16 @@
+deney,conv_channels,conv_katman_sayisi,dropout,accuracy,loss,sure_sn,notlar
+CNN_dropout_0,"(16, 32)",2,0.0,98.8,0.033,38.31,Dropout yok - baz
+CNN_dropout_0.1,"(16, 32)",2,0.1,98.88,0.0323,39.47,Dusuk dropout
+CNN_dropout_0.3,"(16, 32)",2,0.3,98.85,0.0344,38.27,Orta dropout
+CNN_dropout_0.5,"(16, 32)",2,0.5,98.71,0.0341,52.22,Yuksek dropout
+CNN_kanal_8_16,"(8, 16)",2,0.0,98.38,0.0486,41.34,Az kanal
+CNN_kanal_16_32,"(16, 32)",2,0.0,98.8,0.0358,51.82,Orta kanal
+CNN_kanal_32_64,"(32, 64)",2,0.0,98.97,0.0277,84.1,Cok kanal
+CNN_2conv,"(16, 32)",2,0.0,98.78,0.037,51.33,2 conv katman
+CNN_3conv,"(16, 32, 64)",3,0.0,98.83,0.0329,56.03,3 conv katman
+CNN_16_32_d0.3,"(16, 32)",2,0.3,99.1,0.029,47.41,Orta kanal + orta dropout
+CNN_32_64_d0.3,"(32, 64)",2,0.3,98.96,0.0285,83.85,Cok kanal + orta dropout
+CNN_32_64_d0.5,"(32, 64)",2,0.5,98.97,0.0305,84.33,Cok kanal + yuksek dropout
+CNN_2conv_d0.1,"(16, 32)",2,0.1,98.96,0.0321,51.58,2 conv + d0.1
+CNN_3conv_d0.3,"(16, 32, 64)",3,0.3,98.68,0.0363,58.32,3 conv + d0.3
+CNN_3conv_d0.5,"(16, 32, 64)",3,0.5,98.79,0.0343,51.84,3 conv + d0.5

@@ -1,0 +1,4 @@
+deney,katmanlar,dropout,accuracy,loss,sure_sn
+MLP_2_katman,"[256, 128]",0.1,97.87,0.0638,21.18
+MLP_4_katman,"[512, 256, 128, 64]",0.3,97.92,0.0765,31.7
+MLP_6_katman,"[512, 256, 128, 64, 32]",0.5,96.59,0.1523,32.41

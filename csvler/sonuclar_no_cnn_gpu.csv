@@ -1,0 +1,16 @@
+deney,katmanlar,katman_sayisi,dropout,accuracy,loss,sure_sn,cihaz,notlar
+MLP_1_katman,[128],1,0.0,97.2,0.0906,22.01,GPU,Grup1 - tek gizli katman
+MLP_2_katman,"[256, 128]",2,0.0,97.81,0.0684,25.52,GPU,Grup1 - iki gizli katman
+MLP_dropout_0.1,"[256, 128]",2,0.1,97.8,0.0659,26.03,GPU,Grup1 - dropout 0.1
+MLP_1_katman_g2,[128],1,0.0,97.34,0.0886,24.4,GPU,Grup2 - tek gizli katman
+MLP_2_katman_g2,"[256, 128]",2,0.0,97.68,0.0711,24.21,GPU,Grup2 - iki gizli katman
+MLP_dropout_0.3,"[256, 128]",2,0.3,97.61,0.0754,25.19,GPU,Grup2 - dropout 0.3
+MLP_1_katman_g3,[128],1,0.0,96.89,0.0979,23.41,GPU,Grup3 - tek gizli katman
+MLP_2_katman_g3,"[256, 128]",2,0.0,97.89,0.0668,25.29,GPU,Grup3 - iki gizli katman
+MLP_dropout_0.5,"[256, 128]",2,0.5,97.33,0.0894,23.62,GPU,Grup3 - dropout 0.5
+MLP_2_katman_derinlik,"[256, 128]",2,0.0,97.9,0.068,25.13,GPU,Grup4 - 2 katman
+MLP_4_katman,"[512, 256, 128, 64]",4,0.0,97.96,0.0654,26.46,GPU,Grup4 - 4 katman
+MLP_6_katman,"[512, 256, 256, 128, 64, 32]",6,0.0,97.72,0.0773,34.85,GPU,Grup4 - 6 katman
+MLP_2_katman_d0.1,"[256, 128]",2,0.1,97.79,0.0683,28.44,GPU,Grup5 - 2 katman + dropout 0.1
+MLP_4_katman_d0.3,"[512, 256, 128, 64]",4,0.3,97.71,0.0792,25.77,GPU,Grup5 - 4 katman + dropout 0.3
+MLP_6_katman_d0.5,"[512, 256, 256, 128, 64, 32]",6,0.5,95.51,0.2168,28.19,GPU,Grup5 - 6 katman + dropout 0.5

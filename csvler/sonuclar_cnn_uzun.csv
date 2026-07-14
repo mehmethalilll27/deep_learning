@@ -1,0 +1,4 @@
+deney,conv_channels,epochs,dropout,batch_size,accuracy,best_accuracy,loss,sure_sn,cihaz,notlar
+CNN_guclu_d0.3_ep30,"(32, 64, 128)",30,0.3,256,99.43,99.44,0.0248,184.73,GPU,Guclu CNN + dropout 0.3 + 30 epoch
+CNN_guclu_d0_ep30,"(32, 64, 128)",30,0.0,256,99.42,99.42,0.0273,186.41,GPU,Guclu CNN + dropout yok + 30 epoch
+CNN_guclu_d0.3_ep50,"(32, 64, 128)",50,0.3,256,99.5,99.52,0.0257,314.09,GPU,Guclu CNN + dropout 0.3 + 50 epoch
