@@ -57,11 +57,11 @@ def loss_function(y_pred, y_true, loss_type="bce"):
     if loss_type == "mse":
         # ortalama karesel hata
         return np.mean(np.square(y_pred - y_true)) # np.square(y_pred - y_true) -> (y_pred - y_true)²
-
-    # binary cross-entropy (0/1 siniflandirma icin)
-    y_pred = np.clip(y_pred, eps, 1 - eps) # y_pred'i 0 ve 1 arasına kırpar
-    return -np.mean(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred))
-    # y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred) -> y_true * log(y_pred) + (1 - y_true) * log(1 - y_pred)
+    else:
+        # binary cross-entropy (0/1 siniflandirma icin)
+        y_pred = np.clip(y_pred, eps, 1 - eps) # y_pred'i 0 ve 1 arasına kırpar
+        return -np.mean(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred)) 
+        # y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred) -> y_true * log(y_pred) + (1 - y_true) * log(1 - y_pred)
 
 
 # 5) GERI YAYILIM (BACKWARD)
@@ -71,7 +71,7 @@ def backward_pass(y_true, y_pred, cache, w1, b1, w2, b2, loss_type="bce", activa
     m = y_true.shape[0]  # ornek sayisi
     x = cache["x"] # x -> giris verisi
     z1 = cache["z1"] # z1 -> gizli katmanin aktivasyonu
-    a1 = cache["a1"]
+    a1 = cache["a1"] 
 
     # --- cikis katmani gradyanlari ---
     if loss_type == "mse":

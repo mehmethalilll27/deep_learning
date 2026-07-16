@@ -1,4 +1,5 @@
 import csv
+import os
 import time
 
 import torch
@@ -6,9 +7,13 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
+KAYITLAR_DIR = "kayıtlar"
+os.makedirs(KAYITLAR_DIR, exist_ok=True)
+
 BATCH_SIZE = 256
 LEARNING_RATE = 0.001
-SONUC_DOSYASI = "sonuclar_cnn_uzun.csv"
+SONUC_DOSYASI = os.path.join(KAYITLAR_DIR, "sonuclar_cnn_uzun.csv")
+DATA_DIR = os.path.join(KAYITLAR_DIR, "data")
 CIHAZ = "GPU"
 CONV_CHANNELS = (32, 64, 128)
 FC_SIZE = 256
@@ -56,8 +61,8 @@ class CNN_Guclu(nn.Module):
 
 def veri_yukle():
     transform = transforms.ToTensor()
-    train_data = datasets.MNIST(root="./data", train=True, download=True, transform=transform)
-    test_data = datasets.MNIST(root="./data", train=False, download=True, transform=transform)
+    train_data = datasets.MNIST(root=DATA_DIR, train=True, download=True, transform=transform)
+    test_data = datasets.MNIST(root=DATA_DIR, train=False, download=True, transform=transform)
     train_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True, pin_memory=True)
     test_loader = DataLoader(test_data, batch_size=512, shuffle=False, pin_memory=True)
     return train_loader, test_loader
@@ -126,9 +131,15 @@ def train_model(model, train_loader, test_loader, device, epochs):
 
 
 def sonuclari_kaydet(sonuclar, dosya=SONUC_DOSYASI):
+    os.makedirs(os.path.dirname(dosya), exist_ok=True)
     fieldnames = [
         "deney", "conv_channels", "epochs", "dropout", "batch_size",
-        "accuracy", "best_accuracy", "loss", "sure_sn", "cihaz", "notlar",
+        "accuracy",
+        "best_accuracy",
+        "loss",
+        "sure_sn",
+        "cihaz",
+        "notlar",
     ]
     with open(dosya, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -141,14 +152,14 @@ def tum_deneyler():
         {
             "ad": "CNN_guclu_d0.3_ep30",
             "dropout": 0.3,
-            "epochs": 30,
-            "not": "Guclu CNN + dropout 0.3 + 30 epoch",
+            "epochs": 50,
+            "not": "Guclu CNN + dropout 0.3 + 50 epoch",
         },
         {
             "ad": "CNN_guclu_d0_ep30",
             "dropout": 0.0,
-            "epochs": 30,
-            "not": "Guclu CNN + dropout yok + 30 epoch",
+            "epochs": 50,
+            "not": "Guclu CNN + dropout yok + 50 epoch",
         },
         {
             "ad": "CNN_guclu_d0.3_ep50",

@@ -1,11 +1,16 @@
 import csv
+import os
 import time
 
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
+# Tum kayitlar bu klasore yazilir
+KAYITLAR_DIR = "kayıtlar"
+os.makedirs(KAYITLAR_DIR, exist_ok=True)
 
 # 1) AYARLAR
 # EPOCHS        -> kac tur egitecegiz
@@ -16,7 +21,8 @@ from torchvision import datasets, transforms
 EPOCHS = 5
 BATCH_SIZE = 128
 LEARNING_RATE = 0.001
-SONUC_DOSYASI = "sonuclar_no_cnn_gpu.csv"
+SONUC_DOSYASI = os.path.join(KAYITLAR_DIR, "sonuclar_no_cnn_gpu.csv")
+DATA_DIR = os.path.join(KAYITLAR_DIR, "data")
 CIHAZ = "GPU"
 
 
@@ -66,8 +72,8 @@ class MLP(nn.Module):
 def veri_yukle():
     transform = transforms.ToTensor()  # piksel -> 0-1 tensor
 
-    train_data = datasets.MNIST(root="./data", train=True, download=True, transform=transform)
-    test_data = datasets.MNIST(root="./data", train=False, download=True, transform=transform)
+    train_data = datasets.MNIST(root=DATA_DIR, train=True, download=True, transform=transform)
+    test_data = datasets.MNIST(root=DATA_DIR, train=False, download=True, transform=transform)
 
     # DataLoader: veriyi batch batch verir
     train_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True, pin_memory=True)
@@ -110,6 +116,67 @@ def loss_hesapla(model, loader, criterion, device):
     return toplam_loss / len(loader)  # test seti icin ortalama loss
 
 
+def metricler_hesapla(
+    model, loader, criterion, device, num_classes=10, topk=5, eps=1e-12
+):
+    """
+    MNIST (10 sinif) icin:
+    - accuracy
+    - precision/recall/F1 (macro)
+    - top-k accuracy (varsayilan top-5)
+    """
+    model.eval()
+    toplam_loss = 0.0
+    dogru = 0
+    toplam = 0
+    topk_dogru = 0
+
+    confusion = np.zeros((num_classes, num_classes), dtype=np.int64)
+
+    with torch.no_grad():
+        for images, labels in loader:
+            images, labels = images.to(device), labels.to(device)
+            logits = model(images)  # [batch, num_classes]
+
+            toplam_loss += criterion(logits, labels).item()
+
+            preds = logits.argmax(dim=1)
+            dogru += (preds == labels).sum().item()
+            toplam += labels.size(0)
+
+            # Confusion matrix'i tek geciste topla
+            labels_np = labels.detach().cpu().numpy()
+            preds_np = preds.detach().cpu().numpy()
+            np.add.at(confusion, (labels_np, preds_np), 1)
+
+            if topk is not None and topk > 1:
+                topk_indices = logits.topk(k=topk, dim=1).indices  # [batch, topk]
+                topk_dogru += (topk_indices == labels.unsqueeze(1)).any(dim=1).sum().item()
+
+    model.train()
+
+    acc = dogru / toplam
+    loss_ort = toplam_loss / len(loader)
+
+    # Macro precision/recall/F1
+    tp = np.diag(confusion).astype(np.float64)
+    fp = confusion.sum(axis=0).astype(np.float64) - tp
+    fn = confusion.sum(axis=1).astype(np.float64) - tp
+
+    precision = tp / (tp + fp + eps)
+    recall = tp / (tp + fn + eps)
+    f1 = 2.0 * precision * recall / (precision + recall + eps)
+
+    return {
+        "accuracy": acc,
+        "loss": loss_ort,
+        "precision_macro": precision.mean(),
+        "recall_macro": recall.mean(),
+        "f1_macro": f1.mean(),
+        "top5_accuracy": (topk_dogru / toplam) if topk is not None and topk > 1 else acc,
+    }
+
+
 # 7) 1 EPOCH EGITIM
 # forward -> loss -> backward -> update
 #  paket al → tahmin et → hatayı hesapla → geri yay → ağırlığı güncelle.
@@ -135,31 +202,37 @@ def bir_epoch_egit(model, loader, criterion, optimizer, device):  # 1 tur egitim
 
 def train_model(model, train_loader, test_loader, device, epochs=EPOCHS):
     criterion = nn.CrossEntropyLoss()  # 10 sinif icin loss
-    optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
-    start = time.perf_counter()
+    optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE) # ağırlık güncelleyici
+    start = time.perf_counter() # başlangıç zamanı
 
     for epoch in range(1, epochs + 1):
-        # 1) egit
+        # 1) egit (paket al → tahmin et → hatayı hesapla → geri yay → ağırlığı güncelle.)
         loss = bir_epoch_egit(model, train_loader, criterion, optimizer, device)
-        # 2) test accuracy olc
+        # 2) test accuracy olc (test seti icin accuracy olc)
         acc = dogruluk_hesapla(model, test_loader, device)
         print(f"  Epoch {epoch}/{epochs} | Loss: {loss:.4f} | Accuracy: {acc * 100:.2f}%")
 
     sure = time.perf_counter() - start
-    final_acc = dogruluk_hesapla(model, test_loader, device)
-    final_loss = loss_hesapla(model, test_loader, criterion, device)
-
-    return final_acc, final_loss, sure
+    metrics = metricler_hesapla(model, test_loader, criterion, device)
+    return metrics["accuracy"], metrics["loss"], sure, metrics
 
 
-# =========================================================
+
 # 9) SONUCLARI CSV'YE KAYDET
-# =========================================================
 
 def sonuclari_kaydet(sonuclar, dosya=SONUC_DOSYASI):
+    os.makedirs(os.path.dirname(dosya), exist_ok=True)
     fieldnames = [
         "deney", "katmanlar", "katman_sayisi", "dropout",
-        "accuracy", "loss", "sure_sn", "cihaz", "notlar",
+        "accuracy",
+        "precision_macro",
+        "recall_macro",
+        "f1_macro",
+        "top5_accuracy",
+        "loss",
+        "sure_sn",
+        "cihaz",
+        "notlar",
     ]
     with open(dosya, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -167,9 +240,7 @@ def sonuclari_kaydet(sonuclar, dosya=SONUC_DOSYASI):
         writer.writerows(sonuclar)
 
 
-# =========================================================
 # 10) DENEY LISTESI
-# =========================================================
 # hidden = gizli katman boyutlari
 # ornek: [256, 128] -> 2 gizli katman
 
@@ -180,36 +251,35 @@ def tum_deneyler():
     h6 = [512, 256, 256, 128, 64, 32]
 
     return [
-        # Grup 1: dropout 0.1
-        {"ad": "MLP_1_katman", "hidden": h1, "dropout": 0.0, "not": "Grup1 - tek gizli katman"},
-        {"ad": "MLP_2_katman", "hidden": h2, "dropout": 0.0, "not": "Grup1 - iki gizli katman"},
-        {"ad": "MLP_dropout_0.1", "hidden": h2, "dropout": 0.1, "not": "Grup1 - dropout 0.1"},
+        # Grup 1: 1 katman + dropout etkisi
+        {"ad": "MLP_1_katman_d0", "hidden": h1, "dropout": 0.0, "not": "Grup1 - 1 katman, dropout yok"},
+        {"ad": "MLP_1_katman_d0.1", "hidden": h1, "dropout": 0.1, "not": "Grup1 - 1 katman, dropout 0.1"},
+        {"ad": "MLP_1_katman_d0.3", "hidden": h1, "dropout": 0.3, "not": "Grup1 - 1 katman, dropout 0.3"},
+        {"ad": "MLP_1_katman_d0.5", "hidden": h1, "dropout": 0.5, "not": "Grup1 - 1 katman, dropout 0.5"},
 
-        # Grup 2: dropout 0.3
-        {"ad": "MLP_1_katman_g2", "hidden": h1, "dropout": 0.0, "not": "Grup2 - tek gizli katman"},
-        {"ad": "MLP_2_katman_g2", "hidden": h2, "dropout": 0.0, "not": "Grup2 - iki gizli katman"},
-        {"ad": "MLP_dropout_0.3", "hidden": h2, "dropout": 0.3, "not": "Grup2 - dropout 0.3"},
+        # Grup 2: dropout yokken katman sayisi etkisi
+        {"ad": "MLP_2_katman_d0", "hidden": h2, "dropout": 0.0, "not": "Grup2 - 2 katman, dropout yok"},
+        {"ad": "MLP_4_katman_d0", "hidden": h4, "dropout": 0.0, "not": "Grup2 - 4 katman, dropout yok"},
+        {"ad": "MLP_6_katman_d0", "hidden": h6, "dropout": 0.0, "not": "Grup2 - 6 katman, dropout yok"},
 
-        # Grup 3: dropout 0.5
-        {"ad": "MLP_1_katman_g3", "hidden": h1, "dropout": 0.0, "not": "Grup3 - tek gizli katman"},
-        {"ad": "MLP_2_katman_g3", "hidden": h2, "dropout": 0.0, "not": "Grup3 - iki gizli katman"},
-        {"ad": "MLP_dropout_0.5", "hidden": h2, "dropout": 0.5, "not": "Grup3 - dropout 0.5"},
+        # Grup 3: 2 katman + dropout taramasi
+        {"ad": "MLP_2_katman_d0.1", "hidden": h2, "dropout": 0.1, "not": "Grup3 - 2 katman, dropout 0.1"},
+        {"ad": "MLP_2_katman_d0.3", "hidden": h2, "dropout": 0.3, "not": "Grup3 - 2 katman, dropout 0.3"},
+        {"ad": "MLP_2_katman_d0.5", "hidden": h2, "dropout": 0.5, "not": "Grup3 - 2 katman, dropout 0.5"},
 
-        # Grup 4: katman sayisi
-        {"ad": "MLP_2_katman_derinlik", "hidden": h2, "dropout": 0.0, "not": "Grup4 - 2 katman"},
-        {"ad": "MLP_4_katman", "hidden": h4, "dropout": 0.0, "not": "Grup4 - 4 katman"},
-        {"ad": "MLP_6_katman", "hidden": h6, "dropout": 0.0, "not": "Grup4 - 6 katman"},
+        # Grup 4: 4 katman + dropout taramasi
+        {"ad": "MLP_4_katman_d0.1", "hidden": h4, "dropout": 0.1, "not": "Grup4 - 4 katman, dropout 0.1"},
+        {"ad": "MLP_4_katman_d0.3", "hidden": h4, "dropout": 0.3, "not": "Grup4 - 4 katman, dropout 0.3"},
 
-        # Grup 5: katman + dropout
-        {"ad": "MLP_2_katman_d0.1", "hidden": h2, "dropout": 0.1, "not": "Grup5 - 2 katman + dropout 0.1"},
-        {"ad": "MLP_4_katman_d0.3", "hidden": h4, "dropout": 0.3, "not": "Grup5 - 4 katman + dropout 0.3"},
-        {"ad": "MLP_6_katman_d0.5", "hidden": h6, "dropout": 0.5, "not": "Grup5 - 6 katman + dropout 0.5"},
+        # Grup 5: 6 katman + dropout taramasi
+        {"ad": "MLP_6_katman_d0.1", "hidden": h6, "dropout": 0.1, "not": "Grup5 - 6 katman, dropout 0.1"},
+        {"ad": "MLP_6_katman_d0.3", "hidden": h6, "dropout": 0.3, "not": "Grup5 - 6 katman, dropout 0.3"},
+        {"ad": "MLP_6_katman_d0.5", "hidden": h6, "dropout": 0.5, "not": "Grup5 - 6 katman, dropout 0.5"},
     ]
 
 
-# =========================================================
+
 # 11) CALISTIR
-# =========================================================
 # sirayla: cihaz al -> veri yukle -> her deneyi egit -> kaydet
 
 def main():
@@ -231,7 +301,7 @@ def main():
         model = MLP(deney["hidden"], dropout=deney["dropout"]).to(device)
 
         # egit
-        acc, loss, sure = train_model(model, train_loader, test_loader, device)
+        acc, loss, sure, metrics = train_model(model, train_loader, test_loader, device)
 
         # sonuclari topla
         sonuc = {
@@ -240,6 +310,10 @@ def main():
             "katman_sayisi": len(deney["hidden"]),
             "dropout": deney["dropout"],
             "accuracy": round(acc * 100, 2),
+            "precision_macro": round(metrics["precision_macro"] * 100, 2),
+            "recall_macro": round(metrics["recall_macro"] * 100, 2),
+            "f1_macro": round(metrics["f1_macro"] * 100, 2),
+            "top5_accuracy": round(metrics["top5_accuracy"] * 100, 2),
             "loss": round(loss, 4),
             "sure_sn": round(sure, 2),
             "cihaz": CIHAZ,

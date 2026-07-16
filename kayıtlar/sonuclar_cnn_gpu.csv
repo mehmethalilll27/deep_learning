@@ -1,0 +1,2 @@
+deney,conv_channels,conv_katman_sayisi,dropout,accuracy,loss,sure_sn,cihaz,notlar
+CNN_dropout_0,"(16, 32)",2,0.0,98.73,0.0358,26.06,GPU,Dropout yok - baz

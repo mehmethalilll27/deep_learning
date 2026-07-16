@@ -1,4 +1,5 @@
 import csv
+import os
 import time
 
 import torch
@@ -6,10 +7,14 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
+KAYITLAR_DIR = "kayıtlar"
+os.makedirs(KAYITLAR_DIR, exist_ok=True)
+
 EPOCHS = 5
 BATCH_SIZE = 128
 LEARNING_RATE = 0.001
-SONUC_DOSYASI = "sonuclar_cnn_gpu.csv"
+SONUC_DOSYASI = os.path.join(KAYITLAR_DIR, "sonuclar_cnn_gpu.csv")
+DATA_DIR = os.path.join(KAYITLAR_DIR, "data")
 CIHAZ = "GPU"
 
 
@@ -51,8 +56,8 @@ class CNN(nn.Module):
 
 def veri_yukle():
     transform = transforms.ToTensor()
-    train_data = datasets.MNIST(root="./data", train=True, download=True, transform=transform)
-    test_data = datasets.MNIST(root="./data", train=False, download=True, transform=transform)
+    train_data = datasets.MNIST(root=DATA_DIR, train=True, download=True, transform=transform)
+    test_data = datasets.MNIST(root=DATA_DIR, train=False, download=True, transform=transform)
     train_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True, pin_memory=True)
     test_loader = DataLoader(test_data, batch_size=256, shuffle=False, pin_memory=True)
     return train_loader, test_loader
@@ -110,9 +115,14 @@ def train_model(model, train_loader, test_loader, device, epochs=EPOCHS):
 
 
 def sonuclari_kaydet(sonuclar, dosya=SONUC_DOSYASI):
+    os.makedirs(os.path.dirname(dosya), exist_ok=True)
     fieldnames = [
         "deney", "conv_channels", "conv_katman_sayisi", "dropout",
-        "accuracy", "loss", "sure_sn", "cihaz", "notlar",
+        "accuracy",
+        "loss",
+        "sure_sn",
+        "cihaz",
+        "notlar",
     ]
     with open(dosya, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
