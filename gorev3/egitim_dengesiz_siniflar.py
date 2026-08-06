@@ -250,13 +250,13 @@ def matris_yazdir(confusion):
         hucreler = []
         for j, deger in enumerate(satir):
             if i == j:
-                hucreler.append(f"{deger:>6} ")      
+                hucreler.append(f"{deger:>6} ")
             elif deger >= 10:
-                hucreler.append(f"{deger:>6}*")       
+                hucreler.append(f"{deger:>6}*")
             elif deger > 0:
                 hucreler.append(f"{deger:>6} ")
             else:
-                hucreler.append(f"{'.':>6} ")         
+                hucreler.append(f"{'.':>6} ")
         etiket = ""
         if i in AZINLIK_SINIFLARI:
             etiket = "  <- AZINLIK"
@@ -420,7 +420,7 @@ def sinif_tipi(sinif):
 # 10) CALISTIR
 def main():
     device = get_device()
-    tohum_ayarla(SEED)
+    seed_ayarla(SEED)
     train_data, test_data = veri_yukle()
     deneyler = tum_deneyler()
     sonuclar = []

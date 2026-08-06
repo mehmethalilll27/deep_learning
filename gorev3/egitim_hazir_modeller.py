@@ -214,8 +214,10 @@ def metricler_hesapla(model, loader, criterion, device, num_classes=10, eps=1e-1
         "destek": destek,
         "confusion": confusion,
         "azinlik_recall": recall[AZINLIK_SINIFLARI].mean(),
+        "azinlik_precision": precision[AZINLIK_SINIFLARI].mean(),
         "azinlik_f1": f1[AZINLIK_SINIFLARI].mean(),
         "cogunluk_recall": recall[COGUNLUK_SINIFLARI].mean(),
+        "cogunluk_f1": f1[COGUNLUK_SINIFLARI].mean(),
     }
 
 
@@ -238,13 +240,13 @@ def matris_yazdir(confusion):
         hucreler = []
         for j, deger in enumerate(satir):
             if i == j:
-                hucreler.append(f"{deger:>6} ")       
+                hucreler.append(f"{deger:>6} ")
             elif deger >= 10:
-                hucreler.append(f"{deger:>6}*")      
+                hucreler.append(f"{deger:>6}*")
             elif deger > 0:
                 hucreler.append(f"{deger:>6} ")
             else:
-                hucreler.append(f"{'.':>6} ")        
+                hucreler.append(f"{'.':>6} ")
         print(f"  {i}   |" + "".join(hucreler))
     print("  ^ GERCEK       ( * = 10+ yanlis tahmin,  . = 0 )")
 

@@ -21,8 +21,8 @@ from torch.utils.data import DataLoader, Subset
 from torchvision import datasets, transforms
 
 # 1) YOLLAR
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))          
-PROJE_DIR = os.path.dirname(BASE_DIR)                          
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJE_DIR = os.path.dirname(BASE_DIR)
 KAYITLAR_DIR = os.path.join(PROJE_DIR, "kayıtlar")
 SONUC_DIR = os.path.join(KAYITLAR_DIR, "gorev3")
 CONFUSION_DIR = os.path.join(SONUC_DIR, "confusion")
@@ -39,11 +39,14 @@ BATCH_SIZE = 128
 LEARNING_RATE = 0.001
 CIHAZ = "GPU"
 
-VERI_BOYUTLARI = [1000, 3000, 5000, 10000, None]
+VERI_BOYUTLARI = [1000, 3000, 5000, 10000, None]   # None = tam veri (60.000)
 
-
-AZINLIK_SINIFLARI = [5, 6, 8]
+# Bu adimda alt kumeler DENGELI; sinif gruplari sadece adim 2 ile ayni pencereden
+# bakabilmek icin tanimli. Buradaki "azinlik_recall" dengesizligin degil, az veriye
+# inildikce 5/6/8 sinifinin nasil zorlandiginin olcusudur.
 COGUNLUK_SINIFLARI = [0, 1]
+AZINLIK_SINIFLARI = [5, 6, 8]
+ORTA_SINIFLAR = [2, 3, 4, 7, 9]
 
 SONUC_DOSYASI = os.path.join(SONUC_DIR, "sonuclar_f1_veri_azalt.csv")
 SINIF_DOSYASI = os.path.join(SONUC_DIR, "sinif_bazli_veri_azalt.csv")
@@ -69,7 +72,7 @@ def seed_ayarla(seed=SEED):
 class MLP(nn.Module):
     def __init__(self, hidden_layers, dropout=0.0):
         super().__init__()
-        layers = [nn.Flatten()]  
+        layers = [nn.Flatten()]
         prev = 28 * 28
 
         for size in hidden_layers:
@@ -201,8 +204,10 @@ def metricler_hesapla(model, loader, criterion, device, num_classes=10, eps=1e-1
         "destek": destek,
         "confusion": confusion,
         "azinlik_recall": recall[AZINLIK_SINIFLARI].mean(),
+        "azinlik_precision": precision[AZINLIK_SINIFLARI].mean(),
         "azinlik_f1": f1[AZINLIK_SINIFLARI].mean(),
         "cogunluk_recall": recall[COGUNLUK_SINIFLARI].mean(),
+        "cogunluk_f1": f1[COGUNLUK_SINIFLARI].mean(),
     }
 
 
@@ -226,13 +231,13 @@ def matris_yazdir(confusion):
         hucreler = []
         for j, deger in enumerate(satir):
             if i == j:
-                hucreler.append(f"{deger:>6} ")     
+                hucreler.append(f"{deger:>6} ")
             elif deger >= 10:
-                hucreler.append(f"{deger:>6}*")     
+                hucreler.append(f"{deger:>6}*")
             elif deger > 0:
                 hucreler.append(f"{deger:>6} ")
             else:
-                hucreler.append(f"{'.':>6} ")      
+                hucreler.append(f"{'.':>6} ")
         print(f"  {i}   |" + "".join(hucreler))
     print("  ^ GERCEK       ( * = 10+ yanlis tahmin,  . = 0 )")
 
