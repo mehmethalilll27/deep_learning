@@ -1,7 +1,0 @@
-deney,katmanlar,katman_sayisi,dropout,accuracy,loss,sure_sn,cihaz,notlar
-MLP_4_katman_d0.1,"[512, 256, 128, 64]",4,0.1,97.57,0.0852,24.89,GPU,Grup6 - 2 katman + dropout 0.1
-MLP_4_katman_d0.3,"[512, 256, 128, 64]",4,0.3,97.48,0.0842,25.43,GPU,Grup6 - 4 katman + dropout 0.3
-MLP_4_katman_d0.5,"[512, 256, 128, 64]",4,0.5,97.45,0.0991,25.43,GPU,Grup6 - 6 katman + dropout 0.5
-MLP_6_katman_d0.1,"[512, 256, 256, 128, 64, 32]",6,0.1,97.75,0.091,27.56,GPU,Grup7 - 2 katman + dropout 0.1
-MLP_6_katman_d0.3,"[512, 256, 256, 128, 64, 32]",6,0.3,97.02,0.1199,27.94,GPU,Grup7 - 4 katman + dropout 0.3
-MLP_6_katman_d0.5,"[512, 256, 256, 128, 64, 32]",6,0.5,95.63,0.1922,28.35,GPU,Grup7 - 6 katman + dropout 0.5

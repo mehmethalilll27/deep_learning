@@ -1,0 +1,1562 @@
+<meta charset="utf-8">
+<title>Deney Sonuçları Raporu — MNIST / Veri Azaltma ve Sınıf Dengesizliği</title>
+<style>
+@page { size: A4; margin: 18mm 15mm 16mm 15mm; }
+* { box-sizing: border-box; }
+body { font-family: "Segoe UI", Calibri, Arial, sans-serif; font-size: 10pt;
+       color: #222; line-height: 1.5; margin: 0; }
+h1 { font-size: 21pt; color: #1F3864; margin: 0 0 2px 0; letter-spacing: -.3px; }
+.altbaslik { font-size: 11.5pt; color: #2E5496; font-weight: 600; margin-bottom: 14px; }
+.cizgi { border-bottom: 2px solid #1F3864; margin-bottom: 16px; }
+h2 { font-size: 14pt; color: #1F3864; margin: 26px 0 10px 0;
+      padding-bottom: 4px; border-bottom: 1px solid #cfd8e8; page-break-after: avoid; }
+h3 { font-size: 11.5pt; color: #2E5496; margin: 18px 0 8px 0; page-break-after: avoid; }
+.kutu { background: #eef3fa; border-left: 4px solid #2E5496; padding: 10px 14px;
+        margin: 12px 0; font-size: 9.5pt; }
+.uyari { background: #fdf3ea; border-left: 4px solid #d98032; padding: 10px 14px;
+         margin: 12px 0; font-size: 9.5pt; }
+.bulgu { background: #eef7f0; border-left: 4px solid #3f8f5c; padding: 10px 14px;
+         margin: 12px 0; font-size: 9.5pt; }
+.model-baslik { font-size: 10pt; font-weight: 600; color: #1F3864;
+                margin: 14px 0 5px 0; page-break-after: avoid; }
+table.veri { border-collapse: collapse; width: 92%; margin: 0 0 10px 0; font-size: 9pt;
+             page-break-inside: avoid; }
+table.veri.genis { width: 100%; }
+table.veri th { background: #1F3864; color: #fff; font-weight: 600; padding: 6px 8px;
+                text-align: center; border: 1px solid #1F3864; font-size: 8.5pt; }
+table.veri td { padding: 5px 8px; text-align: center; border: 1px solid #d5dced; }
+table.veri td.ilk { text-align: left; }
+table.veri tbody tr:nth-child(even) td { background: #f6f8fc; }
+tr.vurgu-kotu td { background: #fdeeea !important; }
+tr.vurgu-orta td { background: #fdf6ea !important; }
+tr.vurgu-iyi td { background: #eef7f0 !important; }
+td.kotu { color: #b8321f; font-weight: 600; }
+td.fark { color: #1F3864; }
+td.fark-ters { color: #b8321f; }
+td.ref, tr td.ref { color: #6a7484; font-style: italic; }
+ul.liste { margin: 6px 0 10px 0; padding-left: 20px; font-size: 9.5pt; }
+ul.liste li { margin-bottom: 4px; }
+ol.adimlar { font-size: 9.5pt; }
+.matris-blok { margin: 12px 0 16px 0; page-break-inside: avoid; }
+.matris-baslik { font-size: 9.5pt; font-weight: 600; color: #1F3864; margin-bottom: 2px; }
+.matris-alt { font-size: 8.5pt; color: #6a7484; margin-bottom: 5px; }
+table.cm { border-collapse: collapse; font-size: 8pt; }
+table.cm th { background: #1F3864; color: #fff; padding: 4px 6px; border: 1px solid #16294a;
+              font-weight: 600; }
+table.cm th.kose { background: #2E5496; font-size: 7pt; }
+table.cm th.satir { background: #2E5496; }
+table.cm th.satir.az { background: #b8321f; }
+table.cm th.satir.cog { background: #3f8f5c; }
+table.cm td { padding: 4px 7px; text-align: center; border: 1px solid #e4e8f0; min-width: 26px; }
+.dipnot { font-size: 8.5pt; color: #6a7484; font-style: italic; margin-top: 4px; }
+.sayfa-kes { page-break-before: always; }
+.altbilgi { margin-top: 26px; padding-top: 8px; border-top: 1px solid #d5dced;
+            font-size: 8.5pt; color: #8a919e; font-style: italic; }
+</style>
+
+<h1>Deney Sonuçları Raporu</h1>
+<div class="altbaslik">Derin Öğrenme — Veri Sayısı Azaltma, Sınıf Dengesizliği ve Genişletilmiş Metrikler</div>
+<div class="cizgi"></div>
+
+<div class="kutu">
+Bu rapor, <b>Yapılacaklar Belgesi</b>'nde tarif edilen dört adımın uygulanmasıyla elde edilen
+sonuçları içerir. Toplam <b>48 eğitim</b> yapılmıştır: 20 deney veri sayısı azaltılarak,
+12 deney sınıflar dengesizleştirilerek, 16 deney hazır mimarilerle (ResNet18, MobileNetV2).
+Tüm metrikler <b>tam ve dengeli 10.000'lik MNIST test setinde</b> ölçülmüştür — eğitim seti
+değiştirilmiş, test seti sabit tutulmuştur. Aksi halde azınlık sınıflarının recall'ü
+ölçülemezdi.
+</div>
+
+<h2>Deney Kurulumu</h2>
+<table class="veri genis">
+<thead><tr><th>Ayar</th><th>Değer</th><th>Gerekçe</th></tr></thead><tbody>
+<tr class="">
+<td class=" ilk">Test seti</td>
+<td class="">Tam MNIST test — 10.000, dengeli</td>
+<td class="">Azınlık recall'ü ancak dengeli testte ölçülebilir</td>
+</tr>
+<tr class="">
+<td class=" ilk">Epoch</td>
+<td class="">10 (tüm deneylerde sabit)</td>
+<td class="">Adil karşılaştırma; 5 epoch az veride yetersiz</td>
+</tr>
+<tr class="">
+<td class=" ilk">Batch size / LR / Optimizer</td>
+<td class="">128 / 0.001 / Adam</td>
+<td class="">Eski deneylerle birebir aynı</td>
+</tr>
+<tr class="">
+<td class=" ilk">Seed</td>
+<td class="">27 (tek tekrar)</td>
+<td class="">Tekrar üretilebilirlik</td>
+</tr>
+<tr class="">
+<td class=" ilk">Cihaz</td>
+<td class="">GPU — NVIDIA RTX 4060 Laptop</td>
+<td class="">CUDA 12.4, PyTorch 2.5.1</td>
+</tr>
+<tr class="">
+<td class=" ilk">Azınlık sınıfları</td>
+<td class="">5, 6, 8</td>
+<td class="">Belgede tarif edilen sınıflar</td>
+</tr>
+<tr class="">
+<td class=" ilk">Çoğunluk sınıfları</td>
+<td class="">0, 1</td>
+<td class="">Belgede tarif edilen sınıflar</td>
+</tr>
+</tbody></table>
+
+<h3>Karşılaştırılan konfigürasyonlar</h3>
+<table class="veri genis">
+<thead><tr><th>Kod</th><th>Mimari</th><th>Not</th></tr></thead><tbody>
+<tr class="">
+<td class=" ilk">MLP_d0</td>
+<td class="">MLP [256, 128], dropout yok</td>
+<td class="">Eski <i>MLP_2_katman</i> deneyi ile aynı</td>
+</tr>
+<tr class="">
+<td class=" ilk">MLP_d03</td>
+<td class="">MLP [256, 128], dropout 0.3</td>
+<td class="">Eski <i>MLP_dropout_0.3</i> deneyi ile aynı</td>
+</tr>
+<tr class="">
+<td class=" ilk">CNN_d0</td>
+<td class="">CNN (16, 32), dropout yok</td>
+<td class="">Eski <i>CNN_dropout_0</i> deneyi ile aynı</td>
+</tr>
+<tr class="">
+<td class=" ilk">CNN_d03</td>
+<td class="">CNN (16, 32), dropout 0.3</td>
+<td class="">Eski <i>CNN_dropout_0.3</i> deneyi ile aynı</td>
+</tr>
+<tr class="">
+<td class=" ilk">ResNet18</td>
+<td class="">torchvision, sıfırdan</td>
+<td class="">28×28 gri → 32×32×3'e uyarlandı</td>
+</tr>
+<tr class="">
+<td class=" ilk">MobileNetV2</td>
+<td class="">torchvision, sıfırdan</td>
+<td class="">28×28 gri → 32×32×3'e uyarlandı</td>
+</tr>
+</tbody></table>
+<div class="dipnot">İlk dört konfigürasyon eski deneylerin birebir aynısıdır; bu sayede eski
+Accuracy değerleriyle doğrudan karşılaştırma yapılabilmektedir.</div>
+
+<h3>Dengesizlik profilleri</h3>
+<table class="veri genis">
+<thead><tr><th>Profil</th><th>Sınıf 0, 1</th><th>Sınıf 2,3,4,7,9</th><th>Sınıf 5, 6, 8</th><th>Toplam</th><th>Oran</th></tr></thead><tbody>
+<tr class="">
+<td class=" ilk">P1_pdf</td>
+<td class="">3.000</td>
+<td class="">500</td>
+<td class="">150</td>
+<td class="">8.950</td>
+<td class="">20:1</td>
+</tr>
+<tr class="">
+<td class=" ilk">P2_agir</td>
+<td class="">3.000</td>
+<td class="">300</td>
+<td class="">100</td>
+<td class="">7.800</td>
+<td class="">30:1</td>
+</tr>
+<tr class="">
+<td class=" ilk">P3_5k</td>
+<td class="">1.500</td>
+<td class="">300</td>
+<td class="">120</td>
+<td class="">4.860</td>
+<td class="">12.5:1</td>
+</tr>
+</tbody></table>
+<div class="dipnot">P1_pdf, belgedeki tarifin birebir uygulanmasıdır (çoğunluk 3.000+,
+azınlık 100–150). P3_5k ise belgedeki "5.000 + dengesiz" satırına toplam boyutça en yakın olandır.</div>
+
+<div class="sayfa-kes"></div>
+<h2>1. Adım — Veri Sayısını Azalt</h2>
+
+<div class="uyari">
+<b>Sorun:</b> Tam veri setinde (60.000 örnek) tüm modeller ~%98-99 accuracy veriyor —
+farklı konfigürasyonlar arasındaki fark gözlemlenemiyor.
+</div>
+
+<div class="model-baslik">MLP [256, 128] — dropout yok</div><table class="veri">
+<thead><tr><th>Veri Sayısı</th><th>Accuracy</th><th>F1 (macro)</th><th>Recall Azınlık</th><th>Loss</th></tr></thead><tbody>
+<tr class="">
+<td class="ref ilk">60.000 (tam) — <i>eski rapor, CPU, 5 epoch</i></td>
+<td class="ref">%97.75</td>
+<td class="ref">—</td>
+<td class="ref">—</td>
+<td class="ref">0.0711</td>
+</tr>
+<tr class="">
+<td class=" ilk">60.000 (tam) — <i>yeni</i></td>
+<td class="">%97.84</td>
+<td class="">%97.83</td>
+<td class="">%97.88</td>
+<td class="">0.0805</td>
+</tr>
+<tr class="">
+<td class=" ilk">10.000</td>
+<td class="">%95.0</td>
+<td class="">%94.95</td>
+<td class="">%93.05</td>
+<td class="">0.1699</td>
+</tr>
+<tr class="">
+<td class=" ilk">5.000</td>
+<td class="">%93.12</td>
+<td class="">%93.05</td>
+<td class="">%92.31</td>
+<td class="">0.2433</td>
+</tr>
+<tr class="vurgu-orta">
+<td class=" ilk">3.000</td>
+<td class="">%91.62</td>
+<td class="">%91.51</td>
+<td class="">%90.98</td>
+<td class="">0.2849</td>
+</tr>
+<tr class="vurgu-kotu">
+<td class=" ilk">1.000</td>
+<td class="">%89.24</td>
+<td class="">%89.02</td>
+<td class="">%83.25</td>
+<td class="">0.3809</td>
+</tr>
+</tbody></table>
+<div class="model-baslik">MLP [256, 128] — dropout 0.3</div><table class="veri">
+<thead><tr><th>Veri Sayısı</th><th>Accuracy</th><th>F1 (macro)</th><th>Recall Azınlık</th><th>Loss</th></tr></thead><tbody>
+<tr class="">
+<td class="ref ilk">60.000 (tam) — <i>eski rapor, CPU, 5 epoch</i></td>
+<td class="ref">%97.66</td>
+<td class="ref">—</td>
+<td class="ref">—</td>
+<td class="ref">0.0728</td>
+</tr>
+<tr class="">
+<td class=" ilk">60.000 (tam) — <i>yeni</i></td>
+<td class="">%97.95</td>
+<td class="">%97.94</td>
+<td class="">%97.46</td>
+<td class="">0.0676</td>
+</tr>
+<tr class="">
+<td class=" ilk">10.000</td>
+<td class="">%95.4</td>
+<td class="">%95.35</td>
+<td class="">%93.91</td>
+<td class="">0.1456</td>
+</tr>
+<tr class="">
+<td class=" ilk">5.000</td>
+<td class="">%93.6</td>
+<td class="">%93.52</td>
+<td class="">%92.4</td>
+<td class="">0.2117</td>
+</tr>
+<tr class="vurgu-orta">
+<td class=" ilk">3.000</td>
+<td class="">%91.88</td>
+<td class="">%91.77</td>
+<td class="">%90.43</td>
+<td class="">0.2681</td>
+</tr>
+<tr class="vurgu-kotu">
+<td class=" ilk">1.000</td>
+<td class="">%88.75</td>
+<td class="">%88.51</td>
+<td class="">%85.13</td>
+<td class="">0.3923</td>
+</tr>
+</tbody></table>
+<div class="model-baslik">CNN (16, 32) — dropout yok</div><table class="veri">
+<thead><tr><th>Veri Sayısı</th><th>Accuracy</th><th>F1 (macro)</th><th>Recall Azınlık</th><th>Loss</th></tr></thead><tbody>
+<tr class="">
+<td class="ref ilk">60.000 (tam) — <i>eski rapor, CPU, 5 epoch</i></td>
+<td class="ref">%98.80</td>
+<td class="ref">—</td>
+<td class="ref">—</td>
+<td class="ref">0.0330</td>
+</tr>
+<tr class="">
+<td class=" ilk">60.000 (tam) — <i>yeni</i></td>
+<td class="">%98.98</td>
+<td class="">%98.97</td>
+<td class="">%98.81</td>
+<td class="">0.0337</td>
+</tr>
+<tr class="">
+<td class=" ilk">10.000</td>
+<td class="">%97.63</td>
+<td class="">%97.62</td>
+<td class="">%97.37</td>
+<td class="">0.0708</td>
+</tr>
+<tr class="">
+<td class=" ilk">5.000</td>
+<td class="">%96.18</td>
+<td class="">%96.16</td>
+<td class="">%95.83</td>
+<td class="">0.1186</td>
+</tr>
+<tr class="vurgu-orta">
+<td class=" ilk">3.000</td>
+<td class="">%94.87</td>
+<td class="">%94.81</td>
+<td class="">%94.35</td>
+<td class="">0.1703</td>
+</tr>
+<tr class="vurgu-kotu">
+<td class=" ilk">1.000</td>
+<td class="">%87.63</td>
+<td class="">%87.52</td>
+<td class="">%85.69</td>
+<td class="">0.4176</td>
+</tr>
+</tbody></table>
+<div class="model-baslik">CNN (16, 32) — dropout 0.3</div><table class="veri">
+<thead><tr><th>Veri Sayısı</th><th>Accuracy</th><th>F1 (macro)</th><th>Recall Azınlık</th><th>Loss</th></tr></thead><tbody>
+<tr class="">
+<td class="ref ilk">60.000 (tam) — <i>eski rapor, CPU, 5 epoch</i></td>
+<td class="ref">%98.85</td>
+<td class="ref">—</td>
+<td class="ref">—</td>
+<td class="ref">0.0344</td>
+</tr>
+<tr class="">
+<td class=" ilk">60.000 (tam) — <i>yeni</i></td>
+<td class="">%99.12</td>
+<td class="">%99.11</td>
+<td class="">%98.97</td>
+<td class="">0.0271</td>
+</tr>
+<tr class="">
+<td class=" ilk">10.000</td>
+<td class="">%97.74</td>
+<td class="">%97.74</td>
+<td class="">%98.04</td>
+<td class="">0.0681</td>
+</tr>
+<tr class="">
+<td class=" ilk">5.000</td>
+<td class="">%96.06</td>
+<td class="">%96.04</td>
+<td class="">%95.83</td>
+<td class="">0.1201</td>
+</tr>
+<tr class="vurgu-orta">
+<td class=" ilk">3.000</td>
+<td class="">%95.34</td>
+<td class="">%95.3</td>
+<td class="">%95.47</td>
+<td class="">0.154</td>
+</tr>
+<tr class="vurgu-kotu">
+<td class=" ilk">1.000</td>
+<td class="">%88.7</td>
+<td class="">%88.54</td>
+<td class="">%85.93</td>
+<td class="">0.3992</td>
+</tr>
+</tbody></table>
+
+<h3>Konfigürasyonlar arası fark — belgenin ana tezi</h3>
+<table class="veri genis">
+<thead><tr><th>Veri Sayısı</th><th>Acc min</th><th>Acc max</th><th>Acc farkı</th><th>F1 min</th><th>F1 max</th><th>F1 farkı</th></tr></thead><tbody>
+<tr class="">
+<td class=" ilk">60.000 (tam)</td>
+<td class="">%97.84</td>
+<td class="">%99.12</td>
+<td class="fark"><b>1.28 puan</b></td>
+<td class="">%97.83</td>
+<td class="">%99.11</td>
+<td class="fark"><b>1.28 puan</b></td>
+</tr>
+<tr class="">
+<td class=" ilk">10.000</td>
+<td class="">%95.0</td>
+<td class="">%97.74</td>
+<td class="fark"><b>2.74 puan</b></td>
+<td class="">%94.95</td>
+<td class="">%97.74</td>
+<td class="fark"><b>2.79 puan</b></td>
+</tr>
+<tr class="">
+<td class=" ilk">5.000</td>
+<td class="">%93.12</td>
+<td class="">%96.18</td>
+<td class="fark"><b>3.06 puan</b></td>
+<td class="">%93.05</td>
+<td class="">%96.16</td>
+<td class="fark"><b>3.11 puan</b></td>
+</tr>
+<tr class="vurgu-iyi">
+<td class=" ilk">3.000</td>
+<td class="">%91.62</td>
+<td class="">%95.34</td>
+<td class="fark"><b>3.72 puan</b></td>
+<td class="">%91.51</td>
+<td class="">%95.3</td>
+<td class="fark"><b>3.79 puan</b></td>
+</tr>
+<tr class="">
+<td class=" ilk">1.000</td>
+<td class="">%87.63</td>
+<td class="">%89.24</td>
+<td class="fark"><b>1.61 puan</b></td>
+<td class="">%87.52</td>
+<td class="">%89.02</td>
+<td class="fark"><b>1.5 puan</b></td>
+</tr>
+</tbody></table>
+
+<div class="bulgu">
+<b>Tez doğrulandı, ama bir sınırla.</b> Konfigürasyonlar arası fark tam veride yalnızca
+<b>1.28 puan</b> iken, <b>3.000</b> örnekte
+<b>3.72 puana</b> çıkıyor — modeller gerçekten ayrışıyor. Ancak 1.000 örnekte
+fark tekrar daralıyor, çünkü orada bütün modeller birlikte çöküyor ve ayrışacak performans
+kalmıyor. <b>Ayrım için en verimli aralık 3.000–5.000 örnektir.</b>
+</div>
+
+<h3>Beklenmedik bulgu: CNN'in üstünlüğü veri miktarına bağlı</h3>
+<table class="veri">
+<thead><tr><th>Veri Sayısı</th><th>MLP_d0 Accuracy</th><th>CNN_d0 Accuracy</th><th>Fark</th></tr></thead><tbody>
+<tr class="">
+<td class=" ilk">60.000 (tam)</td>
+<td class="">%97.84</td>
+<td class="">%98.98</td>
+<td class="fark"><b>CNN +1.14</b></td>
+</tr>
+<tr class="">
+<td class=" ilk">10.000</td>
+<td class="">%95.0</td>
+<td class="">%97.63</td>
+<td class="fark"><b>CNN +2.63</b></td>
+</tr>
+<tr class="">
+<td class=" ilk">5.000</td>
+<td class="">%93.12</td>
+<td class="">%96.18</td>
+<td class="fark"><b>CNN +3.06</b></td>
+</tr>
+<tr class="">
+<td class=" ilk">3.000</td>
+<td class="">%91.62</td>
+<td class="">%94.87</td>
+<td class="fark"><b>CNN +3.25</b></td>
+</tr>
+<tr class="vurgu-kotu">
+<td class=" ilk">1.000</td>
+<td class="">%89.24</td>
+<td class="">%87.63</td>
+<td class="fark-ters"><b>MLP +1.61</b></td>
+</tr>
+</tbody></table>
+<div class="bulgu">
+1.000 örnekte <b>MLP, CNN'i geçiyor</b>. Konvolüsyon katmanlarının öğrenmesi gereken filtreler
+var; bu kadar az veriyle onları öğrenemiyor ve basit MLP daha iyi genelliyor. Yalnızca tam veri
+setine bakan biri "CNN her koşulda üstündür" sonucuna varırdı — bu yanlış olurdu.
+</div>
+
+<div class="sayfa-kes"></div>
+<h2>2. Adım — Sınıfları Dengesiz Hale Getir</h2>
+
+<div class="uyari">
+<b>Amaç:</b> Bazı sınıflara çok az örnek bırakarak modelin azınlık sınıflarına karşı nasıl
+davrandığını gözlemlemek. Her tablodaki ilk satır, aynı büyüklükteki <i>dengeli</i> veri
+setinin sonucudur — karşılaştırma referansı.
+</div>
+
+<div class="model-baslik">MLP [256, 128] — dropout yok</div><table class="veri genis">
+<thead><tr><th>Veri Seti</th><th>Accuracy</th><th>F1 (macro)</th><th>Recall Azınlık</th><th>Recall Çoğunluk</th><th>Acc − AzRec</th></tr></thead><tbody>
+<tr class="">
+<td class="ref ilk"><i>dengeli 5.000 (referans)</i></td>
+<td class="ref">%93.12</td>
+<td class="ref">%93.05</td>
+<td class="ref">%92.31</td>
+<td class="ref">%97.53</td>
+<td class="ref">—</td>
+</tr>
+<tr class="">
+<td class=" ilk">P1_pdf — 8.950 örnek (20:1)</td>
+<td class="">%91.09</td>
+<td class="">%90.85</td>
+<td class="kotu"><b>%81.1</b></td>
+<td class="">%99.63</td>
+<td class="fark"><b>9.99 p</b></td>
+</tr>
+<tr class="">
+<td class=" ilk">P2_agir — 7.800 örnek (30:1)</td>
+<td class="">%90.44</td>
+<td class="">%90.18</td>
+<td class="kotu"><b>%80.96</b></td>
+<td class="">%99.2</td>
+<td class="fark"><b>9.48 p</b></td>
+</tr>
+<tr class="">
+<td class=" ilk">P3_5k — 4.860 örnek (12.5:1)</td>
+<td class="">%90.98</td>
+<td class="">%90.83</td>
+<td class="kotu"><b>%86.46</b></td>
+<td class="">%99.14</td>
+<td class="fark"><b>4.52 p</b></td>
+</tr>
+</tbody></table>
+<div class="model-baslik">MLP [256, 128] — dropout 0.3</div><table class="veri genis">
+<thead><tr><th>Veri Seti</th><th>Accuracy</th><th>F1 (macro)</th><th>Recall Azınlık</th><th>Recall Çoğunluk</th><th>Acc − AzRec</th></tr></thead><tbody>
+<tr class="">
+<td class="ref ilk"><i>dengeli 5.000 (referans)</i></td>
+<td class="ref">%93.6</td>
+<td class="ref">%93.52</td>
+<td class="ref">%92.4</td>
+<td class="ref">%97.47</td>
+<td class="ref">—</td>
+</tr>
+<tr class="">
+<td class=" ilk">P1_pdf — 8.950 örnek (20:1)</td>
+<td class="">%91.12</td>
+<td class="">%90.81</td>
+<td class="kotu"><b>%80.98</b></td>
+<td class="">%99.53</td>
+<td class="fark"><b>10.14 p</b></td>
+</tr>
+<tr class="">
+<td class=" ilk">P2_agir — 7.800 örnek (30:1)</td>
+<td class="">%90.34</td>
+<td class="">%90.11</td>
+<td class="kotu"><b>%81.04</b></td>
+<td class="">%99.41</td>
+<td class="fark"><b>9.3 p</b></td>
+</tr>
+<tr class="">
+<td class=" ilk">P3_5k — 4.860 örnek (12.5:1)</td>
+<td class="">%90.78</td>
+<td class="">%90.56</td>
+<td class="kotu"><b>%84.5</b></td>
+<td class="">%99.39</td>
+<td class="fark"><b>6.28 p</b></td>
+</tr>
+</tbody></table>
+<div class="model-baslik">CNN (16, 32) — dropout yok</div><table class="veri genis">
+<thead><tr><th>Veri Seti</th><th>Accuracy</th><th>F1 (macro)</th><th>Recall Azınlık</th><th>Recall Çoğunluk</th><th>Acc − AzRec</th></tr></thead><tbody>
+<tr class="">
+<td class="ref ilk"><i>dengeli 5.000 (referans)</i></td>
+<td class="ref">%96.18</td>
+<td class="ref">%96.16</td>
+<td class="ref">%95.83</td>
+<td class="ref">%98.98</td>
+<td class="ref">—</td>
+</tr>
+<tr class="">
+<td class=" ilk">P1_pdf — 8.950 örnek (20:1)</td>
+<td class="">%95.34</td>
+<td class="">%95.27</td>
+<td class="kotu"><b>%91.35</b></td>
+<td class="">%99.67</td>
+<td class="fark"><b>3.99 p</b></td>
+</tr>
+<tr class="">
+<td class=" ilk">P2_agir — 7.800 örnek (30:1)</td>
+<td class="">%92.8</td>
+<td class="">%92.61</td>
+<td class="kotu"><b>%84.4</b></td>
+<td class="">%99.63</td>
+<td class="fark"><b>8.4 p</b></td>
+</tr>
+<tr class="">
+<td class=" ilk">P3_5k — 4.860 örnek (12.5:1)</td>
+<td class="">%93.07</td>
+<td class="">%92.97</td>
+<td class="kotu"><b>%88.51</b></td>
+<td class="">%99.38</td>
+<td class="fark"><b>4.56 p</b></td>
+</tr>
+</tbody></table>
+<div class="model-baslik">CNN (16, 32) — dropout 0.3</div><table class="veri genis">
+<thead><tr><th>Veri Seti</th><th>Accuracy</th><th>F1 (macro)</th><th>Recall Azınlık</th><th>Recall Çoğunluk</th><th>Acc − AzRec</th></tr></thead><tbody>
+<tr class="">
+<td class="ref ilk"><i>dengeli 5.000 (referans)</i></td>
+<td class="ref">%96.06</td>
+<td class="ref">%96.04</td>
+<td class="ref">%95.83</td>
+<td class="ref">%99.15</td>
+<td class="ref">—</td>
+</tr>
+<tr class="">
+<td class=" ilk">P1_pdf — 8.950 örnek (20:1)</td>
+<td class="">%95.0</td>
+<td class="">%94.91</td>
+<td class="kotu"><b>%89.83</b></td>
+<td class="">%99.63</td>
+<td class="fark"><b>5.17 p</b></td>
+</tr>
+<tr class="">
+<td class=" ilk">P2_agir — 7.800 örnek (30:1)</td>
+<td class="">%93.59</td>
+<td class="">%93.48</td>
+<td class="kotu"><b>%87.24</b></td>
+<td class="">%99.61</td>
+<td class="fark"><b>6.35 p</b></td>
+</tr>
+<tr class="">
+<td class=" ilk">P3_5k — 4.860 örnek (12.5:1)</td>
+<td class="">%93.74</td>
+<td class="">%93.66</td>
+<td class="kotu"><b>%91.34</b></td>
+<td class="">%99.39</td>
+<td class="fark"><b>2.4 p</b></td>
+</tr>
+</tbody></table>
+
+<h3>Aynı veri bütçesi, sadece denge değişti</h3>
+<div class="dipnot">Dengeli 10.000 → dengesiz 8.950 (P1_pdf). Veri miktarı neredeyse aynı,
+değişen tek şey sınıf dağılımı.</div>
+<table class="veri genis">
+<thead><tr><th>Konfigürasyon</th><th>Accuracy değişimi</th><th>F1 değişimi</th><th>Recall Azınlık değişimi</th><th>Hasar oranı</th></tr></thead><tbody>
+<tr class="">
+<td class=" ilk">MLP_d0</td>
+<td class="">-3.91 p</td>
+<td class="">-4.1 p</td>
+<td class="kotu"><b>-11.95 p</b></td>
+<td class="">3.1×</td>
+</tr>
+<tr class="">
+<td class=" ilk">MLP_d03</td>
+<td class="">-4.28 p</td>
+<td class="">-4.54 p</td>
+<td class="kotu"><b>-12.93 p</b></td>
+<td class="">3.0×</td>
+</tr>
+<tr class="">
+<td class=" ilk">CNN_d0</td>
+<td class="">-2.29 p</td>
+<td class="">-2.35 p</td>
+<td class="kotu"><b>-6.02 p</b></td>
+<td class="">2.6×</td>
+</tr>
+<tr class="">
+<td class=" ilk">CNN_d03</td>
+<td class="">-2.74 p</td>
+<td class="">-2.83 p</td>
+<td class="kotu"><b>-8.21 p</b></td>
+<td class="">3.0×</td>
+</tr>
+</tbody></table>
+
+<div class="bulgu">
+<b>Accuracy hasarı 2–3 kat küçük gösteriyor.</b> Accuracy'ye bakan biri "3–4 puan kaybettik,
+idare eder" der. Gerçekte azınlık sınıflarının recall'ü <b>12 puana kadar</b> düşmüştür.
+Belgenin kanıtlamak istediği tam olarak budur: <b>Accuracy tek başına yanıltıcıdır.</b>
+</div>
+
+<div class="sayfa-kes"></div>
+<h2>3. Adım — Genişletilmiş Metrikler</h2>
+
+<h3>Precision yüksek, Recall düşük — dengesizliğin imzası</h3>
+<div class="dipnot">Deney: <b>CNN_d0_dengesiz_P2_agir</b> (30:1 dengesizlik). Accuracy %92.80
+görünüyor.</div>
+<table class="veri genis">
+<thead><tr><th>Sınıf</th><th>Tip</th><th>Eğitim örneği</th><th>Test örneği</th><th>Precision</th><th>Recall</th><th>F1</th></tr></thead><tbody>
+<tr class="vurgu-iyi">
+<td class=" ilk">0</td>
+<td class="">çoğunluk</td>
+<td class="">3000</td>
+<td class="">980</td>
+<td class="">%85.93</td>
+<td class="">%99.69</td>
+<td class="">%92.3</td>
+</tr>
+<tr class="vurgu-iyi">
+<td class=" ilk">1</td>
+<td class="">çoğunluk</td>
+<td class="">3000</td>
+<td class="">1135</td>
+<td class="">%95.68</td>
+<td class="">%99.56</td>
+<td class="">%97.58</td>
+</tr>
+<tr class="">
+<td class=" ilk">2</td>
+<td class="">orta</td>
+<td class="">300</td>
+<td class="">1032</td>
+<td class="">%91.51</td>
+<td class="">%95.06</td>
+<td class="">%93.25</td>
+</tr>
+<tr class="">
+<td class=" ilk">3</td>
+<td class="">orta</td>
+<td class="">300</td>
+<td class="">1010</td>
+<td class="">%85.48</td>
+<td class="">%97.92</td>
+<td class="">%91.28</td>
+</tr>
+<tr class="">
+<td class=" ilk">4</td>
+<td class="">orta</td>
+<td class="">300</td>
+<td class="">982</td>
+<td class="">%95.88</td>
+<td class="">%94.91</td>
+<td class="">%95.39</td>
+</tr>
+<tr class="vurgu-kotu">
+<td class=" ilk">5</td>
+<td class="">AZINLIK</td>
+<td class="">100</td>
+<td class="">892</td>
+<td class="">%97.37</td>
+<td class="">%87.11</td>
+<td class="">%91.95</td>
+</tr>
+<tr class="vurgu-kotu">
+<td class=" ilk">6</td>
+<td class="">AZINLIK</td>
+<td class="">100</td>
+<td class="">958</td>
+<td class="">%95.48</td>
+<td class="">%92.59</td>
+<td class="">%94.01</td>
+</tr>
+<tr class="">
+<td class=" ilk">7</td>
+<td class="">orta</td>
+<td class="">300</td>
+<td class="">1028</td>
+<td class="">%96.45</td>
+<td class="">%92.51</td>
+<td class="">%94.44</td>
+</tr>
+<tr class="vurgu-kotu">
+<td class=" ilk">8</td>
+<td class="">AZINLIK</td>
+<td class="">100</td>
+<td class="">974</td>
+<td class="">%97.95</td>
+<td class="">%73.51</td>
+<td class="">%83.99</td>
+</tr>
+<tr class="">
+<td class=" ilk">9</td>
+<td class="">orta</td>
+<td class="">300</td>
+<td class="">1009</td>
+<td class="">%90.65</td>
+<td class="">%93.16</td>
+<td class="">%91.89</td>
+</tr>
+</tbody></table>
+
+<div class="bulgu">
+Tablodaki asimetri, tek başına accuracy'nin neden yetersiz olduğunun en net kanıtıdır:
+<ul class="liste">
+<li><b>Sınıf 8 (azınlık, 100 eğitim örneği):</b> Precision %97.95 — model "8" dediğinde
+neredeyse hep haklı. Ama Recall %73.51 — gerçek 8'lerin dörtte birini kaçırıyor. Model
+"8" demeye <i>çekiniyor</i>.</li>
+<li><b>Sınıf 0 (çoğunluk, 3.000 eğitim örneği):</b> Tam tersi. Recall %99.69 — hiç kaçırmıyor.
+Ama Precision %85.93 — "0" dediklerinin %14'ü aslında başka sınıf. Diğer sınıfları
+<i>yutuyor</i>.</li>
+</ul>
+Bu asimetri Accuracy'de görünmez. F1'de de görünmez, çünkü precision ve recall birbirini
+ortalayıp sınıf 8 için %83.99 gibi makul bir sayı üretir. Yalnızca ikisine <b>ayrı ayrı</b>
+bakıldığında ortaya çıkar.
+</div>
+
+<h3>Confusion Matrix — hatanın nereye gittiği</h3>
+<div class="kutu">
+Precision/Recall/F1 hatanın <b>ne kadar</b> olduğunu söyler. Confusion Matrix hatanın
+<b>nereye</b> gittiğini söyler — ve teşhis oradadır. Bir azınlık sınıfının görsel olarak benzer
+bir rakama kayması ile çoğunluk sınıfına kayması tamamen farklı iki sorundur ve farklı
+çözümler gerektirir; recall değeri ikisinde de aynı çıkar.
+</div>
+
+<div class="matris-blok"><div class="matris-baslik">CNN_d0 — 60.000 örnek (tam veri, dengeli)</div>
+<div class="matris-alt">Accuracy %98.98 — köşegen dışı neredeyse boş. Bu tabloda ayırt edici bilgi yok.</div>
+<table class="cm"><thead><tr><th class="kose">gerçek \ tahmin</th>
+<th>0</th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+<th>5</th>
+<th>6</th>
+<th>7</th>
+<th>8</th>
+<th>9</th>
+</tr></thead><tbody>
+<tr><th class="satir cog">0</th>
+<td style="background:rgba(31,56,100,0.5966014234875445);color:#fff;font-weight:600">974</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.08551601423487544);color:#7a2018;font-weight:400">1</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.09654804270462633);color:#7a2018;font-weight:400">3</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.09103202846975089);color:#7a2018;font-weight:400">2</td>
+<td style="color:#c8c8c8">·</td>
+</tr>
+<tr><th class="satir cog">1</th>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(31,56,100,0.67);color:#fff;font-weight:600">1124</td>
+<td style="background:rgba(197,58,42,0.09103202846975089);color:#7a2018;font-weight:400">2</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.09654804270462633);color:#7a2018;font-weight:400">3</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.11309608540925267);color:#7a2018;font-weight:400">6</td>
+<td style="color:#c8c8c8">·</td>
+</tr>
+<tr><th class="satir ">2</th>
+<td style="background:rgba(197,58,42,0.08551601423487544);color:#7a2018;font-weight:400">1</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(31,56,100,0.6205782918149467);color:#fff;font-weight:600">1023</td>
+<td style="background:rgba(197,58,42,0.08551601423487544);color:#7a2018;font-weight:400">1</td>
+<td style="background:rgba(197,58,42,0.08551601423487544);color:#7a2018;font-weight:400">1</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.09654804270462633);color:#7a2018;font-weight:400">3</td>
+<td style="background:rgba(197,58,42,0.09654804270462633);color:#7a2018;font-weight:400">3</td>
+<td style="color:#c8c8c8">·</td>
+</tr>
+<tr><th class="satir ">3</th>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.09103202846975089);color:#7a2018;font-weight:400">2</td>
+<td style="background:rgba(31,56,100,0.6088345195729538);color:#fff;font-weight:600">999</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.08551601423487544);color:#7a2018;font-weight:400">1</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.11309608540925267);color:#7a2018;font-weight:400">6</td>
+<td style="background:rgba(197,58,42,0.09103202846975089);color:#7a2018;font-weight:400">2</td>
+</tr>
+<tr><th class="satir ">4</th>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(31,56,100,0.5961120996441281);color:#fff;font-weight:600">973</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.08551601423487544);color:#7a2018;font-weight:400">1</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.08551601423487544);color:#7a2018;font-weight:400">1</td>
+<td style="background:rgba(197,58,42,0.11861209964412811);color:#7a2018;font-weight:400">7</td>
+</tr>
+<tr><th class="satir az">5</th>
+<td style="background:rgba(197,58,42,0.09103202846975089);color:#7a2018;font-weight:400">2</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.129644128113879);color:#7a2018;font-weight:400">9</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(31,56,100,0.5476690391459075);color:#fff;font-weight:600">874</td>
+<td style="background:rgba(197,58,42,0.09654804270462633);color:#7a2018;font-weight:400">3</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.09103202846975089);color:#7a2018;font-weight:400">2</td>
+<td style="background:rgba(197,58,42,0.09103202846975089);color:#7a2018;font-weight:400">2</td>
+</tr>
+<tr><th class="satir az">6</th>
+<td style="background:rgba(197,58,42,0.09103202846975089);color:#7a2018;font-weight:400">2</td>
+<td style="background:rgba(197,58,42,0.08551601423487544);color:#7a2018;font-weight:400">1</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.08551601423487544);color:#7a2018;font-weight:400">1</td>
+<td style="background:rgba(197,58,42,0.08551601423487544);color:#7a2018;font-weight:400">1</td>
+<td style="background:rgba(31,56,100,0.5853469750889679);color:#fff;font-weight:600">951</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.09103202846975089);color:#7a2018;font-weight:400">2</td>
+<td style="color:#c8c8c8">·</td>
+</tr>
+<tr><th class="satir ">7</th>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.08551601423487544);color:#7a2018;font-weight:400">1</td>
+<td style="background:rgba(197,58,42,0.11861209964412811);color:#7a2018;font-weight:400">7</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(31,56,100,0.6161743772241993);color:#fff;font-weight:600">1014</td>
+<td style="background:rgba(197,58,42,0.08551601423487544);color:#7a2018;font-weight:400">1</td>
+<td style="background:rgba(197,58,42,0.10758007117437722);color:#7a2018;font-weight:400">5</td>
+</tr>
+<tr><th class="satir az">8</th>
+<td style="background:rgba(197,58,42,0.09103202846975089);color:#7a2018;font-weight:400">2</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.09103202846975089);color:#7a2018;font-weight:400">2</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.08551601423487544);color:#7a2018;font-weight:400">1</td>
+<td style="background:rgba(31,56,100,0.5926868327402135);color:#fff;font-weight:600">966</td>
+<td style="background:rgba(197,58,42,0.09654804270462633);color:#7a2018;font-weight:400">3</td>
+</tr>
+<tr><th class="satir ">9</th>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.08551601423487544);color:#7a2018;font-weight:400">1</td>
+<td style="background:rgba(197,58,42,0.09103202846975089);color:#7a2018;font-weight:400">2</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.08551601423487544);color:#7a2018;font-weight:400">1</td>
+<td style="background:rgba(197,58,42,0.09103202846975089);color:#7a2018;font-weight:400">2</td>
+<td style="background:rgba(197,58,42,0.09654804270462633);color:#7a2018;font-weight:400">3</td>
+<td style="background:rgba(31,56,100,0.6093238434163701);color:#fff;font-weight:600">1000</td>
+</tr>
+</tbody></table></div>
+<div class="matris-blok"><div class="matris-baslik">CNN_d0 — 1.000 örnek (dengeli)</div>
+<div class="matris-alt">Accuracy %87.63 — hatalar tüm sınıflara dağılmış, belirli bir yapı yok. Sorun veri yetersizliği.</div>
+<table class="cm"><thead><tr><th class="kose">gerçek \ tahmin</th>
+<th>0</th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+<th>5</th>
+<th>6</th>
+<th>7</th>
+<th>8</th>
+<th>9</th>
+</tr></thead><tbody>
+<tr><th class="satir cog">0</th>
+<td style="background:rgba(31,56,100,0.6185500467726848);color:#fff;font-weight:600">969</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.08579981290926099);color:#7a2018;font-weight:400">1</td>
+<td style="background:rgba(197,58,42,0.08579981290926099);color:#7a2018;font-weight:400">1</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.09739943872778298);color:#7a2018;font-weight:400">3</td>
+<td style="background:rgba(197,58,42,0.09739943872778298);color:#7a2018;font-weight:400">3</td>
+<td style="background:rgba(197,58,42,0.09159962581852199);color:#7a2018;font-weight:400">2</td>
+<td style="background:rgba(197,58,42,0.08579981290926099);color:#7a2018;font-weight:400">1</td>
+<td style="color:#c8c8c8">·</td>
+</tr>
+<tr><th class="satir cog">1</th>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(31,56,100,0.67);color:#fff;font-weight:600">1069</td>
+<td style="background:rgba(197,58,42,0.17859681945743686);color:#7a2018;font-weight:400">17</td>
+<td style="background:rgba(197,58,42,0.08579981290926099);color:#7a2018;font-weight:400">1</td>
+<td style="background:rgba(197,58,42,0.08579981290926099);color:#7a2018;font-weight:400">1</td>
+<td style="background:rgba(197,58,42,0.12059869036482693);color:#7a2018;font-weight:400">7</td>
+<td style="background:rgba(197,58,42,0.12639850327408794);color:#7a2018;font-weight:400">8</td>
+<td style="background:rgba(197,58,42,0.08579981290926099);color:#7a2018;font-weight:400">1</td>
+<td style="background:rgba(197,58,42,0.25979420018709076);color:#7a2018;font-weight:600">31</td>
+<td style="color:#c8c8c8">·</td>
+</tr>
+<tr><th class="satir ">2</th>
+<td style="background:rgba(197,58,42,0.28879326473339567);color:#7a2018;font-weight:600">36</td>
+<td style="background:rgba(197,58,42,0.09159962581852199);color:#7a2018;font-weight:400">2</td>
+<td style="background:rgba(31,56,100,0.5804770813844715);color:#fff;font-weight:600">895</td>
+<td style="background:rgba(197,58,42,0.15539756782039288);color:#7a2018;font-weight:400">13</td>
+<td style="background:rgba(197,58,42,0.16119738072965387);color:#7a2018;font-weight:400">14</td>
+<td style="background:rgba(197,58,42,0.08579981290926099);color:#7a2018;font-weight:400">1</td>
+<td style="background:rgba(197,58,42,0.19019644527595883);color:#7a2018;font-weight:400">19</td>
+<td style="background:rgba(197,58,42,0.20179607109448083);color:#7a2018;font-weight:600">21</td>
+<td style="background:rgba(197,58,42,0.23659494855004676);color:#7a2018;font-weight:600">27</td>
+<td style="background:rgba(197,58,42,0.10319925163704396);color:#7a2018;font-weight:400">4</td>
+</tr>
+<tr><th class="satir ">3</th>
+<td style="background:rgba(197,58,42,0.21919550982226377);color:#7a2018;font-weight:600">24</td>
+<td style="background:rgba(197,58,42,0.09739943872778298);color:#7a2018;font-weight:400">3</td>
+<td style="background:rgba(197,58,42,0.2655940130963517);color:#7a2018;font-weight:600">32</td>
+<td style="background:rgba(31,56,100,0.5424041159962583);color:#fff;font-weight:600">821</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.37579045837231057);color:#7a2018;font-weight:600">51</td>
+<td style="background:rgba(197,58,42,0.10899906454630495);color:#7a2018;font-weight:400">5</td>
+<td style="background:rgba(197,58,42,0.30619270346117866);color:#7a2018;font-weight:600">39</td>
+<td style="background:rgba(197,58,42,0.22499532273152478);color:#7a2018;font-weight:600">25</td>
+<td style="background:rgba(197,58,42,0.13799812909260992);color:#7a2018;font-weight:400">10</td>
+</tr>
+<tr><th class="satir ">4</th>
+<td style="background:rgba(197,58,42,0.09159962581852199);color:#7a2018;font-weight:400">2</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.10899906454630495);color:#7a2018;font-weight:400">5</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(31,56,100,0.5084471468662302);color:#fff;font-weight:600">755</td>
+<td style="background:rgba(197,58,42,0.08579981290926099);color:#7a2018;font-weight:400">1</td>
+<td style="background:rgba(197,58,42,0.19599625818521982);color:#7a2018;font-weight:600">20</td>
+<td style="background:rgba(197,58,42,0.10899906454630495);color:#7a2018;font-weight:400">5</td>
+<td style="background:rgba(197,58,42,0.09159962581852199);color:#7a2018;font-weight:400">2</td>
+<td style="background:rgba(197,58,42,0.7);color:#fff;font-weight:600">192</td>
+</tr>
+<tr><th class="satir az">5</th>
+<td style="background:rgba(197,58,42,0.25979420018709076);color:#7a2018;font-weight:600">31</td>
+<td style="background:rgba(197,58,42,0.08579981290926099);color:#7a2018;font-weight:400">1</td>
+<td style="background:rgba(197,58,42,0.12639850327408794);color:#7a2018;font-weight:400">8</td>
+<td style="background:rgba(197,58,42,0.22499532273152478);color:#7a2018;font-weight:600">25</td>
+<td style="background:rgba(197,58,42,0.13799812909260992);color:#7a2018;font-weight:400">10</td>
+<td style="background:rgba(31,56,100,0.5125631431244153);color:#fff;font-weight:600">763</td>
+<td style="background:rgba(197,58,42,0.17859681945743686);color:#7a2018;font-weight:400">17</td>
+<td style="background:rgba(197,58,42,0.13799812909260992);color:#7a2018;font-weight:400">10</td>
+<td style="background:rgba(197,58,42,0.17859681945743686);color:#7a2018;font-weight:400">17</td>
+<td style="background:rgba(197,58,42,0.13799812909260992);color:#7a2018;font-weight:400">10</td>
+</tr>
+<tr><th class="satir az">6</th>
+<td style="background:rgba(197,58,42,0.3119925163704397);color:#7a2018;font-weight:600">40</td>
+<td style="background:rgba(197,58,42,0.10899906454630495);color:#7a2018;font-weight:400">5</td>
+<td style="background:rgba(197,58,42,0.12059869036482693);color:#7a2018;font-weight:400">7</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.13219831618334893);color:#7a2018;font-weight:400">9</td>
+<td style="background:rgba(197,58,42,0.17279700654817587);color:#7a2018;font-weight:400">16</td>
+<td style="background:rgba(31,56,100,0.5712160898035548);color:#fff;font-weight:600">877</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.10319925163704396);color:#7a2018;font-weight:400">4</td>
+<td style="color:#c8c8c8">·</td>
+</tr>
+<tr><th class="satir ">7</th>
+<td style="background:rgba(197,58,42,0.09159962581852199);color:#7a2018;font-weight:400">2</td>
+<td style="background:rgba(197,58,42,0.11479887745556594);color:#7a2018;font-weight:400">6</td>
+<td style="background:rgba(197,58,42,0.24819457436856873);color:#7a2018;font-weight:600">29</td>
+<td style="background:rgba(197,58,42,0.09159962581852199);color:#7a2018;font-weight:400">2</td>
+<td style="background:rgba(197,58,42,0.09739943872778298);color:#7a2018;font-weight:400">3</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(31,56,100,0.6005425631431245);color:#fff;font-weight:600">934</td>
+<td style="background:rgba(197,58,42,0.10319925163704396);color:#7a2018;font-weight:400">4</td>
+<td style="background:rgba(197,58,42,0.3583910196445276);color:#7a2018;font-weight:600">48</td>
+</tr>
+<tr><th class="satir az">8</th>
+<td style="background:rgba(197,58,42,0.2945930776426567);color:#7a2018;font-weight:600">37</td>
+<td style="background:rgba(197,58,42,0.09739943872778298);color:#7a2018;font-weight:400">3</td>
+<td style="background:rgba(197,58,42,0.16699719363891485);color:#7a2018;font-weight:400">15</td>
+<td style="background:rgba(197,58,42,0.1495977549111319);color:#7a2018;font-weight:400">12</td>
+<td style="background:rgba(197,58,42,0.13219831618334893);color:#7a2018;font-weight:400">9</td>
+<td style="background:rgba(197,58,42,0.2713938260056127);color:#7a2018;font-weight:600">33</td>
+<td style="background:rgba(197,58,42,0.12639850327408794);color:#7a2018;font-weight:400">8</td>
+<td style="background:rgba(197,58,42,0.25399438727782975);color:#7a2018;font-weight:600">30</td>
+<td style="background:rgba(31,56,100,0.5207951356407858);color:#fff;font-weight:600">779</td>
+<td style="background:rgba(197,58,42,0.3583910196445276);color:#7a2018;font-weight:600">48</td>
+</tr>
+<tr><th class="satir ">9</th>
+<td style="background:rgba(197,58,42,0.20179607109448083);color:#7a2018;font-weight:600">21</td>
+<td style="background:rgba(197,58,42,0.10319925163704396);color:#7a2018;font-weight:400">4</td>
+<td style="background:rgba(197,58,42,0.09739943872778298);color:#7a2018;font-weight:400">3</td>
+<td style="background:rgba(197,58,42,0.11479887745556594);color:#7a2018;font-weight:400">6</td>
+<td style="background:rgba(197,58,42,0.12059869036482693);color:#7a2018;font-weight:400">7</td>
+<td style="background:rgba(197,58,42,0.12059869036482693);color:#7a2018;font-weight:400">7</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.4105893358278765);color:#7a2018;font-weight:600">57</td>
+<td style="background:rgba(197,58,42,0.09739943872778298);color:#7a2018;font-weight:400">3</td>
+<td style="background:rgba(31,56,100,0.5835640785781104);color:#fff;font-weight:600">901</td>
+</tr>
+</tbody></table></div>
+<div class="matris-blok"><div class="matris-baslik">CNN_d0 — 7.800 örnek, dengesiz (P2_agir)</div>
+<div class="matris-alt">Accuracy %92.80 — hatalar artık rastgele değil: azınlık satırları (kırmızı) belirli sütunlara yığılıyor.</div>
+<table class="cm"><thead><tr><th class="kose">gerçek \ tahmin</th>
+<th>0</th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+<th>5</th>
+<th>6</th>
+<th>7</th>
+<th>8</th>
+<th>9</th>
+</tr></thead><tbody>
+<tr><th class="satir cog">0</th>
+<td style="background:rgba(31,56,100,0.5955309734513274);color:#fff;font-weight:600">977</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.08548672566371682);color:#7a2018;font-weight:400">1</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.08548672566371682);color:#7a2018;font-weight:400">1</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.08548672566371682);color:#7a2018;font-weight:400">1</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+</tr>
+<tr><th class="satir cog">1</th>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(31,56,100,0.67);color:#fff;font-weight:600">1130</td>
+<td style="background:rgba(197,58,42,0.09097345132743363);color:#7a2018;font-weight:400">2</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.09097345132743363);color:#7a2018;font-weight:400">2</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.08548672566371682);color:#7a2018;font-weight:400">1</td>
+<td style="color:#c8c8c8">·</td>
+</tr>
+<tr><th class="satir ">2</th>
+<td style="background:rgba(197,58,42,0.14584070796460177);color:#7a2018;font-weight:400">12</td>
+<td style="background:rgba(197,58,42,0.11840707964601771);color:#7a2018;font-weight:400">7</td>
+<td style="background:rgba(31,56,100,0.5974778761061947);color:#fff;font-weight:600">981</td>
+<td style="background:rgba(197,58,42,0.1568141592920354);color:#7a2018;font-weight:400">14</td>
+<td style="background:rgba(197,58,42,0.09097345132743363);color:#7a2018;font-weight:400">2</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.11292035398230088);color:#7a2018;font-weight:400">6</td>
+<td style="background:rgba(197,58,42,0.12389380530973451);color:#7a2018;font-weight:400">8</td>
+<td style="background:rgba(197,58,42,0.09097345132743363);color:#7a2018;font-weight:400">2</td>
+<td style="color:#c8c8c8">·</td>
+</tr>
+<tr><th class="satir ">3</th>
+<td style="background:rgba(197,58,42,0.10743362831858408);color:#7a2018;font-weight:400">5</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.10194690265486725);color:#7a2018;font-weight:400">4</td>
+<td style="background:rgba(31,56,100,0.6013716814159293);color:#fff;font-weight:600">989</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.11840707964601771);color:#7a2018;font-weight:400">7</td>
+<td style="background:rgba(197,58,42,0.09646017699115045);color:#7a2018;font-weight:400">3</td>
+<td style="background:rgba(197,58,42,0.09097345132743363);color:#7a2018;font-weight:400">2</td>
+</tr>
+<tr><th class="satir ">4</th>
+<td style="background:rgba(197,58,42,0.09646017699115045);color:#7a2018;font-weight:400">3</td>
+<td style="background:rgba(197,58,42,0.09646017699115045);color:#7a2018;font-weight:400">3</td>
+<td style="background:rgba(197,58,42,0.14035398230088497);color:#7a2018;font-weight:400">11</td>
+<td style="background:rgba(197,58,42,0.08548672566371682);color:#7a2018;font-weight:400">1</td>
+<td style="background:rgba(31,56,100,0.5736283185840708);color:#fff;font-weight:600">932</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.12389380530973451);color:#7a2018;font-weight:400">8</td>
+<td style="background:rgba(197,58,42,0.08548672566371682);color:#7a2018;font-weight:400">1</td>
+<td style="background:rgba(197,58,42,0.09097345132743363);color:#7a2018;font-weight:400">2</td>
+<td style="background:rgba(197,58,42,0.1952212389380531);color:#7a2018;font-weight:600">21</td>
+</tr>
+<tr><th class="satir az">5</th>
+<td style="background:rgba(197,58,42,0.2226548672566372);color:#7a2018;font-weight:600">26</td>
+<td style="background:rgba(197,58,42,0.11292035398230088);color:#7a2018;font-weight:400">6</td>
+<td style="background:rgba(197,58,42,0.09097345132743363);color:#7a2018;font-weight:400">2</td>
+<td style="background:rgba(197,58,42,0.3433628318584071);color:#7a2018;font-weight:600">48</td>
+<td style="background:rgba(197,58,42,0.09097345132743363);color:#7a2018;font-weight:400">2</td>
+<td style="background:rgba(31,56,100,0.4981858407079646);color:#fff;font-weight:600">777</td>
+<td style="background:rgba(197,58,42,0.1568141592920354);color:#7a2018;font-weight:400">14</td>
+<td style="background:rgba(197,58,42,0.08548672566371682);color:#7a2018;font-weight:400">1</td>
+<td style="background:rgba(197,58,42,0.11292035398230088);color:#7a2018;font-weight:400">6</td>
+<td style="background:rgba(197,58,42,0.13486725663716814);color:#7a2018;font-weight:400">10</td>
+</tr>
+<tr><th class="satir az">6</th>
+<td style="background:rgba(197,58,42,0.34884955752212393);color:#7a2018;font-weight:600">49</td>
+<td style="background:rgba(197,58,42,0.10194690265486725);color:#7a2018;font-weight:400">4</td>
+<td style="background:rgba(197,58,42,0.10194690265486725);color:#7a2018;font-weight:400">4</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.10743362831858408);color:#7a2018;font-weight:400">5</td>
+<td style="background:rgba(197,58,42,0.1293805309734513);color:#7a2018;font-weight:400">9</td>
+<td style="background:rgba(31,56,100,0.5517256637168142);color:#fff;font-weight:600">887</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+</tr>
+<tr><th class="satir ">7</th>
+<td style="background:rgba(197,58,42,0.10194690265486725);color:#7a2018;font-weight:400">4</td>
+<td style="background:rgba(197,58,42,0.11840707964601771);color:#7a2018;font-weight:400">7</td>
+<td style="background:rgba(197,58,42,0.2336283185840708);color:#7a2018;font-weight:600">28</td>
+<td style="background:rgba(197,58,42,0.14035398230088497);color:#7a2018;font-weight:400">11</td>
+<td style="background:rgba(197,58,42,0.11292035398230088);color:#7a2018;font-weight:400">6</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(31,56,100,0.5828761061946903);color:#fff;font-weight:600">951</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.1952212389380531);color:#7a2018;font-weight:600">21</td>
+</tr>
+<tr><th class="satir az">8</th>
+<td style="background:rgba(197,58,42,0.3269026548672566);color:#7a2018;font-weight:600">45</td>
+<td style="background:rgba(197,58,42,0.16230088495575223);color:#7a2018;font-weight:400">15</td>
+<td style="background:rgba(197,58,42,0.28300884955752215);color:#7a2018;font-weight:600">37</td>
+<td style="background:rgba(197,58,42,0.49699115044247794);color:#fff;font-weight:600">76</td>
+<td style="background:rgba(197,58,42,0.13486725663716814);color:#7a2018;font-weight:400">10</td>
+<td style="background:rgba(197,58,42,0.14035398230088497);color:#7a2018;font-weight:400">11</td>
+<td style="background:rgba(197,58,42,0.14584070796460177);color:#7a2018;font-weight:400">12</td>
+<td style="background:rgba(197,58,42,0.1293805309734513);color:#7a2018;font-weight:400">9</td>
+<td style="background:rgba(31,56,100,0.46849557522123897);color:#fff;font-weight:600">716</td>
+<td style="background:rgba(197,58,42,0.315929203539823);color:#7a2018;font-weight:600">43</td>
+</tr>
+<tr><th class="satir ">9</th>
+<td style="background:rgba(197,58,42,0.167787610619469);color:#7a2018;font-weight:400">16</td>
+<td style="background:rgba(197,58,42,0.1293805309734513);color:#7a2018;font-weight:400">9</td>
+<td style="background:rgba(197,58,42,0.09646017699115045);color:#7a2018;font-weight:400">3</td>
+<td style="background:rgba(197,58,42,0.17327433628318584);color:#7a2018;font-weight:400">17</td>
+<td style="background:rgba(197,58,42,0.16230088495575223);color:#7a2018;font-weight:400">15</td>
+<td style="color:#c8c8c8">·</td>
+<td style="color:#c8c8c8">·</td>
+<td style="background:rgba(197,58,42,0.12389380530973451);color:#7a2018;font-weight:400">8</td>
+<td style="background:rgba(197,58,42,0.08548672566371682);color:#7a2018;font-weight:400">1</td>
+<td style="background:rgba(31,56,100,0.5775221238938053);color:#fff;font-weight:600">940</td>
+</tr>
+</tbody></table></div>
+
+<h3>Azınlık sınıfları nereye kaçıyor?</h3>
+<div class="dipnot">Deney: CNN_d0_dengesiz_P2_agir</div>
+<ul class='liste'><li>Sınıf <b>5</b>: 892 test örneğinin <b>115</b>'i yanlış sınıfa gidiyor → <b>'3'</b> (48), <b>'0'</b> (26), <b>'6'</b> (14)</li><li>Sınıf <b>6</b>: 958 test örneğinin <b>71</b>'i yanlış sınıfa gidiyor → <b>'0'</b> (49), <b>'5'</b> (9), <b>'4'</b> (5)</li><li>Sınıf <b>8</b>: 974 test örneğinin <b>258</b>'i yanlış sınıfa gidiyor → <b>'3'</b> (76), <b>'0'</b> (45), <b>'9'</b> (43)</li></ul>
+<div class="bulgu">
+İki farklı mekanizma iç içe çalışıyor:
+<ul class="liste">
+<li><b>Görsel benzerlik:</b> 8 → '3', 5 → '3'. Bu sınıflar zaten birbirine benzer; az veriyle
+ayrım kayboluyor. Çözüm: daha iyi özellik çıkarımı, augmentation, daha derin model.</li>
+<li><b>Çoğunluk çekimi:</b> 6 → '0', 5 → '0'. 6 ile 0 görsel olarak benzemez. Model
+görüntüye bakmayı bırakıp <b>sınıf önceliğini</b> kullanıyor: "şüphedeysem çoğunluk sınıfını
+söyle, istatistiksel olarak kârlıyım." Çözüm: class weights, oversampling, focal loss.</li>
+</ul>
+Bu ayrım yalnızca Confusion Matrix ile görünür. Recall değeri her iki durumda da aynıdır.
+</div>
+
+<div class="sayfa-kes"></div>
+<h2>4. Adım — Eski Sonuçlarla ve Modeller Arası Karşılaştırma</h2>
+
+<h3>Hazır mimariler</h3>
+<div class="model-baslik">ResNet18 — torchvision, sıfırdan eğitim, 32×32×3 girdi</div><table class="veri">
+<thead><tr><th>Veri Seti</th><th>Accuracy</th><th>F1 (macro)</th><th>Recall Azınlık</th><th>Süre</th></tr></thead><tbody>
+<tr class="">
+<td class=" ilk">60.000 (tam)</td>
+<td class="">%98.91</td>
+<td class="">%98.9</td>
+<td class="">%99.05</td>
+<td class="">189.23 sn</td>
+</tr>
+<tr class="">
+<td class=" ilk">10.000</td>
+<td class="">%98.41</td>
+<td class="">%98.4</td>
+<td class="">%97.78</td>
+<td class="">47.11 sn</td>
+</tr>
+<tr class="">
+<td class=" ilk">5.000</td>
+<td class="">%97.77</td>
+<td class="">%97.76</td>
+<td class="">%99.23</td>
+<td class="">36.32 sn</td>
+</tr>
+<tr class="">
+<td class=" ilk">3.000</td>
+<td class="">%96.15</td>
+<td class="">%96.08</td>
+<td class="">%95.78</td>
+<td class="">27.43 sn</td>
+</tr>
+<tr class="">
+<td class=" ilk">1.000</td>
+<td class="">%94.86</td>
+<td class="">%94.81</td>
+<td class="">%94.72</td>
+<td class="">23.02 sn</td>
+</tr>
+<tr class="">
+<td class=" ilk">P1_pdf — 8.950 örnek (20:1)</td>
+<td class="">%96.55</td>
+<td class="">%96.49</td>
+<td class="kotu"><b>%92.15</b></td>
+<td class="">44.27 sn</td>
+</tr>
+<tr class="">
+<td class=" ilk">P2_agir — 7.800 örnek (30:1)</td>
+<td class="">%94.37</td>
+<td class="">%94.29</td>
+<td class="kotu"><b>%88.79</b></td>
+<td class="">40.87 sn</td>
+</tr>
+<tr class="">
+<td class=" ilk">P3_5k — 4.860 örnek (12.5:1)</td>
+<td class="">%94.85</td>
+<td class="">%94.84</td>
+<td class="kotu"><b>%91.01</b></td>
+<td class="">34.6 sn</td>
+</tr>
+</tbody></table>
+<div class="model-baslik">MobileNetV2 — torchvision, sıfırdan eğitim, 32×32×3 girdi</div><table class="veri">
+<thead><tr><th>Veri Seti</th><th>Accuracy</th><th>F1 (macro)</th><th>Recall Azınlık</th><th>Süre</th></tr></thead><tbody>
+<tr class="">
+<td class=" ilk">60.000 (tam)</td>
+<td class="">%98.86</td>
+<td class="">%98.85</td>
+<td class="">%98.64</td>
+<td class="">236.55 sn</td>
+</tr>
+<tr class="">
+<td class=" ilk">10.000</td>
+<td class="">%96.4</td>
+<td class="">%96.37</td>
+<td class="">%96.36</td>
+<td class="">59.45 sn</td>
+</tr>
+<tr class="">
+<td class=" ilk">5.000</td>
+<td class="">%93.37</td>
+<td class="">%93.31</td>
+<td class="">%91.77</td>
+<td class="">41.18 sn</td>
+</tr>
+<tr class="">
+<td class=" ilk">3.000</td>
+<td class="">%88.9</td>
+<td class="">%88.81</td>
+<td class="">%89.66</td>
+<td class="">33.51 sn</td>
+</tr>
+<tr class="">
+<td class=" ilk">1.000</td>
+<td class="">%52.4</td>
+<td class="">%51.74</td>
+<td class="">%43.37</td>
+<td class="">27.81 sn</td>
+</tr>
+<tr class="">
+<td class=" ilk">P1_pdf — 8.950 örnek (20:1)</td>
+<td class="">%90.38</td>
+<td class="">%90.15</td>
+<td class="kotu"><b>%83.1</b></td>
+<td class="">54.55 sn</td>
+</tr>
+<tr class="">
+<td class=" ilk">P2_agir — 7.800 örnek (30:1)</td>
+<td class="">%88.68</td>
+<td class="">%88.57</td>
+<td class="kotu"><b>%80.02</b></td>
+<td class="">50.42 sn</td>
+</tr>
+<tr class="">
+<td class=" ilk">P3_5k — 4.860 örnek (12.5:1)</td>
+<td class="">%86.44</td>
+<td class="">%86.15</td>
+<td class="kotu"><b>%77.61</b></td>
+<td class="">39.79 sn</td>
+</tr>
+</tbody></table>
+
+<div class="bulgu">
+<b>ResNet18 az veride çarpıcı biçimde üstün.</b> 1.000 örnekte %94.86 accuracy — aynı veriyle
+basit CNN %87.63, MLP %89.24 alıyor. Residual bağlantılar ve BatchNorm az veride çok daha iyi
+genelliyor. Buna karşılık <b>MobileNetV2 1.000 örnekte çöküyor</b> (%52.40): depthwise separable
+konvolüsyonlar ve yoğun BatchNorm katmanları yeterli istatistik bulamıyor.
+</div>
+
+<div class="uyari">
+<b>Dikkat çekici:</b> Tam veri setinde basit CNN_d03 (%99.12) ResNet18'i (%98.91) <b>geçiyor</b>.
+MNIST için ResNet18 gereğinden büyük bir modeldir — 11 milyon parametre, 30 bin parametrelik bir
+CNN'in çözdüğü problem için. Model büyüklüğü tek başına üstünlük getirmiyor.
+</div>
+
+<h3>Tüm modeller — tek tabloda</h3>
+<table class="veri genis">
+<thead><tr><th>Model</th><th>60.000</th><th>10.000</th><th>5.000</th><th>1.000</th><th>Azınlık Recall (P1_pdf)</th></tr></thead><tbody>
+<tr class="">
+<td class=" ilk">MLP_d0</td>
+<td class="">%97.84</td>
+<td class="">%95.0</td>
+<td class="">%93.12</td>
+<td class="">%89.24</td>
+<td class="kotu"><b>%81.1</b></td>
+</tr>
+<tr class="">
+<td class=" ilk">MLP_d03</td>
+<td class="">%97.95</td>
+<td class="">%95.4</td>
+<td class="">%93.6</td>
+<td class="">%88.75</td>
+<td class="kotu"><b>%80.98</b></td>
+</tr>
+<tr class="">
+<td class=" ilk">CNN_d0</td>
+<td class="">%98.98</td>
+<td class="">%97.63</td>
+<td class="">%96.18</td>
+<td class="">%87.63</td>
+<td class="kotu"><b>%91.35</b></td>
+</tr>
+<tr class="">
+<td class=" ilk">CNN_d03</td>
+<td class="">%99.12</td>
+<td class="">%97.74</td>
+<td class="">%96.06</td>
+<td class="">%88.7</td>
+<td class="kotu"><b>%89.83</b></td>
+</tr>
+<tr class="">
+<td class=" ilk">ResNet18</td>
+<td class="">%98.91</td>
+<td class="">%98.41</td>
+<td class="">%97.77</td>
+<td class="">%94.86</td>
+<td class="kotu"><b>%92.15</b></td>
+</tr>
+<tr class="">
+<td class=" ilk">MobileNetV2</td>
+<td class="">%98.86</td>
+<td class="">%96.4</td>
+<td class="">%93.37</td>
+<td class="">%52.4</td>
+<td class="kotu"><b>%83.1</b></td>
+</tr>
+</tbody></table>
+
+<div class="sayfa-kes"></div>
+<h2>Eski Deneylerle Karşılaştırma</h2>
+
+<div class="kutu">
+Karşılaştırma iki önceki rapora dayanmaktadır: <b>MLP_Deney_Sonuclari.pdf</b> ve
+<b>MNIST_CNN_Deney_Sonuclari.pdf</b> (her ikisi de 15 deney, <b>CPU</b>, <b>5 epoch</b>,
+yalnızca tam 60.000'lik veri seti). O raporlarda ölçülen metrikler <b>Accuracy, Loss ve
+eğitim süresi</b> ile sınırlıydı — F1, Precision, Recall ve Confusion Matrix yoktu.
+Yeni deneyler GPU'da ve 10 epoch ile yapılmıştır; bu nedenle sayılar birebir değil,
+<b>yön ve büyüklük</b> olarak karşılaştırılmalıdır.
+</div>
+
+<h3>Aynı konfigürasyon, tam veri seti</h3>
+<table class="veri genis">
+<thead><tr><th>Konfigürasyon</th><th>Eski (CPU, 5 ep)</th><th>Yeni (GPU, 10 ep)</th><th>Fark</th><th>Eski kaynak</th></tr></thead><tbody>
+<tr class="">
+<td class=" ilk">MLP [256, 128] — dropout yok</td>
+<td class="">%97.75</td>
+<td class="">%97.84</td>
+<td class="">0.09 p</td>
+<td class="">MLP raporu — 4 koşunun ortalaması (%97.57 – %97.86)</td>
+</tr>
+<tr class="">
+<td class=" ilk">MLP [256, 128] — dropout 0.3</td>
+<td class="">%97.66</td>
+<td class="">%97.95</td>
+<td class="">0.29 p</td>
+<td class="">MLP raporu — tek koşu</td>
+</tr>
+<tr class="">
+<td class=" ilk">CNN (16, 32) — dropout yok</td>
+<td class="">%98.80</td>
+<td class="">%98.98</td>
+<td class="">0.18 p</td>
+<td class="">CNN raporu — dropout tablosu, (16,32)</td>
+</tr>
+<tr class="">
+<td class=" ilk">CNN (16, 32) — dropout 0.3</td>
+<td class="">%98.85</td>
+<td class="">%99.12</td>
+<td class="">0.27 p</td>
+<td class="">CNN raporu — aynı konfig ikinci koşuda %99.10 vermişti</td>
+</tr>
+</tbody></table>
+<div class="dipnot">Farklar 0.3 puanın altında ve hepsi pozitif yönde — beklenen sonuç, çünkü
+yeni deneyler iki kat epoch görüyor. Kurulumun eski deneylerle tutarlı olduğu doğrulanmıştır.</div>
+
+<div class="uyari">
+<b>Koşu varyansı gözlemi.</b> Eski CNN raporunda <i>(16,32) + dropout 0.3</i> konfigürasyonu iki
+ayrı yerde raporlanmış ve iki farklı sonuç vermiş: %98.85 ve %99.10. Aynı konfigürasyon,
+0.25 puan fark. Bu, tam veri setinde ölçülen küçük farkların (0.1–0.3 puan) <b>gerçek bir
+üstünlüğü değil, rastgele koşu varyansını</b> yansıtabileceğini gösterir — belgenin
+"farklar gözlemlenemiyor" tespitini destekleyen bağımsız bir kanıttır.
+</div>
+
+<h3>Eski raporların çıkarımları bugün de geçerli mi?</h3>
+<table class="veri genis">
+<thead><tr><th>Eski rapordaki çıkarım</th><th>Yeni deneylerin sonucu</th></tr></thead><tbody>
+<tr class="">
+<td class=" ilk"><i>CNN, MLP'den ~%1–1.2 daha yüksek accuracy verir</i> (CNN raporu, bölüm 6)</td>
+<td class="kotu"><b>Yalnızca yeterli veri varken doğru.</b> 60.000'de CNN +1.14 puan, 5.000'de +3.06 puan, ancak <b>1.000 örnekte MLP CNN'i 1.61 puan geçiyor.</b></td>
+</tr>
+<tr class="">
+<td class=" ilk"><i>Tüm CNN deneylerinde accuracy %98'in üzerinde kaldı</i> (CNN raporu, genel sonuç)</td>
+<td class="">Tam veri için doğru. 5.000 örnekte %96.18'e, 1.000 örnekte %87.63'e iniyor.</td>
+</tr>
+<tr class="">
+<td class=" ilk"><i>Dropout 0.1–0.3 en iyi dengeyi sağlar, 0.5 modeli zayıflatır</i> (her iki rapor)</td>
+<td class="">Doğrulandı ve genişletildi: dropout 0.3'ün faydası tam veride 0.14 puanla gürültü seviyesindeyken, 3.000 örnekte 0.47 puana, dengesiz veride azınlık recall'ünde 2.8 puana çıkıyor.</td>
+</tr>
+<tr class="">
+<td class=" ilk"><i>MNIST için 2 conv katman / 2–4 gizli katman yeterli</i> (her iki rapor)</td>
+<td class="">Çelişmiyor. Ek olarak: 1.000 örnekte ResNet18 (%94.86) basit CNN'i (%87.63) 7 puan geçiyor — az veride mimari seçimi çok daha belirleyici.</td>
+</tr>
+<tr class="">
+<td class=" ilk"><i>Ölçülen metrikler: Accuracy, Loss, süre</i></td>
+<td class="kotu"><b>Yetersiz olduğu ölçüldü.</b> Dengesiz veride accuracy %92.80 iken azınlık sınıfı 8'in recall'ü %73.51. Eski metrik setiyle bu görülemezdi.</td>
+</tr>
+</tbody></table>
+
+<h3>CPU → GPU: süre karşılaştırması</h3>
+<div class="dipnot">Eski deneyler CPU'da 5 epoch, yeni deneyler GPU'da 10 epoch koştuğu için
+epoch başına süreye normalize edilmiştir. Her iki ölçümde de her epoch sonunda tam test seti
+değerlendirmesi yapılmaktadır.</div>
+<table class="veri genis">
+<thead><tr><th>Model</th><th>Eski epoch</th><th>Eski toplam</th><th>Eski sn/epoch</th><th>Yeni epoch</th><th>Yeni toplam</th><th>Yeni sn/epoch</th><th>Hızlanma</th></tr></thead><tbody>
+<tr class="">
+<td class=" ilk">MLP [256, 128]</td>
+<td class="">5</td>
+<td class="">~21–25 sn</td>
+<td class="">~4.2–5.0 sn</td>
+<td class="">10</td>
+<td class="">46.56 sn</td>
+<td class="">4.66 sn</td>
+<td class="">≈ 1.0×</td>
+</tr>
+<tr class="">
+<td class=" ilk">CNN (16, 32)</td>
+<td class="">5</td>
+<td class="">52 sn</td>
+<td class="">10.4 sn</td>
+<td class="">10</td>
+<td class="">56.54 sn</td>
+<td class="">5.65 sn</td>
+<td class="">1.8×</td>
+</tr>
+<tr class="">
+<td class=" ilk">CNN (32, 64)</td>
+<td class="">5</td>
+<td class="">84 sn</td>
+<td class="">16.8 sn</td>
+<td class="">—</td>
+<td class="">—</td>
+<td class="">—</td>
+<td class="">—</td>
+</tr>
+</tbody></table>
+<div class="bulgu">
+<b>GPU her modelde hızlandırmıyor.</b> MLP'de kazanç neredeyse sıfır (≈1.0×) — model o kadar
+küçük ki darboğaz hesaplama değil, veri yükleme ve çekirdek başlatma gecikmesi. CNN'de ise
+GPU 1.8× hızlandırıyor, çünkü konvolüsyon işlemi paralelleştirmeye çok daha uygun.
+<b>Model küçüldükçe GPU'nun avantajı kayboluyor.</b>
+</div>
+
+<div class="sayfa-kes"></div>
+<h2>Genel Çıkarımlar</h2>
+
+<ol class="adimlar">
+<li><b>Veri azaltma işe yarıyor.</b> Konfigürasyonlar arası fark tam veride 1.28 puan,
+3.000 örnekte 3.72 puan. Deneylerin ayırt edici olması için
+<b>3.000–5.000 örnek</b> aralığı önerilir.</li>
+
+<li><b>Accuracy dengesiz veride yanıltıcıdır — ölçüldü.</b> Aynı veri bütçesinde dengeden
+dengesizliğe geçildiğinde accuracy 2–4 puan düşerken azınlık recall'ü 6–13 puan düşüyor.
+En kötü durum: <b>MobileNetV2_dengesiz_P3_5k</b> — accuracy %86.44,
+azınlık recall <b>%77.61</b>
+(8.83 puan uçurum).</li>
+
+<li><b>F1 tek başına da yeterli değil.</b> Precision ve recall zıt yönlerde saptığında F1 ikisini
+ortalayıp sorunu gizliyor (sınıf 8: precision %97.95, recall %73.51, F1 %83.99). Dengesiz
+veride <b>precision ve recall ayrı ayrı</b> raporlanmalıdır.</li>
+
+<li><b>Confusion Matrix vazgeçilmez.</b> Azınlık sınıflarının görsel benzerlik yüzünden mi
+yoksa çoğunluk çekimi yüzünden mi kaybedildiği yalnızca matriste görünür — ve bu iki sorunun
+çözümü tamamen farklıdır.</li>
+
+<li><b>Model seçimi veri miktarına bağlıdır.</b> 60.000 örnekte sıralama
+CNN_d03 &gt; ResNet18 &gt; MobileNetV2 &gt; MLP iken, 1.000 örnekte
+ResNet18 &gt; MLP &gt; CNN &gt; MobileNetV2'ye dönüyor. Tek bir veri boyutunda yapılan
+karşılaştırma yanıltıcıdır.</li>
+
+<li><b>CNN dengesizliğe MLP'den dayanıklı.</b> P1_pdf profilinde azınlık recall CNN_d0'da
+%91.35,
+MLP_d0'da %81.1 — dengeli veride aralarındaki
+fark 2–3 puanken burada 10 puana çıkıyor.</li>
+</ol>
+
+<div class="uyari">
+<b>Belgedeki örnek tabloyla fark.</b> Yapılacaklar Belgesi'ndeki örnek senaryo azınlık recall'ünü
+%38 olarak gösteriyordu; dengesiz profillerde ölçülen en düşük değer %77.61 (tüm deneyler içinde en düşük ise 1.000 örnekle eğitilen MobileNetV2'de %43.37). Bunun nedeni
+o tablonun <i>simüle edilmiş</i> olması ve MNIST'in kolay bir veri seti olmasıdır — 100–150
+örnek bir rakamı öğrenmeye büyük ölçüde yetiyor. Etki gerçek ve tutarlı biçimde ölçülmüştür,
+ancak çöküş seviyesinde değildir. Daha keskin bir tablo için azınlık sınıflarını 20–30 örneğe
+indiren bir profil eklenmelidir.
+</div>
+
+<div class="altbilgi">
+Bu rapor <code>egitim_veri_azalt.py</code>, <code>egitim_dengesiz_siniflar.py</code> ve
+<code>egitim_hazir_modeller.py</code> tarafından üretilen sonuç dosyalarından
+(<code>sonuclar_f1_*.csv</code>, <code>sinif_bazli_*.csv</code>, 48 adet confusion matrisi)
+otomatik olarak oluşturulmuştur. Yeni deneylere ait hiçbir sayı elle girilmemiştir.
+Eski deney değerleri <code>MLP_Deney_Sonuclari.pdf</code> ve
+<code>MNIST_CNN_Deney_Sonuclari.pdf</code> raporlarından alınmıştır.
+</div>

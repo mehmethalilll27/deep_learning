@@ -1,0 +1,4 @@
+deney,conv_channels,epochs,dropout,batch_size,accuracy,best_accuracy,loss,sure_sn,cihaz,notlar
+CNN_bn_aug_d0.3_ep50,"(64, 128, 256)",50,0.3,256,99.66,99.7,0.0119,639.62,GPU,64-128-256 + BN + aug + OneCycle + wd + d0.3 + 50ep
+CNN_bn_aug_d0_ep50,"(64, 128, 256)",50,0.0,256,99.67,99.67,0.0122,725.33,GPU,64-128-256 + BN + aug + OneCycle + wd + d0 + 50ep
+CNN_bn_aug_d0.2_ep50,"(64, 128, 256)",50,0.2,256,99.67,99.72,0.0111,717.42,GPU,64-128-256 + BN + aug + OneCycle + wd + d0.2 + 50ep

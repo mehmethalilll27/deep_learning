@@ -1,0 +1,17 @@
+deney,model,senaryo,veri_sayisi,gercek_ornek,profil,seed,epochs,img_size,pretrained,accuracy,precision_macro,recall_macro,f1_macro,azinlik_recall,cogunluk_recall,acc_azinlik_farki,loss,sure_sn,cihaz,notlar
+ResNet18_1000,ResNet18,dengeli,1000,1000,,27,10,32,False,94.86,94.87,94.84,94.81,94.72,98.27,0.14,0.1972,23.02,GPU,ResNet18 - dengeli 1000 ornek
+ResNet18_3000,ResNet18,dengeli,3000,3000,,27,10,32,False,96.15,96.19,96.08,96.08,95.78,98.7,0.37,0.1459,27.43,GPU,ResNet18 - dengeli 3000 ornek
+ResNet18_5000,ResNet18,dengeli,5000,5000,,27,10,32,False,97.77,97.78,97.79,97.76,99.23,97.78,-1.46,0.0727,36.32,GPU,ResNet18 - dengeli 5000 ornek
+ResNet18_10000,ResNet18,dengeli,10000,10000,,27,10,32,False,98.41,98.41,98.39,98.4,97.78,99.22,0.63,0.056,47.11,GPU,ResNet18 - dengeli 10000 ornek
+ResNet18_60000,ResNet18,dengeli,60000,60000,,27,10,32,False,98.91,98.89,98.91,98.9,99.05,99.11,-0.14,0.0364,189.23,GPU,ResNet18 - dengeli 60000 ornek
+ResNet18_dengesiz_P1_pdf,ResNet18,dengesiz,8950 (dengesiz),8950,P1_pdf,27,10,32,False,96.55,96.66,96.45,96.49,92.15,99.85,4.4,0.1317,44.27,GPU,ResNet18 - dengesiz profil P1_pdf
+ResNet18_dengesiz_P2_agir,ResNet18,dengesiz,7800 (dengesiz),7800,P2_agir,27,10,32,False,94.37,94.85,94.26,94.29,88.79,99.9,5.58,0.2401,40.87,GPU,ResNet18 - dengesiz profil P2_agir
+ResNet18_dengesiz_P3_5k,ResNet18,dengesiz,4860 (dengesiz),4860,P3_5k,27,10,32,False,94.85,95.33,94.69,94.84,91.01,99.8,3.84,0.1927,34.6,GPU,ResNet18 - dengesiz profil P3_5k
+MobileNetV2_1000,MobileNetV2,dengeli,1000,1000,,27,10,32,False,52.4,65.17,51.93,51.74,43.37,51.32,9.03,1.4056,27.81,GPU,MobileNetV2 - dengeli 1000 ornek
+MobileNetV2_3000,MobileNetV2,dengeli,3000,3000,,27,10,32,False,88.9,89.01,88.87,88.81,89.66,96.05,-0.76,0.444,33.51,GPU,MobileNetV2 - dengeli 3000 ornek
+MobileNetV2_5000,MobileNetV2,dengeli,5000,5000,,27,10,32,False,93.37,93.34,93.32,93.31,91.77,97.47,1.6,0.2436,41.18,GPU,MobileNetV2 - dengeli 5000 ornek
+MobileNetV2_10000,MobileNetV2,dengeli,10000,10000,,27,10,32,False,96.4,96.39,96.39,96.37,96.36,97.74,0.04,0.1296,59.45,GPU,MobileNetV2 - dengeli 10000 ornek
+MobileNetV2_60000,MobileNetV2,dengeli,60000,60000,,27,10,32,False,98.86,98.87,98.84,98.85,98.64,99.49,0.22,0.0442,236.55,GPU,MobileNetV2 - dengeli 60000 ornek
+MobileNetV2_dengesiz_P1_pdf,MobileNetV2,dengesiz,8950 (dengesiz),8950,P1_pdf,27,10,32,False,90.38,90.83,90.25,90.15,83.1,99.45,7.28,0.3832,54.55,GPU,MobileNetV2 - dengesiz profil P1_pdf
+MobileNetV2_dengesiz_P2_agir,MobileNetV2,dengesiz,7800 (dengesiz),7800,P2_agir,27,10,32,False,88.68,89.73,88.43,88.57,80.02,99.54,8.66,0.4258,50.42,GPU,MobileNetV2 - dengesiz profil P2_agir
+MobileNetV2_dengesiz_P3_5k,MobileNetV2,dengesiz,4860 (dengesiz),4860,P3_5k,27,10,32,False,86.44,86.76,86.16,86.15,77.61,98.97,8.83,0.5341,39.79,GPU,MobileNetV2 - dengesiz profil P3_5k

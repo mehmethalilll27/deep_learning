@@ -1,0 +1,18 @@
+# MNIST veri seti - scriptler ilk calistirmada otomatik indiriyor,
+# repoda tutmaya gerek yok (~64 MB)
+data/
+kayitlar/data/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Editor / OS
+.vscode/
+.idea/
+.cursor/
+.DS_Store
+Thumbs.db
