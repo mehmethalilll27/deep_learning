@@ -1,0 +1,13 @@
+deney,model,konfig,profil,toplam_ornek,cogunluk_ornek,orta_ornek,azinlik_ornek,dengesizlik_orani,seed,epochs,accuracy,precision_macro,recall_macro,f1_macro,azinlik_precision,azinlik_recall,azinlik_f1,cogunluk_recall,acc_azinlik_farki,loss,sure_sn,cihaz,notlar
+MLP_d0_dengesiz_P1_pdf,MLP,MLP_d0,P1_pdf,8950,3000,500,150,20.0,27,10,91.09,91.51,90.8,90.85,94.66,81.1,87.34,99.63,9.99,0.3354,13.39,GPU,"MLP 2 katman, dropout yok"
+MLP_d0_dengesiz_P2_agir,MLP,MLP_d0,P2_agir,7800,3000,300,100,30.0,27,10,90.44,90.61,90.15,90.18,92.76,80.96,86.45,99.2,9.48,0.3194,12.9,GPU,"MLP 2 katman, dropout yok"
+MLP_d0_dengesiz_P3_5k,MLP,MLP_d0,P3_5k,4860,1500,300,120,12.5,27,10,90.98,90.97,90.79,90.83,90.07,86.46,88.22,99.14,4.52,0.3048,11.08,GPU,"MLP 2 katman, dropout yok"
+MLP_d03_dengesiz_P1_pdf,MLP,MLP_d03,P1_pdf,8950,3000,500,150,20.0,27,10,91.12,91.46,90.83,90.81,93.96,80.98,86.82,99.53,10.14,0.3166,13.52,GPU,MLP 2 katman + dropout 0.3
+MLP_d03_dengesiz_P2_agir,MLP,MLP_d03,P2_agir,7800,3000,300,100,30.0,27,10,90.34,90.79,90.04,90.11,93.2,81.04,86.65,99.41,9.3,0.3404,13.25,GPU,MLP 2 katman + dropout 0.3
+MLP_d03_dengesiz_P3_5k,MLP,MLP_d03,P3_5k,4860,1500,300,120,12.5,27,10,90.78,90.84,90.54,90.56,91.79,84.5,87.92,99.39,6.28,0.2998,10.87,GPU,MLP 2 katman + dropout 0.3
+CNN_d0_dengesiz_P1_pdf,CNN,CNN_d0,P1_pdf,8950,3000,500,150,20.0,27,10,95.34,95.43,95.24,95.27,96.54,91.35,93.85,99.67,3.99,0.1514,14.99,GPU,"CNN 2 conv katman, dropout yok"
+CNN_d0_dengesiz_P2_agir,CNN,CNN_d0,P2_agir,7800,3000,300,100,30.0,27,10,92.8,93.24,92.6,92.61,96.93,84.4,89.98,99.63,8.4,0.2321,14.6,GPU,"CNN 2 conv katman, dropout yok"
+CNN_d0_dengesiz_P3_5k,CNN,CNN_d0,P3_5k,4860,1500,300,120,12.5,27,10,93.07,93.2,92.97,92.97,94.56,88.51,91.32,99.38,4.56,0.2131,11.5,GPU,"CNN 2 conv katman, dropout yok"
+CNN_d03_dengesiz_P1_pdf,CNN,CNN_d03,P1_pdf,8950,3000,500,150,20.0,27,10,95.0,95.11,94.87,94.91,96.9,89.83,93.19,99.63,5.17,0.1607,15.38,GPU,CNN 2 conv katman + dropout 0.3
+CNN_d03_dengesiz_P2_agir,CNN,CNN_d03,P2_agir,7800,3000,300,100,30.0,27,10,93.59,93.88,93.43,93.48,96.49,87.24,91.58,99.61,6.35,0.2142,14.57,GPU,CNN 2 conv katman + dropout 0.3
+CNN_d03_dengesiz_P3_5k,CNN,CNN_d03,P3_5k,4860,1500,300,120,12.5,27,10,93.74,93.73,93.67,93.66,93.07,91.34,92.15,99.39,2.4,0.198,12.47,GPU,CNN 2 conv katman + dropout 0.3
