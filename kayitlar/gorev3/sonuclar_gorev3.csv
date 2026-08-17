@@ -1,0 +1,16 @@
+deney,model,augmentation,optimizer,scheduler,pretrained,seed,epochs,img_size,batch,lr,parametre,train_acc,val_acc,val_f1,en_iyi_val_acc,en_iyi_epoch,test_acc,test_f1,test_precision,test_recall,overfit_farki,test_loss,sure_sn,cihaz,notlar
+baseline_cnn,BasitCNN,yok,Adam,yok,False,27,15,128,64,0.001,8483654,99.08,82.22,82.41,83.78,10,81.0,81.21,81.55,81.25,16.87,1.1624,169.66,GPU,baseline - augmentation/BN/dropout/scheduler yok
+aug_yok,BasitCNN,yok,Adam,yok,False,27,15,128,64,0.001,8483654,99.78,82.68,82.69,83.07,14,82.23,82.32,82.38,82.43,17.1,1.2109,218.15,GPU,A1 augmentation profili: yok
+aug_hafif,BasitCNN,hafif,Adam,yok,False,27,15,128,64,0.001,8483654,92.62,83.61,83.76,85.25,14,83.77,83.95,84.17,84.03,9.01,0.5504,174.83,GPU,A1 augmentation profili: hafif
+aug_orta,BasitCNN,orta,Adam,yok,False,27,15,128,64,0.001,8483654,93.72,85.67,85.79,85.67,15,84.5,84.64,84.73,84.83,8.05,0.4881,174.2,GPU,A1 augmentation profili: orta
+aug_guclu,BasitCNN,guclu,Adam,yok,False,27,15,128,64,0.001,8483654,86.87,83.82,83.88,84.11,14,82.87,82.98,83.3,83.35,3.05,0.4898,186.59,GPU,A1 augmentation profili: guclu
+mim_bn,"CNN(bn=True,do=0.0,gap=False)",orta,Adam,yok,False,27,15,128,64,0.001,8484102,85.61,83.29,83.42,84.82,13,81.83,82.0,83.01,81.98,2.32,0.5194,198.12,GPU,A2 - BatchNorm eklendi
+mim_bn_dropout,"CNN(bn=True,do=0.3,gap=False)",orta,Adam,yok,False,27,15,128,64,0.001,8484102,84.11,83.29,83.24,84.0,14,82.47,82.54,83.01,83.01,0.83,0.5283,182.26,GPU,A2 - BatchNorm + dropout 0.3
+mim_gap,"CNN(bn=True,do=0.3,gap=True)",orta,Adam,yok,False,27,15,128,64,0.001,128262,84.99,85.25,85.29,85.25,15,84.3,84.27,85.04,84.25,-0.25,0.4477,173.97,GPU,A2 - FC yerine GlobalAvgPool
+mim_gap_adamw,"CNN(bn=True,do=0.3,gap=True)",orta,AdamW,yok,False,27,15,128,64,0.001,128262,83.33,82.32,82.21,82.32,15,82.7,82.53,84.15,82.56,1.0,0.4803,174.18,GPU,A2 - GAP + AdamW
+mim_gap_onecycle,"CNN(bn=True,do=0.3,gap=True)",orta,AdamW,OneCycle,False,27,15,128,64,0.001,128262,87.42,87.42,87.52,87.42,15,86.03,86.07,86.19,86.08,0.0,0.3938,176.35,GPU,A2 - GAP + AdamW + OneCycle
+ResNet18_scratch,ResNet18,orta,Adam,yok,False,27,15,128,64,0.001,11179590,84.1,80.72,80.73,86.96,14,79.2,79.3,81.04,79.71,3.38,0.5855,211.29,GPU,"A3 - sifirdan egitim (Gorev 2 duzeni, referans)"
+ResNet18_donuk,ResNet18_donuk,orta,Adam,yok,True,27,15,128,64,0.001,3078,87.82,87.46,87.61,87.46,15,86.17,86.41,86.38,86.49,0.36,0.3741,151.37,GPU,"A3 - pretrained, govde donuk, sadece siniflandirici egitiliyor"
+ResNet18_finetune,ResNet18,orta,Adam,yok,True,27,15,128,64,0.0001,11179590,99.65,93.09,93.23,93.55,5,92.8,92.94,92.92,92.97,6.57,0.2858,177.77,GPU,"A3 - pretrained, tum agirliklar fine-tune"
+MobileNetV2_finetune,MobileNetV2,orta,Adam,yok,True,27,15,128,64,0.0001,2231558,99.72,93.16,93.26,93.98,6,92.67,92.81,92.74,92.92,6.57,0.265,203.49,GPU,"A3 - pretrained, tum agirliklar fine-tune"
+EfficientNetB0_ft,EfficientNetB0,orta,Adam,yok,True,27,15,128,64,0.0001,4015234,99.86,94.12,94.23,94.16,14,94.33,94.43,94.41,94.47,5.74,0.2359,256.56,GPU,"A3 - pretrained, tum agirliklar fine-tune"

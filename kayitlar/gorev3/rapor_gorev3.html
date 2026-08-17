@@ -1,0 +1,785 @@
+<meta charset="utf-8">
+<title>Deney Sonuçları Raporu — Intel Image Classification / Skor Yükseltme</title>
+<style>
+@page { size: A4; margin: 18mm 15mm 16mm 15mm; }
+* { box-sizing: border-box; }
+body { font-family: "Segoe UI", Calibri, Arial, sans-serif; font-size: 10pt;
+       color: #222; line-height: 1.5; margin: 0; }
+h1 { font-size: 21pt; color: #1F3864; margin: 0 0 2px 0; letter-spacing: -.3px; }
+.altbaslik { font-size: 11.5pt; color: #2E5496; font-weight: 600; margin-bottom: 14px; }
+.cizgi { border-bottom: 2px solid #1F3864; margin-bottom: 16px; }
+h2 { font-size: 14pt; color: #1F3864; margin: 26px 0 10px 0;
+      padding-bottom: 4px; border-bottom: 1px solid #cfd8e8; page-break-after: avoid; }
+h3 { font-size: 11.5pt; color: #2E5496; margin: 18px 0 8px 0; page-break-after: avoid; }
+.kutu { background: #eef3fa; border-left: 4px solid #2E5496; padding: 10px 14px;
+        margin: 12px 0; font-size: 9.5pt; }
+.uyari { background: #fdf3ea; border-left: 4px solid #d98032; padding: 10px 14px;
+         margin: 12px 0; font-size: 9.5pt; }
+.bulgu { background: #eef7f0; border-left: 4px solid #3f8f5c; padding: 10px 14px;
+         margin: 12px 0; font-size: 9.5pt; }
+.model-baslik { font-size: 10pt; font-weight: 600; color: #1F3864;
+                margin: 14px 0 5px 0; page-break-after: avoid; }
+table.veri { border-collapse: collapse; width: 92%; margin: 0 0 10px 0; font-size: 9pt;
+             page-break-inside: avoid; }
+table.veri.genis { width: 100%; }
+table.veri th { background: #1F3864; color: #fff; font-weight: 600; padding: 6px 8px;
+                text-align: center; border: 1px solid #1F3864; font-size: 8.5pt; }
+table.veri td { padding: 5px 8px; text-align: center; border: 1px solid #d5dced; }
+table.veri td.ilk { text-align: left; }
+table.veri tbody tr:nth-child(even) td { background: #f6f8fc; }
+tr.vurgu-kotu td { background: #fdeeea !important; }
+tr.vurgu-orta td { background: #fdf6ea !important; }
+tr.vurgu-iyi td { background: #eef7f0 !important; }
+td.kotu { color: #b8321f; font-weight: 600; }
+td.fark { color: #1F3864; }
+td.fark-ters { color: #b8321f; }
+td.ref, tr td.ref { color: #6a7484; font-style: italic; }
+ul.liste { margin: 6px 0 10px 0; padding-left: 20px; font-size: 9.5pt; }
+ul.liste li { margin-bottom: 4px; }
+ol.adimlar { font-size: 9.5pt; }
+.matris-blok { margin: 12px 0 16px 0; page-break-inside: avoid; }
+.matris-baslik { font-size: 9.5pt; font-weight: 600; color: #1F3864; margin-bottom: 2px; }
+.matris-alt { font-size: 8.5pt; color: #6a7484; margin-bottom: 5px; }
+table.cm { border-collapse: collapse; font-size: 8pt; }
+table.cm th { background: #1F3864; color: #fff; padding: 4px 6px; border: 1px solid #16294a;
+              font-weight: 600; }
+table.cm th.kose { background: #2E5496; font-size: 7pt; }
+table.cm th.satir { background: #2E5496; }
+table.cm td { padding: 4px 7px; text-align: center; border: 1px solid #e4e8f0; min-width: 26px; }
+table.cm td.dogru { background: #eef7f0; font-weight: 600; color: #1F3864; }
+table.cm td.agir { background: #fdeeea; color: #b8321f; font-weight: 600; }
+table.cm td.orta { background: #fdf6ea; }
+table.cm td.sifir { color: #c3c9d4; }
+.dipnot { font-size: 8.5pt; color: #6a7484; font-style: italic; margin-top: 4px; }
+.sayfa-kes { page-break-before: always; }
+.altbilgi { margin-top: 26px; padding-top: 8px; border-top: 1px solid #d5dced;
+            font-size: 8.5pt; color: #8a919e; font-style: italic; }
+.zincir { font-family: Consolas, "Courier New", monospace; font-size: 9pt;
+          background: #f6f8fc; border: 1px solid #d5dced; padding: 10px 14px; margin: 12px 0; }
+</style>
+
+<h1>Deney Sonuçları Raporu</h1>
+<div class="altbaslik">Görev 3 — Kaggle Veri Setinde Serbest Deney: Skoru Adım Adım Yükseltme</div>
+<div class="cizgi"></div>
+
+<div class="kutu">
+Bu rapor, <b>Görev Belgesi</b>'nde tarif edilen üç adımın uygulanmasıyla elde edilen sonuçları
+içerir. Veri seti olarak <b>Intel Image Classification</b> (Kaggle) seçilmiş, toplam
+<b>15 eğitim</b> yapılmıştır: 1 baseline, 4 augmentation, 5 mimari/optimizasyon, 5 transfer
+learning deneyi. Toplam eğitim süresi <b>47,1 dakika</b> (RTX 4060 Laptop GPU).
+<br><br>
+Belgenin sorduğu soru — <i>"skor ilk sonuca kıyasla yükseldi mi?"</i> — şu şekilde
+cevaplanmıştır: baseline <b>%81,00</b> test accuracy ile başlamış, en iyi konfigürasyon
+<b>%94,33</b>'e ulaşmıştır. <b>Kazanç: +13,33 puan</b>, test hatası 570 örnekten
+170 örneğe inmiştir (<b>%70,2 hata azalması</b>).
+</div>
+
+<h2>Veri Seti ve Deney Kurulumu</h2>
+
+<p>Veri seti seçiminde belgenin iki koşulu vardı: MNIST gibi basit olmasın, daha önce
+çalışılmamış olsun. <b>Intel Image Classification</b> altı sınıf doğa ve şehir manzarası
+içerir; sınıflar görsel olarak birbirine yakındır (buzul ile dağ, sokak ile bina), bu yüzden
+baseline'ın doygunluğa ulaşmayacağı ve iyileştirmeye yer kalacağı öngörülmüştür.</p>
+
+<table class="veri">
+<thead><tr><th>Sınıf</th><th>Eğitim</th><th>Test</th></tr></thead>
+<tbody>
+<tr><td class="ilk">buildings</td><td>2.191</td><td>437</td></tr>
+<tr><td class="ilk">forest</td><td>2.271</td><td>474</td></tr>
+<tr><td class="ilk">glacier</td><td>2.404</td><td>553</td></tr>
+<tr><td class="ilk">mountain</td><td>2.512</td><td>525</td></tr>
+<tr><td class="ilk">sea</td><td>2.274</td><td>510</td></tr>
+<tr><td class="ilk">street</td><td>2.382</td><td>501</td></tr>
+<tr><td class="ilk"><b>Toplam</b></td><td><b>14.034</b></td><td><b>3.000</b></td></tr>
+</tbody>
+</table>
+<div class="dipnot">Veri setinde ayrıca 7.301 etiketsiz görüntü (seg_pred) bulunur; Kaggle
+yarışması için ayrılmıştır, bu çalışmada kullanılmamıştır.</div>
+
+<div class="bulgu">
+<b>Sınıflar dengeli.</b> En büyük ve en küçük sınıf arasındaki oran <b>1,15:1</b>. Görev 2'nin
+ana teması olan sınıf dengesizliği burada yoktur, bu yüzden azınlık recall'ü gibi metrikler
+bu göreve taşınmamış, yerine <b>overfitting</b> ve <b>transfer learning</b> merkeze alınmıştır.
+</div>
+
+<h3>Neden train / validation / test olarak üçe bölündü</h3>
+
+<p>Görev 1 ve 2'de tek bir sabit test seti kullanılıyordu ve bu doğruydu: o görevlerde
+hiperparametre <i>ayarlanmıyor</i>, yalnızca koşullar karşılaştırılıyordu. Görev 3 farklıdır —
+burada skoru yükseltmek için tekrar tekrar ayar yapılır. Her denemeyi test setine bakarak
+seçmek, farkında olmadan test setine göre optimizasyon yapmak anlamına gelir
+(<i>test set leakage</i>) ve final skoru gerçekte olduğundan iyimser gösterir.</p>
+
+<table class="veri">
+<thead><tr><th>Küme</th><th>Kaynak</th><th>Görüntü</th><th>Görevi</th></tr></thead>
+<tbody>
+<tr><td class="ilk">train</td><td>seg_train'in %80'i</td><td>11.228</td>
+    <td class="ilk">model öğrenir</td></tr>
+<tr><td class="ilk">validation</td><td>seg_train'in %20'si</td><td>2.806</td>
+    <td class="ilk"><b>iyileştirme kararları buna göre verilir</b></td></tr>
+<tr><td class="ilk">test</td><td>seg_test (tamamı)</td><td>3.000</td>
+    <td class="ilk">konfigürasyon başına yalnızca 1 kez, eğitim sonunda</td></tr>
+</tbody>
+</table>
+
+<p>Bölme <b>katmanlıdır</b>: her sınıftan ayrı ayrı %20 ayrılır. Düz rastgele bölmede şans
+eseri bir sınıfın %30'u, başkasının %12'si validation'a düşebilir; o durumda validation skoru
+performansı değil bölmenin şansını ölçer.</p>
+
+<h3>Sabit tutulan ayarlar</h3>
+
+<p>Bir deneyin skorundaki değişimin tek bir sebebe atfedilebilmesi için aşağıdakiler
+15 deneyin tamamında değiştirilmemiştir:</p>
+
+<table class="veri">
+<thead><tr><th>Ayar</th><th>Değer</th><th>Ayar</th><th>Değer</th></tr></thead>
+<tbody>
+<tr><td class="ilk">Seed</td><td>27</td><td class="ilk">Epoch</td><td>15</td></tr>
+<tr><td class="ilk">Batch</td><td>64</td><td class="ilk">Girdi boyutu</td><td>128 × 128 × 3</td></tr>
+<tr><td class="ilk">Loss</td><td>CrossEntropy</td><td class="ilk">Normalizasyon</td>
+    <td>ImageNet istatistikleri</td></tr>
+</tbody>
+</table>
+
+<p>Normalizasyonda ImageNet ortalama/standart sapma değerlerinin
+(<span style="font-family:Consolas,monospace">[0.485, 0.456, 0.406]</span> /
+<span style="font-family:Consolas,monospace">[0.229, 0.224, 0.225]</span>) baştan seçilmesi
+bilinçliydi: 3. adımda kullanılacak pretrained modeller bu değerlerle eğitildiği için
+transfer learning'in verimi korunur.</p>
+
+<div class="uyari">
+<b>Teknik ayrıntı — Resize'ın ikili parametreyle çağrılması zorunlu.</b> Görüntülerin %99,8'i
+150 × 150 ama tamamı değil; 150 × 113, 150 × 108 gibi kareler var.
+<span style="font-family:Consolas,monospace">Resize(128)</span> tek sayıyla çağrılırsa
+en-boy oranı korunur ve çıktılar farklı boyutta olur; bu görüntüler bir batch'e denk geldiğinde
+eğitim <span style="font-family:Consolas,monospace">stack expects each tensor to be equal
+size</span> hatasıyla düşer. Bu yüzden
+<span style="font-family:Consolas,monospace">Resize((128, 128))</span> kullanılmıştır.
+</div>
+
+<h2>Baseline — Bilerek Zayıf Kurulan Başlangıç</h2>
+
+<p>Baseline'ın amacı iyi bir ilk skor almak değil, sonraki adımların neyi düzelttiğini
+ölçülebilir kılmaktır. Bu yüzden düzenlileştirmenin tamamı kapatılmıştır:
+<b>augmentation yok, BatchNorm yok, dropout yok, scheduler yok</b>. Optimizer düz Adam,
+sabit learning rate 0,001.</p>
+
+<p>Mimari üç blok conv+pool, ardından iki katmanlı sınıflandırıcı:
+Conv(3→32) → Conv(32→64) → Conv(64→128), her biri MaxPool(2) ile yarıya inen boyutla;
+sonra Flatten → Linear(32.768 → 256) → Linear(256 → 6).</p>
+
+<table class="veri">
+<thead><tr><th>Metrik</th><th>Değer</th><th>Metrik</th><th>Değer</th></tr></thead>
+<tbody>
+<tr><td class="ilk">Parametre</td><td>8.483.654</td>
+    <td class="ilk">Test accuracy</td><td><b>%81,00</b></td></tr>
+<tr><td class="ilk">Train accuracy</td><td>%99,08</td>
+    <td class="ilk">Test F1 (macro)</td><td>%81,21</td></tr>
+<tr><td class="ilk">Validation accuracy</td><td>%82,22</td>
+    <td class="ilk">Test loss</td><td>1,1624</td></tr>
+<tr class="vurgu-kotu"><td class="ilk"><b>Overfit farkı (train − val)</b></td>
+    <td class="kotu"><b>+16,87 puan</b></td>
+    <td class="ilk">Süre</td><td>169,7 sn</td></tr>
+</tbody>
+</table>
+
+<div class="bulgu">
+<b>Beklenen ezberleme ölçüldü.</b> Train accuracy %99,08, validation %82,22 — model eğitim
+verisini neredeyse tamamen öğrenmiş ama genelleyemiyor. Epoch geçmişinde fark epoch 1'de
++1,51 puanken epoch 15'te +16,87'ye çıkıyor, yani ezberleme eğitim boyunca kademeli açılıyor.
+Validation skoru epoch 10'da (%83,78) tepe yapıp sonra düşüyor.
+</div>
+
+<p>Parametrelerin dağılımı bu sonucun sebebini açıklıyor: 8,48 milyon parametrenin
+<b>8,39 milyonu</b> tek bir katmanda, Flatten sonrası Linear(32.768 → 256) bağlantısında
+toplanmış. Modelin kapasitesinin neredeyse tamamı, uzamsal yapıyı kullanmayan dev bir
+tam bağlı katmanda duruyor. 2. adımda bu katman kaldırıldığında ne olduğu görülecektir.</p>
+
+<p>Test loss'un 1,1624 gibi yüksek bir değerde olması da aynı belirtinin parçası: model
+yanlış tahminlerini yüksek güvenle yapıyor. Karşılaştırma için, en iyi modelin test loss'u
+0,2359'dur.</p>
+
+<div class="sayfa-kes"></div>
+<h2>1. Adım — Augmentation Taraması</h2>
+
+<p>Baseline ezberliyordu, ilk aksiyon veri artırma oldu. Model, epoch, seed, learning rate
+baseline ile birebir aynı bırakıldı; tek değişen augmentation profili.</p>
+
+<table class="veri genis">
+<thead><tr><th>Deney</th><th>Profil içeriği</th><th>Train</th><th>Val</th>
+<th>Test</th><th>Test F1</th><th>Overfit farkı</th><th>Test loss</th></tr></thead>
+<tbody>
+<tr class="vurgu-kotu"><td class="ilk">baseline_cnn</td><td class="ilk ref">referans</td>
+    <td>99,08</td><td>82,22</td><td>81,00</td><td>81,21</td>
+    <td class="kotu">+16,87</td><td>1,1624</td></tr>
+<tr class="vurgu-kotu"><td class="ilk">aug_yok</td>
+    <td class="ilk ref">baseline tekrarı</td>
+    <td>99,78</td><td>82,68</td><td>82,23</td><td>82,32</td>
+    <td class="kotu">+17,10</td><td>1,2109</td></tr>
+<tr><td class="ilk">aug_hafif</td><td class="ilk">flip + rotation 15°</td>
+    <td>92,62</td><td>83,61</td><td>83,77</td><td>83,95</td>
+    <td class="fark">+9,01</td><td>0,5504</td></tr>
+<tr class="vurgu-iyi"><td class="ilk"><b>aug_orta</b></td>
+    <td class="ilk">flip + rotation 15° + ColorJitter</td>
+    <td>93,72</td><td><b>85,67</b></td><td><b>84,50</b></td><td>84,64</td>
+    <td class="fark">+8,05</td><td>0,4881</td></tr>
+<tr class="vurgu-orta"><td class="ilk">aug_guclu</td>
+    <td class="ilk">RandomResizedCrop + rotation 20° + güçlü ColorJitter</td>
+    <td>86,87</td><td>83,82</td><td>82,87</td><td>82,98</td>
+    <td>+3,05</td><td>0,4898</td></tr>
+</tbody>
+</table>
+<div class="dipnot">Seçim validation accuracy'ye göre yapılmıştır. Kazanan: aug_orta.</div>
+
+<h3>Augmentation çalıştı, ama bir optimumu var</h3>
+
+<div class="bulgu">
+<b>Overfit farkı yarıya indi, skor yükseldi.</b> aug_yok'ta +17,10 olan train−val farkı
+aug_orta'da <b>+8,05</b>'e düştü; test accuracy %82,23'ten <b>%84,50</b>'ye çıktı. Test loss
+1,2109'dan 0,4881'e indi — model artık yanlışlarında da aşırı kendinden emin değil.
+</div>
+
+<div class="uyari">
+<b>aug_guclu fazla bastırdı.</b> En düşük overfit farkı bu profilde (<b>+3,05</b>) — yani
+ezberleme neredeyse tamamen kırıldı. Ama validation ve test skoru aug_orta'nın <i>altında</i>
+kaldı ve train accuracy %86,87'ye düştü. Model artık ezberlemiyor, ama öğrenemiyor da.
+<b>Augmentation'ın da bir optimumu olduğu ölçülmüş oldu:</b> düzenlileştirmeyi artırmak
+belirli bir noktaya kadar yardım eder, sonrası zarardır.
+</div>
+
+<h3>Beklenmedik bulgu: koşular arası tekrarlanabilirlik</h3>
+
+<p><span style="font-family:Consolas,monospace">aug_yok</span> deneyi tanım olarak
+baseline'ın birebir tekrarıdır — aynı seed, aynı model, aynı hiperparametreler, aynı
+augmentation (yok). Beklenen aynı sonucu vermesiydi. Ölçülen:</p>
+
+<table class="veri">
+<thead><tr><th>Deney</th><th>Test accuracy</th><th>Süre</th></tr></thead>
+<tbody>
+<tr><td class="ilk">baseline_cnn</td><td>%81,00</td><td>169,7 sn</td></tr>
+<tr><td class="ilk">aug_yok</td><td>%82,23</td><td>218,2 sn</td></tr>
+<tr class="vurgu-orta"><td class="ilk"><b>Fark</b></td>
+    <td class="kotu"><b>1,23 puan</b></td><td><b>48,5 sn</b></td></tr>
+</tbody>
+</table>
+
+<div class="uyari">
+<b>Sebep: <span style="font-family:Consolas,monospace">cudnn.benchmark = True</span>.</b>
+Bu ayar cuDNN'in her koşuda en hızlı konvolüsyon algoritmasını seçmesine izin verir. Seçim
+GPU yüküne göre değişebilir ve farklı algoritmalar farklı kayan nokta yuvarlama hataları
+üretir; 15 epoch boyunca bu birikir. Süre farkının 48,5 saniye olması da farklı algoritma
+seçildiğini doğruluyor.
+<br><br>
+<b>Yorumlama kuralı:</b> bu kurulumda <b>1,2 puandan küçük farklar gürültü sayılmalıdır.</b>
+Örneğin aug_hafif (%83,77) ile aug_orta (%84,50) arasındaki 0,73 puanlık fark bu eşiğin
+altındadır; ikisi arasında kesin üstünlük iddia edilemez. aug_orta'nın seçilmesi validation
+skorunun da en yüksek olmasına (%85,67) dayanır.
+<br><br>
+Görev 1 ve 2'de tüm deneyler tek koşuydu; aynı belirsizlik orada da vardı ama ölçülmemişti.
+Bu göreve tesadüfen bir tekrar deneyi girdiği için ölçülebildi.
+</div>
+
+<div class="sayfa-kes"></div>
+<h2>2. Adım — Mimari ve Optimizasyon</h2>
+
+<p>Augmentation profili <span style="font-family:Consolas,monospace">orta</span>'da
+sabitlendi; her konfigürasyon bir öncekine tek bir şey ekliyor.</p>
+
+<table class="veri genis">
+<thead><tr><th>Deney</th><th>Eklenen</th><th>Parametre</th><th>Train</th><th>Val</th>
+<th>Test</th><th>Test F1</th><th>Overfit</th><th>Test loss</th></tr></thead>
+<tbody>
+<tr><td class="ilk ref">aug_orta</td><td class="ilk ref">1. adım kazananı</td>
+    <td class="ref">8.483.654</td><td class="ref">93,72</td><td class="ref">85,67</td>
+    <td class="ref">84,50</td><td class="ref">84,64</td><td class="ref">+8,05</td>
+    <td class="ref">0,4881</td></tr>
+<tr class="vurgu-kotu"><td class="ilk">mim_bn</td><td class="ilk">BatchNorm</td>
+    <td>8.484.102</td><td>85,61</td><td>83,29</td><td>81,83</td><td>82,00</td>
+    <td>+2,32</td><td>0,5194</td></tr>
+<tr class="vurgu-orta"><td class="ilk">mim_bn_dropout</td><td class="ilk">+ dropout 0,3</td>
+    <td>8.484.102</td><td>84,11</td><td>83,29</td><td>82,47</td><td>82,54</td>
+    <td>+0,83</td><td>0,5283</td></tr>
+<tr><td class="ilk">mim_gap</td><td class="ilk">+ FC yerine GlobalAvgPool</td>
+    <td><b>128.262</b></td><td>84,99</td><td>85,25</td><td>84,30</td><td>84,27</td>
+    <td>−0,25</td><td>0,4477</td></tr>
+<tr class="vurgu-kotu"><td class="ilk">mim_gap_adamw</td><td class="ilk">+ AdamW (wd 0,01)</td>
+    <td>128.262</td><td>83,33</td><td>82,32</td><td>82,70</td><td>82,53</td>
+    <td>+1,00</td><td>0,4803</td></tr>
+<tr class="vurgu-iyi"><td class="ilk"><b>mim_gap_onecycle</b></td>
+    <td class="ilk">+ OneCycle scheduler</td>
+    <td>128.262</td><td>87,42</td><td><b>87,42</b></td><td><b>86,03</b></td><td>86,07</td>
+    <td><b>0,00</b></td><td>0,3938</td></tr>
+</tbody>
+</table>
+
+<h3>BatchNorm ve AdamW tek başlarına zarar verdi</h3>
+
+<div class="uyari">
+BatchNorm eklenince overfit farkı +8,05'ten +2,32'ye indi, ama validation skoru %85,67'den
+%83,29'a <i>düştü</i>. AdamW eklenince de aynı: validation %85,25'ten %82,32'ye indi.
+<br><br>
+Sebep aug_guclu'dakiyle aynı: model zaten augmentation ile düzenlenmişti. Üstüne BatchNorm,
+sonra dropout, sonra <span style="font-family:Consolas,monospace">weight_decay = 0,01</span>
+eklenmesi düzenlileştirmeyi optimumun ötesine taşıdı. <b>Düzenlileştirme teknikleri toplanabilir
+değil</b> — her biri ayrı ayrı faydalı olabilir ama üst üste konduğunda modeli öğrenemez hale
+getirir.
+</div>
+
+<h3>Global Average Pooling — raporun en net bulgusu</h3>
+
+<div class="bulgu">
+Flatten + Linear(32.768 → 256) katmanı kaldırılıp yerine
+<span style="font-family:Consolas,monospace">AdaptiveAvgPool2d(1)</span> konduğunda parametre
+sayısı <b>8.484.102'den 128.262'ye</b> indi — <b>66 kat küçülme</b>. Buna rağmen validation
+skoru mim_bn_dropout'un %83,29'undan <b>%85,25</b>'e <i>yükseldi</i>.
+<br><br>
+Yani baseline'ın 8,4 milyon parametresinin %98,5'i yalnızca yer kaplıyor, ezberlemeye katkı
+veriyor ama genelleme sağlamıyordu. Bu, Görev 2'deki <i>"büyük model her zaman kazanmıyor"</i>
+bulgusunun çok daha keskin hali: orada 30 bin parametreli CNN 11 milyonluk ResNet18'i 0,21 puan
+geçmişti, burada 66 kat küçük model 1,96 puan geçiyor.
+</div>
+
+<h3>OneCycle scheduler, AdamW'nin zararını telafi edip üstüne koydu</h3>
+
+<p>mim_gap_adamw ile mim_gap_onecycle arasındaki tek fark scheduler'dır. Sonuç validation'da
+<b>%82,32 → %87,42</b>, yani <b>+5,10 puan</b> — 2. adımdaki en büyük tek sıçrama.
+Learning rate seyri şöyle gelişti:</p>
+
+<table class="veri">
+<thead><tr><th>Epoch</th><th>1</th><th>3</th><th>5</th><th>7</th><th>9</th><th>11</th>
+<th>13</th><th>15</th></tr></thead>
+<tbody>
+<tr><td class="ilk">Learning rate</td><td>0,00046</td><td>0,00228</td><td>0,00298</td>
+    <td>0,00260</td><td>0,00183</td><td>0,00095</td><td>0,00026</td><td>0,00000</td></tr>
+<tr><td class="ilk">Validation acc</td><td>62,94</td><td>66,22</td><td>63,26</td>
+    <td>81,18</td><td>76,16</td><td>84,25</td><td>86,85</td><td>87,42</td></tr>
+</tbody>
+</table>
+<div class="dipnot">OneCycle her batch'te adım atar. Learning rate epoch 5'te tepe yapıp
+epoch 15'te sıfıra iner; asıl kazanç son üç epoch'taki iniş fazında gelir.</div>
+
+<h3>Artık overfitting değil, kapasite darboğazı var</h3>
+
+<div class="kutu">
+mim_gap_onecycle'ın son epoch'unda <b>train %87,42, validation %87,42 — tam eşit</b>. Epoch
+geçmişinde de baştan sona train ≈ val; bazı epoch'larda validation daha yüksek.
+<br><br>
+Baseline'daki +16,87 puanlık ezberleme tamamen kapandı. Ama artık ters taraftayız:
+<b>128 bin parametreli model bu veriyi öğrenmeye yetmiyor.</b> Son epoch'ta train loss hâlâ
+düşmekteydi (0,3961) ve learning rate sıfıra indiği için eğitim orada kesildi.
+<br><br>
+Bu tam olarak transfer learning'in çözdüğü problemdir: pretrained model kapasiteyi
+<i>iyi başlangıç ağırlıklarıyla birlikte</i> getirir, yani kapasite artarken ezberlemeye geri
+dönülmez. 3. adımın en büyük sıçramayı vermesi bu yüzden beklenmiştir.
+</div>
+
+<div class="sayfa-kes"></div>
+<h2>3. Adım — Transfer Learning</h2>
+
+<p>Görev 2'de hazır mimariler
+<span style="font-family:Consolas,monospace">PRETRAINED = False</span> ile, yani sıfırdan
+eğitilmişti. Burada asıl kazanç ölçülüyor: ImageNet üzerinde önceden öğrenilmiş ağırlıklarla
+başlamak. Learning rate konfigürasyona göre değişir — sıfırdan eğitim ve donuk gövdede 0,001,
+fine-tune'da 0,0001. Yüksek learning rate hazır filtreleri ilk epoch'ta bozar.</p>
+
+<table class="veri genis">
+<thead><tr><th>Deney</th><th>Pretrained</th><th>Eğitilebilir<br>parametre</th><th>LR</th>
+<th>Train</th><th>Val</th><th>Test</th><th>Test F1</th><th>Overfit</th>
+<th>Test loss</th></tr></thead>
+<tbody>
+<tr class="vurgu-kotu"><td class="ilk">ResNet18_scratch</td><td>—</td><td>11.179.590</td>
+    <td>0,001</td><td>84,10</td><td>80,72</td><td class="kotu">79,20</td><td>79,30</td>
+    <td>+3,38</td><td>0,5855</td></tr>
+<tr><td class="ilk">ResNet18_donuk</td><td>✓</td><td><b>3.078</b></td>
+    <td>0,001</td><td>87,82</td><td>87,46</td><td>86,17</td><td>86,41</td>
+    <td>+0,36</td><td>0,3741</td></tr>
+<tr><td class="ilk">ResNet18_finetune</td><td>✓</td><td>11.179.590</td>
+    <td>0,0001</td><td>99,65</td><td>93,09</td><td>92,80</td><td>92,94</td>
+    <td>+6,57</td><td>0,2858</td></tr>
+<tr><td class="ilk">MobileNetV2_finetune</td><td>✓</td><td>2.231.558</td>
+    <td>0,0001</td><td>99,72</td><td>93,16</td><td>92,67</td><td>92,81</td>
+    <td>+6,57</td><td>0,2650</td></tr>
+<tr class="vurgu-iyi"><td class="ilk"><b>EfficientNetB0_ft</b></td><td>✓</td>
+    <td>4.015.234</td><td>0,0001</td><td>99,86</td><td><b>94,12</b></td>
+    <td><b>94,33</b></td><td><b>94,43</b></td><td>+5,74</td><td>0,2359</td></tr>
+</tbody>
+</table>
+
+<h3>Aynı mimari, üç farklı kullanım — farkın tamamı başlangıç ağırlıklarından</h3>
+
+<div class="bulgu">
+ResNet18'in üç satırı yan yana konduğunda transfer learning'in katkısı izole edilmiş olur.
+Mimari aynı, veri aynı, epoch aynı:
+<table class="veri" style="width:100%; margin-top:8px">
+<thead><tr><th>Kullanım</th><th>Eğitilebilir parametre</th><th>Test accuracy</th>
+<th>Önceki satıra göre</th></tr></thead>
+<tbody>
+<tr><td class="ilk">Sıfırdan eğitim</td><td>11.179.590</td><td>%79,20</td>
+    <td class="ref">—</td></tr>
+<tr><td class="ilk">Pretrained, gövde donuk</td><td><b>3.078</b></td><td>%86,17</td>
+    <td class="fark">+6,97 puan</td></tr>
+<tr><td class="ilk">Pretrained, tam fine-tune</td><td>11.179.590</td><td>%92,80</td>
+    <td class="fark">+6,63 puan</td></tr>
+</tbody>
+</table>
+Ortadaki satır dikkat çekicidir: <b>3.078 parametre</b> eğitilmiş, yani yalnızca son doğrusal
+katman. Gövdedeki 11,18 milyon ağırlık hiç güncellenmemiş. Buna rağmen sıfırdan eğitilen
+tam modelden <b>6,97 puan</b> daha iyi. Fark tamamen ImageNet'te öğrenilmiş kenar, doku ve
+şekil filtrelerinden geliyor.
+</div>
+
+<div class="bulgu">
+<b>Donuk gövde, 2. adımın tüm zincirini geçti.</b> mim_gap_onecycle 128 bin parametreyi
+sıfırdan eğitip %86,03 almıştı; ResNet18_donuk sadece son katmanı eğitip <b>%86,17</b> aldı
+(fark gürültü eşiğinin altında, yani berabere). Augmentation taraması, BatchNorm, dropout,
+GAP, AdamW ve OneCycle'dan oluşan dokuz deneylik emeğin tamamı, hazır ağırlıkların üstüne
+konan tek bir doğrusal katman kadar sonuç veriyor.
+</div>
+
+<h3>ResNet18 sıfırdan eğitimde kararsız</h3>
+
+<div class="uyari">
+ResNet18_scratch tabloda %79,20 ile en kötü satır, yani <b>basit baseline CNN'den bile
+düşük</b>. Ancak epoch geçmişi bunun kısmen ölçüm anından kaynaklandığını gösteriyor:
+validation accuracy epoch 14'te <b>%86,96</b>'ya çıkmış, epoch 15'te <b>%80,72</b>'ye
+çökmüş. Test ölçümü son epoch'ta alındığı için düşük skor kaydedilmiş.
+<br><br>
+Bu bir ölçüm hatası değil, <b>bulgunun kendisi</b>: 11,18 milyon parametreli bir ağı
+11 bin görüntüyle sıfırdan eğitmek kararlı yakınsama vermiyor; skor epoch'lar arasında
+6 puan sıçrayabiliyor. Aynı mimarinin pretrained hali ise pürüzsüz ilerliyor —
+ResNet18_donuk epoch 1'de %84,57, epoch 15'te %87,46, arada çöküş yok.
+<br><br>
+Dürüst karşılaştırma için en iyi epoch'lar da CSV'ye kaydedilmiştir
+(<span style="font-family:Consolas,monospace">en_iyi_val_acc</span> kolonu); tablodaki
+tüm satırlar tutarlı olsun diye son epoch değerleri raporlanmıştır.
+</div>
+
+<h3>Yakınsama hızı: transfer learning ilk epoch'ta bitiriyor</h3>
+
+<table class="veri genis">
+<thead><tr><th>Deney</th><th>Epoch 1</th><th>Epoch 5</th><th>Epoch 10</th><th>Epoch 15</th>
+<th>En iyi</th></tr></thead>
+<tbody>
+<tr><td class="ilk">baseline_cnn</td><td>69,28</td><td>82,75</td><td>83,78</td><td>82,22</td>
+    <td>83,78 (ep 10)</td></tr>
+<tr><td class="ilk">aug_orta</td><td>67,00</td><td>81,04</td><td>82,68</td><td>85,67</td>
+    <td>85,67 (ep 15)</td></tr>
+<tr><td class="ilk">ResNet18_scratch</td><td>66,46</td><td>81,90</td><td>85,46</td>
+    <td class="kotu">80,72</td><td>86,96 (ep 14)</td></tr>
+<tr><td class="ilk">ResNet18_donuk</td><td>84,57</td><td>86,56</td><td>87,10</td>
+    <td>87,46</td><td>87,46 (ep 15)</td></tr>
+<tr class="vurgu-iyi"><td class="ilk">EfficientNetB0_ft</td><td><b>92,55</b></td>
+    <td>93,69</td><td>93,44</td><td>94,12</td><td>94,16 (ep 14)</td></tr>
+</tbody>
+</table>
+
+<div class="bulgu">
+EfficientNetB0 <b>tek epoch sonunda %92,55</b> validation accuracy'ye ulaşıyor — bu, 1. ve
+2. adımdaki dokuz deneyin 15 epoch'luk sonuçlarının tamamından daha iyi. Kalan 14 epoch
+yalnızca 1,6 puan ekliyor.
+<br><br>
+Fine-tune edilen ResNet18 ve MobileNetV2 en iyi validation skorlarına epoch 5 ve 6'da
+ulaşıyor; sonrası plato. Yani pretrained modellerde 15 epoch fazla, 5-6 epoch yeterliydi.
+Sıfırdan eğitilen modellerde ise tam tersi — epoch 15'te hâlâ öğrenmekteydiler.
+</div>
+
+<div class="sayfa-kes"></div>
+<h2>Aşama Aşama İlerleme</h2>
+
+<p>Her aşamanın kazananı validation accuracy'ye göre seçilmiştir; test skoru yalnızca
+raporlama içindir.</p>
+
+<table class="veri genis">
+<thead><tr><th>Aşama</th><th>Kazanan deney</th><th>Val</th><th>Test</th><th>Test F1</th>
+<th>Overfit</th><th>Baseline'a göre</th><th>Adımın katkısı</th></tr></thead>
+<tbody>
+<tr><td class="ilk">Baseline</td><td class="ilk">baseline_cnn</td><td>82,22</td>
+    <td>81,00</td><td>81,21</td><td class="kotu">+16,87</td><td class="ref">—</td>
+    <td class="ref">—</td></tr>
+<tr><td class="ilk">1. Augmentation</td><td class="ilk">aug_orta</td><td>85,67</td>
+    <td>84,50</td><td>84,64</td><td>+8,05</td><td class="fark">+3,50</td>
+    <td class="fark">+3,50</td></tr>
+<tr><td class="ilk">2. Mimari</td><td class="ilk">mim_gap_onecycle</td><td>87,42</td>
+    <td>86,03</td><td>86,07</td><td>0,00</td><td class="fark">+5,03</td>
+    <td class="fark">+1,53</td></tr>
+<tr class="vurgu-iyi"><td class="ilk"><b>3. Transfer</b></td>
+    <td class="ilk"><b>EfficientNetB0_ft</b></td><td><b>94,12</b></td><td><b>94,33</b></td>
+    <td><b>94,43</b></td><td>+5,74</td><td class="fark"><b>+13,33</b></td>
+    <td class="fark"><b>+8,30</b></td></tr>
+</tbody>
+</table>
+
+<div class="zincir">
+baseline_cnn      81,00%  ████████████████████████████████<br>
+aug_orta          84,50%  █████████████████████████████████▍      +3,50<br>
+mim_gap_onecycle  86,03%  ██████████████████████████████████▏     +5,03<br>
+EfficientNetB0_ft 94,33%  █████████████████████████████████████▋  +13,33
+</div>
+
+<div class="kutu">
+<b>Katkıların dağılımı dengesiz.</b> 13,33 puanlık toplam kazancın <b>8,30 puanı</b> tek bir
+adımdan — transfer learning'den — geliyor. Augmentation 3,50, mimari ve optimizasyon
+çalışmasının tamamı ise yalnızca 1,53 puan ekliyor.
+<br><br>
+Buradaki ders, iyileştirme çabasının nereye harcanacağıyla ilgili: dokuz deneylik mimari ve
+düzenlileştirme taraması (yaklaşık 30 dakika), tek bir
+<span style="font-family:Consolas,monospace">weights=DEFAULT</span> parametresinin getirdiği
+kazancın beşte biri kadar sonuç verdi.
+</div>
+
+<div class="sayfa-kes"></div>
+<h2>Confusion Matrix Analizi</h2>
+
+<p>Satır gerçek sınıfı, sütun modelin tahminini gösterir. Köşegen doğru tahminlerdir.</p>
+
+<div class="matris-blok">
+<div class="matris-baslik">baseline_cnn — test accuracy %81,00 (570 hata)</div>
+<div class="matris-alt">Kırmızı: 30+ hatalı tahmin &nbsp;·&nbsp; Sarı: 10–29 hatalı tahmin</div>
+<table class="cm">
+<thead><tr><th class="kose">gerçek \ tahmin</th><th>buildings</th><th>forest</th>
+<th>glacier</th><th>mountain</th><th>sea</th><th>street</th><th>toplam</th></tr></thead>
+<tbody>
+<tr><th class="satir">buildings</th><td class="dogru">373</td><td>4</td><td>5</td><td>9</td>
+    <td>8</td><td class="agir">38</td><td>437</td></tr>
+<tr><th class="satir">forest</th><td class="orta">17</td><td class="dogru">411</td><td>3</td>
+    <td>5</td><td>1</td><td class="agir">37</td><td>474</td></tr>
+<tr><th class="satir">glacier</th><td class="orta">16</td><td>2</td><td class="dogru">415</td>
+    <td class="agir">74</td><td class="agir">39</td><td>7</td><td>553</td></tr>
+<tr><th class="satir">mountain</th><td class="orta">12</td><td>3</td><td class="agir">63</td>
+    <td class="dogru">423</td><td class="orta">22</td><td>2</td><td>525</td></tr>
+<tr><th class="satir">sea</th><td class="orta">15</td><td>2</td><td class="agir">30</td>
+    <td class="agir">37</td><td class="dogru">419</td><td>7</td><td>510</td></tr>
+<tr><th class="satir">street</th><td class="agir">95</td><td>5</td><td>1</td><td>3</td>
+    <td>8</td><td class="dogru">389</td><td>501</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="matris-blok">
+<div class="matris-baslik">EfficientNetB0_ft — test accuracy %94,33 (170 hata)</div>
+<div class="matris-alt">Aynı renk eşikleri</div>
+<table class="cm">
+<thead><tr><th class="kose">gerçek \ tahmin</th><th>buildings</th><th>forest</th>
+<th>glacier</th><th>mountain</th><th>sea</th><th>street</th><th>toplam</th></tr></thead>
+<tbody>
+<tr><th class="satir">buildings</th><td class="dogru">409</td><td>1</td>
+    <td class="sifir">.</td><td class="sifir">.</td><td>1</td><td class="orta">26</td>
+    <td>437</td></tr>
+<tr><th class="satir">forest</th><td class="sifir">.</td><td class="dogru">473</td><td>1</td>
+    <td class="sifir">.</td><td class="sifir">.</td><td class="sifir">.</td><td>474</td></tr>
+<tr><th class="satir">glacier</th><td>1</td><td>2</td><td class="dogru">492</td>
+    <td class="agir">45</td><td class="orta">12</td><td>1</td><td>553</td></tr>
+<tr><th class="satir">mountain</th><td class="sifir">.</td><td>2</td><td class="agir">35</td>
+    <td class="dogru">480</td><td>7</td><td>1</td><td>525</td></tr>
+<tr><th class="satir">sea</th><td>4</td><td>1</td><td>4</td><td>3</td>
+    <td class="dogru">498</td><td class="sifir">.</td><td>510</td></tr>
+<tr><th class="satir">street</th><td class="orta">20</td><td class="sifir">.</td><td>1</td>
+    <td class="sifir">.</td><td>2</td><td class="dogru">478</td><td>501</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>En çok karışan çiftler</h3>
+
+<table class="veri genis">
+<thead><tr><th>Sınıf çifti (iki yön toplamı)</th><th>baseline</th><th>EfficientNetB0_ft</th>
+<th>Azalma</th><th>baseline'da<br>hataların %'si</th>
+<th>en iyide<br>hataların %'si</th></tr></thead>
+<tbody>
+<tr class="vurgu-kotu"><td class="ilk">glacier ↔ mountain</td><td>137</td><td>80</td>
+    <td class="fark">−41,6%</td><td>24,0%</td><td class="kotu"><b>47,1%</b></td></tr>
+<tr><td class="ilk">street ↔ buildings</td><td>133</td><td>46</td>
+    <td class="fark">−65,4%</td><td>23,3%</td><td>27,1%</td></tr>
+<tr><td class="ilk">glacier ↔ sea</td><td>69</td><td>16</td>
+    <td class="fark">−76,8%</td><td>12,1%</td><td>9,4%</td></tr>
+<tr><td class="ilk">mountain ↔ sea</td><td>59</td><td>10</td>
+    <td class="fark">−83,1%</td><td>10,4%</td><td>5,9%</td></tr>
+<tr><td class="ilk">forest ↔ street</td><td>42</td><td>0</td>
+    <td class="fark">−100%</td><td>7,4%</td><td>0,0%</td></tr>
+<tr><td class="ilk"><b>Toplam hata</b></td><td><b>570</b></td><td><b>170</b></td>
+    <td class="fark"><b>−70,2%</b></td><td>100%</td><td>100%</td></tr>
+</tbody>
+</table>
+
+<div class="bulgu">
+<b>Model önce "kolay" hataları temizledi.</b> forest ↔ street karışması tamamen bitti
+(42 → 0), mountain ↔ sea %83 azaldı, glacier ↔ sea %77 azaldı. street ↔ buildings de %65
+azaldı — baseline'da sokak görüntülerinin %19'u bina sanılıyordu, artık %4'ü.
+</div>
+
+<div class="uyari">
+<b>Kalan hata iki çiftte yoğunlaştı.</b> Mutlak sayı 137'den 80'e düşmesine rağmen
+glacier ↔ mountain karışması artık <b>kalan hataların %47,1'i</b> (baseline'da %24,0'tı).
+İki çift birlikte kalan hataların <b>%74,1'ini</b> oluşturuyor.
+<br><br>
+Bu büyük ölçüde <b>etiket belirsizliğidir, model kusuru değil</b>: buzul zaten dağ üzerinde
+bulunur, karlı bir dağ fotoğrafının "glacier" mi "mountain" mı olduğu insan için de
+tartışmalıdır. Aynı şekilde bina fotoğrafının çerçevesinde sokak, sokak fotoğrafında bina
+görünür. Bu iki çift, bu veri setinde ulaşılabilecek accuracy'nin üst sınırını belirliyor.
+<br><br>
+Pratik sonucu: <b>bundan sonraki iyileştirme çabası bu iki çifte odaklanmalı</b> — genel
+augmentation veya daha büyük model artırımı kalan hataların yalnızca %26'sına dokunur.
+</div>
+
+<div class="sayfa-kes"></div>
+<h2>Sınıf Bazlı Değişim</h2>
+
+<table class="veri genis">
+<thead><tr><th rowspan="2">Sınıf</th><th rowspan="2">Test<br>desteği</th>
+<th colspan="2">Precision</th><th colspan="2">Recall</th>
+<th colspan="3">F1</th></tr>
+<tr><th>baseline</th><th>en iyi</th><th>baseline</th><th>en iyi</th>
+<th>baseline</th><th>en iyi</th><th>fark</th></tr></thead>
+<tbody>
+<tr class="vurgu-iyi"><td class="ilk">buildings</td><td>437</td><td>70,64</td><td>94,24</td>
+    <td>85,35</td><td>93,59</td><td>77,31</td><td>93,92</td>
+    <td class="fark"><b>+16,61</b></td></tr>
+<tr><td class="ilk">street</td><td>501</td><td>81,04</td><td>94,47</td><td>77,64</td>
+    <td>95,41</td><td>79,31</td><td>94,94</td><td class="fark">+15,63</td></tr>
+<tr><td class="ilk">sea</td><td>510</td><td>84,31</td><td>95,77</td><td>82,16</td>
+    <td>97,65</td><td>83,22</td><td>96,70</td><td class="fark">+13,48</td></tr>
+<tr><td class="ilk">glacier</td><td>553</td><td>80,27</td><td>92,31</td><td>75,05</td>
+    <td>88,97</td><td>77,57</td><td>90,61</td><td class="fark">+13,04</td></tr>
+<tr><td class="ilk">mountain</td><td>525</td><td>76,77</td><td>90,91</td><td>80,57</td>
+    <td>91,43</td><td>78,62</td><td>91,17</td><td class="fark">+12,55</td></tr>
+<tr><td class="ilk">forest</td><td>474</td><td>96,25</td><td>98,75</td><td>86,71</td>
+    <td>99,79</td><td>91,23</td><td>99,27</td><td class="fark">+8,04</td></tr>
+<tr><td class="ilk"><b>MACRO</b></td><td><b>3.000</b></td><td><b>81,55</b></td>
+    <td><b>94,41</b></td><td><b>81,25</b></td><td><b>94,47</b></td><td><b>81,21</b></td>
+    <td><b>94,43</b></td><td class="fark"><b>+13,22</b></td></tr>
+</tbody>
+</table>
+
+<div class="bulgu">
+<b>Altı sınıfın tamamı iyileşti</b>, hiçbiri geriye gitmedi. Kazanç 8,04 ile 16,61 puan
+arasında dağılmış — yani iyileştirme belirli bir sınıfı kayırmadı, modelin genel yeteneği
+arttı.
+<br><br>
+En büyük kazanç <b>buildings</b>'te (+16,61), çünkü baseline'ın en zayıf sınıfıydı: precision
+yalnızca %70,64. Bu, sokak görüntülerinin bina olarak tahmin edilmesinden kaynaklanıyordu
+(95 örnek). En küçük kazanç <b>forest</b>'ta (+8,04), çünkü zaten en iyi sınıftı (%91,23) ve
+tavana yaklaştı — 474 test görüntüsünden yalnızca 1'i yanlış (%99,79 recall).
+</div>
+
+<h3>Precision ve recall dengesi</h3>
+
+<p>Görev 2'de precision ile recall'ün zıt yönlerde sapabildiği ve F1'in bunu gizleyebildiği
+gösterilmişti. Burada durum farklı: sınıflar dengeli olduğu için baseline'da bile macro
+precision (%81,55) ile recall (%81,25) birbirine çok yakın. En iyi modelde de öyle
+(%94,41 / %94,47).</p>
+
+<p>Tek dikkat çeken sapma baseline'ın <b>buildings</b> sınıfında: precision %70,64, recall
+%85,35 — <b>14,71 puan fark</b>. Model bina tahminini fazla cömert kullanıyordu; gerçek
+binaların %85'ini buluyor ama "bina" dediklerinin yalnızca %71'i gerçekten binaydı. En iyi
+modelde bu fark 0,65 puana iniyor (%94,24 / %93,59). <b>Dengeli veride bile sınıf bazlı
+precision/recall ayrımına bakmak gerekiyor</b> — macro ortalama bu asimetriyi tamamen
+gizliyordu.</p>
+
+<div class="sayfa-kes"></div>
+<h2>Genel Çıkarımlar</h2>
+
+<div class="bulgu">
+<b>1. Transfer learning diğer tüm çabaların toplamından fazlasını getirdi.</b>
+13,33 puanlık kazancın 8,30'u tek bir adımdan geliyor. Augmentation taraması, BatchNorm,
+dropout, GAP, AdamW ve OneCycle'dan oluşan dokuz deneylik çalışma toplam 5,03 puan ekledi.
+Pretrained ağırlıklarla başlamak, mimari ve augmentation üzerinde çalışmaktan yaklaşık
+1,7 kat verimliydi — hem de tek bir parametre değişikliğiyle.
+</div>
+
+<div class="bulgu">
+<b>2. Donuk gövde ile 3.078 parametre, sıfırdan eğitilen 11,18 milyonu 6,97 puan geçti.</b>
+Aynı mimari, aynı veri. Fark yalnızca başlangıç ağırlıkları. Küçük veri setlerinde
+(11 bin görüntü) modelin filtreleri sıfırdan keşfetmesini beklemek, hazır filtreleri
+kullanmaktan belirgin biçimde kötü.
+</div>
+
+<div class="bulgu">
+<b>3. Parametrelerin %98,5'i işe yaramıyordu.</b> Flatten sonrası dev FC katmanı Global
+Average Pooling ile değiştirildiğinde parametre 66 kat azaldı ve skor yükseldi. Görev 2'deki
+<i>"büyük model her zaman kazanmıyor"</i> bulgusunun daha keskin doğrulaması.
+</div>
+
+<div class="uyari">
+<b>4. Düzenlileştirme teknikleri toplanabilir değil.</b> Augmentation'ın güçlü profili,
+BatchNorm ve AdamW — üçü de tek başına makul, ama zaten düzenlenmiş bir modele eklendiğinde
+skoru <i>düşürdüler</i>. aug_guclu overfit farkını +3,05'e indirdi ama test skorunu 1,63 puan
+kaybettirdi. Optimum noktayı geçmek, hiç düzenlileştirmemek kadar zararlı olabiliyor.
+</div>
+
+<div class="uyari">
+<b>5. Overfitting kapatıldı ama yerine kapasite darboğazı geldi.</b> Baseline'da train−val
+farkı +16,87'ydi; mim_gap_onecycle'da tam 0,00'a indi. Ama o noktada model artık
+öğrenemiyordu (128 bin parametre). Denge, fine-tune edilen pretrained modellerde bulundu:
+overfit farkı +5,74 ama accuracy %94,33. <b>Sıfır overfit hedef değil</b> — biraz overfit,
+çok daha yüksek skorla birlikte geliyorsa kabul edilebilir.
+</div>
+
+<div class="uyari">
+<b>6. Kalan hatanın %74'ü iki sınıf çiftinde.</b> glacier ↔ mountain (%47,1) ve
+street ↔ buildings (%27,1). Bunlar büyük ölçüde etiket belirsizliğidir — buzul dağ üzerinde
+bulunur, sokak fotoğrafında bina görünür. Genel iyileştirmeler kalan hataların yalnızca
+%26'sına dokunabilir; bundan sonraki çaba bu iki çifte odaklanmalı.
+</div>
+
+<div class="uyari">
+<b>7. Tek koşuluk deneylerde 1,2 puanlık gürültü var.</b> Birebir aynı konfigürasyon
+(baseline_cnn / aug_yok) iki koşuda %81,00 ve %82,23 verdi. Sebep
+<span style="font-family:Consolas,monospace">cudnn.benchmark = True</span>. Bu eşiğin
+altındaki farklar üstünlük kanıtı sayılmamalı — MobileNetV2 (%92,67) ile ResNet18 (%92,80)
+arasındaki 0,13 puan berabere okunmalıdır. Görev 1 ve 2'deki tüm deneyler de tek koşuydu;
+aynı belirsizlik orada da vardı ama ölçülmemişti.
+</div>
+
+<div class="kutu">
+<b>8. Pretrained modellerde 15 epoch fazla, sıfırdan eğitimde az.</b> EfficientNetB0 tek
+epoch sonunda %92,55'e ulaşıyor — 1. ve 2. adımdaki dokuz deneyin 15 epoch'luk sonucundan
+daha iyi. Fine-tune edilen ResNet18 ve MobileNetV2 ise epoch 5-6'da tepe yapıp plato
+çiziyor. Buna karşılık sıfırdan eğitilen modeller epoch 15'te hâlâ öğrenmekteydi. Epoch
+bütçesi konfigürasyona göre ayarlanmalıydı; karşılaştırma adil kalsın diye sabit tutuldu.
+</div>
+
+<h3>Görevin sorusuna cevap</h3>
+
+<div class="kutu">
+<table class="veri" style="width:100%">
+<thead><tr><th></th><th>Deney</th><th>Test accuracy</th><th>Test F1 (macro)</th>
+<th>Test hatası</th></tr></thead>
+<tbody>
+<tr><td class="ilk">İlk sonuç</td><td class="ilk">baseline_cnn</td><td>%81,00</td>
+    <td>%81,21</td><td>570 / 3.000</td></tr>
+<tr><td class="ilk">En iyi sonuç</td><td class="ilk">EfficientNetB0_ft</td><td>%94,33</td>
+    <td>%94,43</td><td>170 / 3.000</td></tr>
+<tr class="vurgu-iyi"><td class="ilk"><b>Kazanç</b></td><td class="ilk">—</td>
+    <td class="fark"><b>+13,33 puan</b></td><td class="fark"><b>+13,22 puan</b></td>
+    <td class="fark"><b>−%70,2 hata</b></td></tr>
+</tbody>
+</table>
+Skor ilk sonuca kıyasla yükselmiştir. Yükselme tek bir sıçramayla değil, <b>üç aşamalı ve her
+aşamada ölçülmüş</b> bir zincirle sağlanmıştır. Aşamaların katkıları eşit değildir ve hangi
+aksiyonun ne kadar getirdiği ayrı ayrı raporlanmıştır. İyileştirme kararlarının tamamı
+validation setinde verilmiş, test seti her konfigürasyon için yalnızca bir kez ölçülmüştür.
+</div>
+
+<h3>Bundan sonrası</h3>
+
+<ul class="liste">
+<li><b>Girdi boyutunu 224 × 224'e çıkarmak.</b> Pretrained modeller bu boyutta eğitildi;
+128 × 128 kullanmak transfer learning'in bir kısmını israf ediyor. Muhtemelen en kolay
+ek kazanç.</li>
+<li><b>glacier ↔ mountain çiftine odaklanmak.</b> Kalan hatanın %47'si burada. Bu iki sınıfa
+özel augmentation, ya da iki aşamalı sınıflandırma (önce altı sınıf, karışan çift için ikinci
+bir model) denenebilir.</li>
+<li><b>Fine-tune için epoch bütçesini düşürüp augmentation'ı artırmak.</b> Fine-tune modelleri
+epoch 5-6'da tepe yapıp train accuracy'yi %99,7'ye çıkarıyor; bu bütçenin bir kısmı daha
+güçlü düzenlileştirmeye ayrılabilir.</li>
+<li><b>Kritik karşılaştırmaları birden fazla seed ile tekrarlamak.</b> 1,2 puanlık gürültü
+ölçüldü; en azından en iyi üç konfigürasyon 3 seed ile koşulup ortalama ± standart sapma
+raporlanmalı.</li>
+</ul>
+
+<div class="altbilgi">
+Görev 3 — Intel Image Classification (Kaggle). 15 eğitim, toplam 47,1 dakika,
+NVIDIA GeForce RTX 4060 Laptop GPU. Tüm deneylerde seed 27, 15 epoch, batch 64,
+girdi 128 × 128 × 3. Ham veriler: sonuclar_gorev3.csv, sinif_bazli_gorev3.csv,
+epoch_gecmisi_*.csv, confusion/*.csv.
+</div>

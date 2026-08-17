@@ -1,5 +1,6 @@
-# MNIST veri seti - scriptler ilk calistirmada otomatik indiriyor,
-# repoda tutmaya gerek yok (~64 MB)
+# Veri setleri - repoda tutulmaz
+#   MNIST  : scriptler ilk calistirmada otomatik indiriyor (~64 MB)
+#   Intel  : Kaggle'dan indirilir, README'deki komut (~346 MB)
 data/
 kayitlar/data/
 
