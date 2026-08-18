@@ -64,13 +64,15 @@ Sonuçlar `kayitlar/gorev1/` ve `kayitlar/gorev2/` altına CSV olarak yazılır.
 
 ## Görev 1 — Mimari ve Dropout Taraması
 
-| Script | İçerik |
-|---|---|
-| `tek_noron.py` | 2 girdi → 3 nöron, sigmoid / ReLU / tanh / softmax çıktılarının elle hesabı |
-| `sinir_agi.py` | NumPy ile forward, BCE loss, backward, SGD; XOR üzerinde eğitim |
-| `egitim_no_cnn.py` | MLP: 1/2/4/6 gizli katman × dropout 0 / 0.1 / 0.3 / 0.5 |
-| `egitim_cnn.py` | CNN: kanal sayısı ve conv katman derinliği × dropout taraması |
-| `egitim_cnn_uzun.py` | (64, 128, 256) + BatchNorm + augmentation + OneCycle, 50 epoch |
+
+| Script               | İçerik                                                                      |
+| -------------------- | --------------------------------------------------------------------------- |
+| `tek_noron.py`       | 2 girdi → 3 nöron, sigmoid / ReLU / tanh / softmax çıktılarının elle hesabı |
+| `sinir_agi.py`       | NumPy ile forward, BCE loss, backward, SGD; XOR üzerinde eğitim             |
+| `egitim_no_cnn.py`   | MLP: 1/2/4/6 gizli katman × dropout 0 / 0.1 / 0.3 / 0.5                     |
+| `egitim_cnn.py`      | CNN: kanal sayısı ve conv katman derinliği × dropout taraması               |
+| `egitim_cnn_uzun.py` | (64, 128, 256) + BatchNorm + augmentation + OneCycle, 50 epoch              |
+
 
 Güçlü CNN 50 epoch sonunda **%99.66–99.67** accuracy'ye ulaşıyor.
 
@@ -78,21 +80,25 @@ Güçlü CNN 50 epoch sonunda **%99.66–99.67** accuracy'ye ulaşıyor.
 
 Toplam **48 eğitim**, hepsi seed 27 / 10 epoch / batch 128 / Adam lr 0.001 ile.
 
-| Script | Deney | Ne yapıyor |
-|---|---|---|
-| `egitim_veri_azalt.py` | 20 | Dengeli alt kümeler (1.000 / 3.000 / 5.000 / 10.000 / 60.000) × 4 konfigürasyon |
-| `egitim_dengesiz_siniflar.py` | 12 | 3 dengesizlik profili × 4 konfigürasyon |
-| `egitim_hazir_modeller.py` | 16 | ResNet18 ve MobileNetV2, aynı düzende (28×28 gri → 32×32×3, sıfırdan eğitim) |
+
+| Script                        | Deney | Ne yapıyor                                                                      |
+| ----------------------------- | ----- | ------------------------------------------------------------------------------- |
+| `egitim_veri_azalt.py`        | 20    | Dengeli alt kümeler (1.000 / 3.000 / 5.000 / 10.000 / 60.000) × 4 konfigürasyon |
+| `egitim_dengesiz_siniflar.py` | 12    | 3 dengesizlik profili × 4 konfigürasyon                                         |
+| `egitim_hazir_modeller.py`    | 16    | ResNet18 ve MobileNetV2, aynı düzende (28×28 gri → 32×32×3, sıfırdan eğitim)    |
+
 
 Sınıf grupları: **çoğunluk** 0, 1 — **orta** 2, 3, 4, 7, 9 — **azınlık** 5, 6, 8.
 
 Dengesizlik profilleri:
 
-| Profil | Çoğunluk | Orta | Azınlık | Toplam | Oran |
-|---|---|---|---|---|---|
-| `P1_pdf` | 3.000 | 500 | 150 | 8.950 | 20:1 |
-| `P2_agir` | 3.000 | 300 | 100 | 7.800 | 30:1 |
-| `P3_5k` | 1.500 | 300 | 120 | 4.860 | 12.5:1 |
+
+| Profil    | Çoğunluk | Orta | Azınlık | Toplam | Oran   |
+| --------- | -------- | ---- | ------- | ------ | ------ |
+| `P1_pdf`  | 3.000    | 500  | 150     | 8.950  | 20:1   |
+| `P2_agir` | 3.000    | 300  | 100     | 7.800  | 30:1   |
+| `P3_5k`   | 1.500    | 300  | 120     | 4.860  | 12.5:1 |
+
 
 Her deney için accuracy, macro precision / recall / F1, azınlık recall, sınıf bazlı metrikler ve 10×10 confusion matrix kaydedilir.
 
@@ -104,12 +110,14 @@ Görüntülerin %99.8'i 150×150 ama hepsi değil (150×113 gibi kareler var). B
 
 **Deney zinciri.** Her aşama bir öncekinin üstüne tek bir şey ekler; model / epoch / seed sabit tutulur ki skordaki değişim başka bir şeye atfedilemesin.
 
-| Script | Deney | Ne değişiyor |
-|---|---|---|
-| `egitim_baseline.py` | 1 | Basit CNN, augmentation / BatchNorm / dropout / scheduler **yok** |
-| `egitim_augmentation.py` | 4 | Augmentation profili: yok / hafif / orta / güçlü |
-| `egitim_mimari.py` | 5 | BatchNorm → dropout → Global Average Pooling → AdamW → OneCycle |
-| `egitim_transfer.py` | 5 | ImageNet ön eğitimi: sıfırdan / donuk gövde / fine-tune × 3 mimari |
+
+| Script                   | Deney | Ne değişiyor                                                       |
+| ------------------------ | ----- | ------------------------------------------------------------------ |
+| `egitim_baseline.py`     | 1     | Basit CNN, augmentation / BatchNorm / dropout / scheduler **yok**  |
+| `egitim_augmentation.py` | 4     | Augmentation profili: yok / hafif / orta / güçlü                   |
+| `egitim_mimari.py`       | 5     | BatchNorm → dropout → Global Average Pooling → AdamW → OneCycle    |
+| `egitim_transfer.py`     | 5     | ImageNet ön eğitimi: sıfırdan / donuk gövde / fine-tune × 3 mimari |
+
 
 Baseline bilerek zayıf kurulmuştur. Amaç iyi bir ilk skor değil, sonraki adımların neyi düzelttiğini ölçebilmek. Sonuç beklendiği gibi: **test %81.00, train/val farkı +16.87 puan** — yani model ezberliyor.
 
@@ -119,12 +127,14 @@ Tüm scriptler ortak `kayitlar/gorev3/sonuclar_gorev3.csv` dosyasına yazar; ayn
 
 **Sonuç.** 15 deney, toplam 47.1 dakika. Aşama aşama ilerleme (her aşamanın kazananı validation'a göre seçilmiştir):
 
-| Aşama | Kazanan | Test Accuracy | Overfit farkı | Baseline'a göre |
-|---|---|---:|---:|---:|
-| Baseline | `baseline_cnn` | %81.00 | +16.87 | — |
-| 1. Augmentation | `aug_orta` | %84.50 | +8.05 | +3.50 |
-| 2. Mimari | `mim_gap_onecycle` | %86.03 | 0.00 | +5.03 |
-| **3. Transfer** | **`EfficientNetB0_ft`** | **%94.33** | +5.74 | **+13.33** |
+
+| Aşama           | Kazanan             | Test Accuracy | Overfit farkı | Baseline'a göre |
+| --------------- | ------------------- | ------------- | ------------- | --------------- |
+| Baseline        | `baseline_cnn`      | %81.00        | +16.87        | —               |
+| 1. Augmentation | `aug_orta`          | %84.50        | +8.05         | +3.50           |
+| 2. Mimari       | `mim_gap_onecycle`  | %86.03        | 0.00          | +5.03           |
+| **3. Transfer** | `EfficientNetB0_ft` | **%94.33**    | +5.74         | **+13.33**      |
+
 
 Test hatası 570 örnekten 170 örneğe indi (**%70.2 hata azalması**).
 
@@ -138,7 +148,7 @@ Test hatası 570 örnekten 170 örneğe indi (**%70.2 hata azalması**).
 
 **Model seçimi veri miktarına bağlı.** 60.000 örnekte sıralama CNN_d03 > ResNet18 > MobileNetV2 > MLP iken, 1.000 örnekte ResNet18 > MLP > CNN > MobileNetV2'ye dönüyor. Tek bir veri boyutunda yapılan karşılaştırma yanıltıcı.
 
-**Büyük model her zaman kazanmıyor.** Tam veri setinde 30 bin parametrelik basit CNN (%99.12), 11 milyon parametreli ResNet18'i (%98.91) geçiyor.
+**Büyük model her zaman kazanmıyor.** Tam veri setinde 206.922 parametrelik basit CNN (%99.12), 11.181.642 parametreli ResNet18'i (%98.91) geçiyor — 54 kat boyut farkına rağmen.
 
 **GPU her modelde hızlandırmıyor.** MLP'de kazanç ≈1.0× (darboğaz hesaplama değil, veri yükleme); CNN'de 1.8×.
 
@@ -155,8 +165,11 @@ Test hatası 570 örnekten 170 örneğe indi (**%70.2 hata azalması**).
 **Tek koşuluk deneylerde 1.2 puanlık gürültü var — ölçüldü.** Birebir aynı konfigürasyon (`baseline_cnn` / `aug_yok`) iki koşuda %81.00 ve %82.23 verdi. Sebep `cudnn.benchmark = True`. Bu eşiğin altındaki farklar üstünlük kanıtı sayılmamalı. Görev 1 ve 2'deki deneyler de tek koşuydu; aynı belirsizlik orada da vardı ama ölçülmemişti.
 
 Ayrıntılı raporlar:
-- [`kayitlar/gorev2/rapor_gorev2.html`](kayitlar/gorev2/rapor_gorev2.html) — 48 deneyin tam tabloları, karşılaştırmalar ve confusion matrix analizleri. PDF sürümü aynı klasörde.
-- [`kayitlar/gorev3/rapor_gorev3.html`](kayitlar/gorev3/rapor_gorev3.html) — 15 deneyin tabloları, aşama aşama kazanç, confusion matrix ve sınıf bazlı analizler.
+
+- `[kayitlar/gorev2/rapor_gorev2.html](kayitlar/gorev2/rapor_gorev2.html)` — 48 deneyin tam tabloları, karşılaştırmalar ve confusion matrix analizleri. PDF sürümü aynı klasörde.
+- `[kayitlar/gorev3/rapor_gorev3.html](kayitlar/gorev3/rapor_gorev3.html)` — 15 deneyin tabloları, aşama aşama kazanç, confusion matrix ve sınıf bazlı analizler.
+
+
 
 ## Klasör Yapısı
 
@@ -180,8 +193,11 @@ kayitlar/
 csvler/                     eski koşuların sonuçları (arşiv)
 ```
 
+
+
 ## Notlar
 
 - Tüm rastgelelik kaynakları seed 27 ile sabitlenmiştir; her model aynı başlangıç ağırlıklarıyla kurulur.
 - `csvler/` klasörü scriptlerin daha eski bir sürümüyle alınmış, konfigürasyon adları farklı olan tam koşuları içerir; güncel scriptler bu klasöre yazmaz.
 - Metrikler tek geçişte confusion matrix'ten türetilir (`metricler_hesapla`), bu yüzden her epoch sonunda tam test seti ölçümü almanın maliyeti düşüktür.
+
