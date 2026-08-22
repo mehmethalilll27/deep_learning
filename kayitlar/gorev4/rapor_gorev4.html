@@ -1,0 +1,771 @@
+<meta charset="utf-8">
+<title>Deney Sonuçları Raporu — Uydu Görüntülerinde Su Kütlesi Segmentasyonu</title>
+<style>
+@page { size: A4; margin: 18mm 15mm 16mm 15mm; }
+* { box-sizing: border-box; }
+body { font-family: "Segoe UI", Calibri, Arial, sans-serif; font-size: 10pt;
+       color: #222; line-height: 1.5; margin: 0; }
+h1 { font-size: 21pt; color: #1F3864; margin: 0 0 2px 0; letter-spacing: -.3px; }
+.altbaslik { font-size: 11.5pt; color: #2E5496; font-weight: 600; margin-bottom: 14px; }
+.cizgi { border-bottom: 2px solid #1F3864; margin-bottom: 16px; }
+h2 { font-size: 14pt; color: #1F3864; margin: 26px 0 10px 0;
+      padding-bottom: 4px; border-bottom: 1px solid #cfd8e8; page-break-after: avoid; }
+h3 { font-size: 11.5pt; color: #2E5496; margin: 18px 0 8px 0; page-break-after: avoid; }
+.kutu { background: #eef3fa; border-left: 4px solid #2E5496; padding: 10px 14px;
+        margin: 12px 0; font-size: 9.5pt; }
+.uyari { background: #fdf3ea; border-left: 4px solid #d98032; padding: 10px 14px;
+         margin: 12px 0; font-size: 9.5pt; }
+.bulgu { background: #eef7f0; border-left: 4px solid #3f8f5c; padding: 10px 14px;
+         margin: 12px 0; font-size: 9.5pt; }
+.model-baslik { font-size: 10pt; font-weight: 600; color: #1F3864;
+                margin: 14px 0 5px 0; page-break-after: avoid; }
+table.veri { border-collapse: collapse; width: 92%; margin: 0 0 10px 0; font-size: 9pt;
+             page-break-inside: avoid; }
+table.veri.genis { width: 100%; }
+table.veri th { background: #1F3864; color: #fff; font-weight: 600; padding: 6px 8px;
+                text-align: center; border: 1px solid #1F3864; font-size: 8.5pt; }
+table.veri td { padding: 5px 8px; text-align: center; border: 1px solid #d5dced; }
+table.veri td.ilk { text-align: left; }
+table.veri tbody tr:nth-child(even) td { background: #f6f8fc; }
+tr.vurgu-kotu td { background: #fdeeea !important; }
+tr.vurgu-orta td { background: #fdf6ea !important; }
+tr.vurgu-iyi td { background: #eef7f0 !important; }
+td.kotu { color: #b8321f; font-weight: 600; }
+td.fark { color: #1F3864; }
+td.fark-ters { color: #b8321f; }
+td.ref, tr td.ref { color: #6a7484; font-style: italic; }
+ul.liste { margin: 6px 0 10px 0; padding-left: 20px; font-size: 9.5pt; }
+ul.liste li { margin-bottom: 4px; }
+ol.adimlar { font-size: 9.5pt; }
+.dipnot { font-size: 8.5pt; color: #6a7484; font-style: italic; margin-top: 4px; }
+.sayfa-kes { page-break-before: always; }
+.altbilgi { margin-top: 26px; padding-top: 8px; border-top: 1px solid #d5dced;
+            font-size: 8.5pt; color: #8a919e; font-style: italic; }
+.zincir { font-family: Consolas, "Courier New", monospace; font-size: 9pt;
+          background: #f6f8fc; border: 1px solid #d5dced; padding: 10px 14px; margin: 12px 0; }
+.gorsel-blok { margin: 10px 0 14px 0; page-break-inside: avoid; }
+.gorsel-blok img { width: 100%; border: 1px solid #d5dced; }
+.gorsel-alt { font-size: 8.5pt; color: #6a7484; font-style: italic; margin-top: 3px; }
+.formul { font-family: Consolas, "Courier New", monospace; font-size: 9.5pt;
+          background: #f6f8fc; border: 1px solid #d5dced; padding: 8px 14px;
+          margin: 8px 0; text-align: center; }
+</style>
+
+<h1>Deney Sonuçları Raporu</h1>
+<div class="altbaslik">Görev 4 — Segmentasyon: Maskeli Veri Setinde Model Eğitimi ve Skor Yükseltme</div>
+<div class="cizgi"></div>
+
+<div class="kutu">
+Bu rapor, <b>Görev Belgesi</b>'nde tarif edilen beş adımın uygulanmasıyla elde edilen
+sonuçları içerir. Veri seti olarak <b>Satellite Images of Water Bodies</b> (Kaggle) seçilmiş,
+toplam <b>17 eğitim</b> yapılmıştır: 1 baseline, 4 loss, 4 augmentation, 4 encoder,
+4 mimari deneyi. Toplam eğitim süresi <b>145,8 dakika</b> (RTX 4060 Laptop GPU).
+<br><br>
+Belgenin sorduğu soru — <i>"skor ilk sonuca kıyasla yükseldi mi?"</i> — şu şekilde
+cevaplanmıştır: baseline <b>%71,28 IoU / %83,23 Dice</b> ile başlamış, en iyi konfigürasyon
+<b>%82,75 IoU / %90,56 Dice</b>'a ulaşmıştır. <b>Kazanç: +11,47 puan IoU, +7,33 puan Dice.</b>
+<br><br>
+Belgenin ısrarla belirttiği <i>"yalnızca accuracy yeterli değildir"</i> uyarısı bu çalışmada
+sayısal olarak doğrulanmıştır: aynı iyileştirme <b>piksel doğruluğunda yalnızca 4,13 puan</b>
+görünürken <b>IoU'da 11,47 puan</b> görünmektedir.
+</div>
+
+<h2>Veri Seti ve Deney Kurulumu</h2>
+
+<p>Belgenin iki koşulu vardı: veri seti maske dosyaları içersin ve daha önce çalışılmamış
+olsun. <b>Satellite Images of Water Bodies</b> Sentinel-2 uydu görüntüleri ile bunlara
+birebir eşleşen ikili su maskelerinden oluşur. Görev, her pikseli <i>su</i> veya
+<i>su değil</i> olarak etiketlemektir — yani <b>ikili semantik segmentasyon</b>.</p>
+
+<div class="uyari">
+<b>Görev 3'ün veri seti neden kullanılamadı.</b> Intel Image Classification'ın klasör adları
+<code>seg_train</code> / <code>seg_test</code> / <code>seg_pred</code> olduğu için segmentasyon
+veri seti sanılabiliyor. Kontrol edildiğinde <b>24.335 dosyanın tamamı <code>.jpg</code>
+görüntüdür, tek bir maske dosyası yoktur</b>; "seg" ön eki <i>segment</i> değil
+<i>Kaggle yarışma bölümü</i> anlamındadır. Bu yüzden yeni bir veri seti seçilmiştir.
+</div>
+
+<table class="veri">
+<thead><tr><th>Özellik</th><th>Değer</th></tr></thead>
+<tbody>
+<tr><td class="ilk">Görüntü–maske çifti</td><td>2.841</td></tr>
+<tr><td class="ilk">Görüntü boyutları</td><td>değişken (300 örnekte 298 farklı boyut)</td></tr>
+<tr><td class="ilk">Eğitimde kullanılan boyut</td><td>256 × 256</td></tr>
+<tr><td class="ilk">Ortalama su oranı</td><td>%32,89</td></tr>
+<tr><td class="ilk">Su oranı aralığı</td><td>%2,00 – %100,00</td></tr>
+<tr><td class="ilk">Tamamen su olan görüntü</td><td>123</td></tr>
+<tr><td class="ilk">Hiç su içermeyen görüntü</td><td>0</td></tr>
+</tbody>
+</table>
+
+<div class="bulgu">
+<b>Sınıf dengesizliği ılımlı.</b> Su pikselleri ortalama %32,89. Bu, tıbbi segmentasyonda
+sık görülen %1–2'lik aşırı dengesizlikten çok uzaktır. Bu ölçüm sonradan önemli hale
+gelmiştir: aşırı dengesizlik için tasarlanmış <b>Focal loss</b> bu veri setinde en kötü
+sonucu vermiştir (bkz. Adım A1). Veri setinin özelliğini <i>varsaymak</i> yerine
+<i>ölçmek</i>, yanlış aracı seçmekten korumuştur.
+</div>
+
+<h3>Maskelerin eşiklenmesi zorunluydu</h3>
+
+<p>Maskeler <code>.jpg</code> formatında saklanmış. JPEG kayıplı sıkıştırma yaptığı için
+maskeler <b>ikili değil</b>: örnek olarak <code>water_body_1.jpg</code> maskesinde
+<b>88 farklı piksel değeri</b> bulunur (0 ve 255 baskın, geri kalanı kenar artefaktı).
+Bu değerler doğrudan hedef olarak kullanılsaydı model "0,37 oranında su" gibi anlamsız
+hedeflere öğrenmeye çalışırdı. Tüm maskeler <b>127 eşiğiyle</b> ikiliye çevrilmiştir.</p>
+
+<h3>Yeniden boyutlandırmada maskenin ayrı işlenmesi</h3>
+
+<p>Görüntüler 256 × 256'ya küçültülürken <b>bilinear</b>, maskeler <b>nearest</b>
+interpolasyonla işlenir. <code>albumentations.Resize</code> bunu otomatik yapar. Maske
+bilinear ile küçültülseydi kenarlarda 0,37 gibi ara değerler oluşur, etiketler bozulurdu —
+ve <b>hata mesajı vermeden</b>, yalnızca skoru düşürerek. Aynı ilke augmentation'da da
+geçerlidir: görüntü döndüğünde maske de aynı rastgele parametrelerle dönmek zorundadır.</p>
+
+<div class="uyari">
+<b>Karşılaşılan teknik sorun: OpenCV Türkçe karakterli yolu okuyamıyor.</b> Proje yolu
+<code>…\nöron\…</code> içerdiği için <code>cv2.imread</code> tüm dosyalar için
+<b>sessizce <code>None</code> döndürdü</b> — hata fırlatmadı. Sonuç: 2.841 maskenin
+tamamı "su oranı %0" olarak hesaplandı ve bu değerler önbelleğe yazıldı; katmanlı bölme
+bozuldu. Çözüm, dosyayı Python seviyesinde açıp (<code>np.fromfile</code>) baytları
+çözmek (<code>cv2.imdecode</code>) ve okunamama durumunda <b>istisna fırlatmak</b> oldu.
+Sessiz başarısızlık, gürültülü başarısızlıktan çok daha tehlikelidir.
+</div>
+
+<h3>Katmanlı bölme: su oranına göre</h3>
+
+<p>Görev 3'te bölme sınıf etiketine göre katmanlanmıştı. Segmentasyonda sınıf etiketi
+yoktur; onun yerine <b>her görüntünün su oranı</b> sürekli bir değişkendir. Düz rastgele
+bölmede şans eseri az sulu görüntülerin çoğu teste düşerse skor performansı değil bölmenin
+şansını ölçer. Bu yüzden görüntüler su oranına göre <b>5 kovaya</b> ayrılmış, her kova
+kendi içinde %70 / %15 / %15 bölünmüştür.</p>
+
+<table class="veri genis">
+<thead><tr><th>Su oranı kovası</th><th>Toplam</th><th>Train</th><th>Validation</th><th>Test</th></tr></thead>
+<tbody>
+<tr><td class="ilk">&lt; %10</td><td>414</td><td>290</td><td>62</td><td>62</td></tr>
+<tr><td class="ilk">%10 – %25</td><td>854</td><td>598</td><td>128</td><td>128</td></tr>
+<tr><td class="ilk">%25 – %40</td><td>687</td><td>481</td><td>103</td><td>103</td></tr>
+<tr><td class="ilk">%40 – %60</td><td>551</td><td>385</td><td>83</td><td>83</td></tr>
+<tr><td class="ilk">&gt; %60</td><td>335</td><td>235</td><td>50</td><td>50</td></tr>
+<tr><td class="ilk"><b>Toplam</b></td><td><b>2.841</b></td><td><b>1.989</b></td><td><b>426</b></td><td><b>426</b></td></tr>
+</tbody>
+</table>
+
+<table class="veri">
+<thead><tr><th>Küme</th><th>Görüntü</th><th>Ortalama su oranı</th><th>Medyan</th></tr></thead>
+<tbody>
+<tr><td class="ilk">train</td><td>1.989</td><td>%32,90</td><td>%27,84</td></tr>
+<tr><td class="ilk">validation</td><td>426</td><td>%32,74</td><td>%27,50</td></tr>
+<tr><td class="ilk">test</td><td>426</td><td>%32,94</td><td>%28,42</td></tr>
+</tbody>
+</table>
+<div class="dipnot">Üç kümenin su oranı dağılımı 0,20 puan içinde örtüşüyor — bölme
+başarılı. Validation seti tüm iyileştirme kararlarında kullanılmış, test setine yalnızca
+final raporlamada bakılmıştır (Görev 3'teki test set leakage gerekçesi).</div>
+
+<h3>Tüm deneylerde sabit tutulanlar</h3>
+
+<table class="veri">
+<thead><tr><th>Parametre</th><th>Değer</th><th>Gerekçe</th></tr></thead>
+<tbody>
+<tr><td class="ilk">Epoch</td><td>20</td><td class="ilk">süre / yakınsama dengesi</td></tr>
+<tr><td class="ilk">Batch</td><td>16</td><td class="ilk">256×256'da 8 GB VRAM sınırı</td></tr>
+<tr><td class="ilk">Görüntü boyutu</td><td>256 × 256</td><td class="ilk">tüm deneylerde aynı</td></tr>
+<tr><td class="ilk">Optimizer</td><td>Adam</td><td class="ilk">tek değişken kalsın diye sabit</td></tr>
+<tr><td class="ilk">Eşik</td><td>0,50</td><td class="ilk">sigmoid çıkışını ikiliye çevirme</td></tr>
+<tr><td class="ilk">Seed</td><td>27</td><td class="ilk">her deney başında yeniden kurulur</td></tr>
+<tr><td class="ilk">Normalizasyon</td><td>ImageNet ort./std</td><td class="ilk">A3'te transfer learning verimli olsun diye baştan</td></tr>
+</tbody>
+</table>
+
+<h2 class="sayfa-kes">Neden Piksel Doğruluğu Yetmez: IoU ve Dice</h2>
+
+<p>Belgenin en çok vurguladığı nokta budur. Segmentasyonda <b>piksel doğruluğu</b> her
+pikseli tek tek doğru/yanlış sayar. Bu veri setinde piksellerin %67'si arka plandır;
+model hiç su tahmin etmese bile %67 doğruluk alır. Model gerçekten iyi olduğunda bile
+doğruluk büyük ölçüde arka planın kolay kısmını ölçer.</p>
+
+<div class="formul">
+IoU = kesişim / birleşim &nbsp;&nbsp;&nbsp;&nbsp;
+Dice = 2 × kesişim / (tahmin alanı + gerçek alan)
+</div>
+
+<p>İkisi de yalnızca <b>hedef bölgeye</b> bakar, arka plan doğru bilinmesinden puan
+gelmez. Dice her zaman IoU'dan büyüktür (aynı örtüşmede kesişimi iki kez saydığı için);
+bu yüzden iki çalışma karşılaştırılırken hangisinin raporlandığı mutlaka belirtilmelidir.</p>
+
+<div class="bulgu">
+<b>Bu farkın ölçülmüş hâli.</b> Nihai model baseline'a göre <b>IoU'da 11,47</b>,
+<b>Dice'ta 7,33</b>, <b>piksel doğruluğunda yalnızca 4,13</b> puan kazandırmıştır.
+Sadece piksel doğruluğuna bakılsaydı iyileştirmenin üçte ikisi görünmeyecekti.
+Belgenin uyarısı bu tabloyla sayısallaşmaktadır.
+</div>
+
+<h3>IoU iki farklı şekilde hesaplanabilir — ikisi de kaydedildi</h3>
+
+<table class="veri genis">
+<thead><tr><th>Hesap biçimi</th><th>Nasıl</th><th>Ne ölçer</th><th>Baseline</th><th>Nihai</th></tr></thead>
+<tbody>
+<tr><td class="ilk">Veri seti geneli</td><td class="ilk">tüm kesişimler ve birleşimler toplanıp bölünür</td>
+    <td class="ilk">büyük su kütleleri ağırlıklı, daha kararlı</td><td>%71,28</td><td>%82,75</td></tr>
+<tr><td class="ilk">Görüntü başına</td><td class="ilk">her görüntü için ayrı hesaplanıp ortalanır</td>
+    <td class="ilk">küçük su kütleli görüntüler eşit ağırlıkta, daha sert</td><td>%68,47</td><td>%79,25</td></tr>
+</tbody>
+</table>
+<div class="dipnot">İkisi arasındaki 3–4 puanlık fark tesadüf değil: görüntü başına hesap,
+küçük su kütlelerinde yapılan hataları cezalandırır. Literatürde ikisi de "IoU" adıyla
+raporlanır; hangisinin kullanıldığını belirtmemek yaygın bir karşılaştırma hatasıdır.</div>
+
+<h2>Ölçüm Gürültüsü: 2,33 Puanlık Eşik</h2>
+
+<p>Görev 3'te aynı konfigürasyonun iki koşusu arasında 1,23 puanlık fark ölçülmüş ve
+bunun altındaki farklar yorumlanmamıştı. Bu görevde aynı kontrol <b>üç kez</b> tekrarlandı.
+Deney tasarımı gereği bazı konfigürasyonlar iki farklı script'te birebir tekrarlanıyor;
+bu tekrarlar bedava bir gürültü ölçümü sağladı.</p>
+
+<table class="veri genis">
+<thead><tr><th>Birebir aynı konfigürasyon</th><th>Koşu A</th><th>Koşu B</th>
+<th>Test IoU farkı</th><th>Val IoU farkı</th></tr></thead>
+<tbody>
+<tr><td class="ilk">UNet + BCE + aug yok</td><td class="ilk">baseline_unet</td>
+    <td class="ilk">loss_BCE</td><td>0,14</td><td>0,33</td></tr>
+<tr><td class="ilk">UNet + effnet-b0 pretrained</td><td class="ilk">enc_efficientnet_b0_pretrained</td>
+    <td class="ilk">mim_Unet</td><td>0,95</td><td>0,32</td></tr>
+<tr class="vurgu-kotu"><td class="ilk">UNet + BCE+Dice + aug yok</td><td class="ilk">loss_BCE_Dice</td>
+    <td class="ilk">aug_yok</td><td><b>2,33</b></td><td><b>3,24</b></td></tr>
+</tbody>
+</table>
+
+<p>Kaynak <code>cudnn.benchmark = True</code> ayarı ve CUDA çekirdeklerinin deterministik
+olmayan toplama sırasıdır. Her epoch'ta biriken küçük farklar 20 epoch sonunda birkaç
+puana ulaşabilir. Ayarın kapatılması eğitimi belirgin biçimde yavaşlatacağı için tercih
+edilmemiş, bunun yerine gürültü <b>ölçülüp raporlanmıştır</b>.</p>
+
+<div class="uyari">
+<b>Bu raporun temel kuralı.</b> Test IoU'da <b>2,33 puandan</b>, validation IoU'da
+<b>3,24 puandan</b> küçük hiçbir fark "iyileştirme" olarak yorumlanmamıştır. İlk üç
+adımın (loss, augmentation, mimari) sonuçlarının büyük kısmı bu eşiğin altında kalmıştır
+ve raporda böyle belirtilmiştir. <b>Kazanan uydurulmamış, ölçüm karar veremediğinde
+karar verilemediği yazılmıştır.</b>
+</div>
+
+<h2 class="sayfa-kes">Adım 1 — Baseline: Sıfırdan U-Net</h2>
+
+<p>Baseline'ın işlevi iyi olmak değil, <b>ölçüm sıfır noktası</b> olmaktır. Bu yüzden
+kasıtlı olarak sade tutulmuştur: sıfırdan yazılmış U-Net, BCE loss, augmentation yok,
+scheduler yok.</p>
+
+<table class="veri">
+<thead><tr><th>Bileşen</th><th>Yapı</th></tr></thead>
+<tbody>
+<tr><td class="ilk">Encoder</td><td>4 seviye, kanallar 32 → 64 → 128 → 256</td></tr>
+<tr><td class="ilk">Bottleneck</td><td>512 kanal</td></tr>
+<tr><td class="ilk">Decoder</td><td>4 seviye, <code>ConvTranspose2d</code> ile büyütme</td></tr>
+<tr><td class="ilk">Skip bağlantı</td><td>her seviyede, havuzlamadan önce saklanır</td></tr>
+<tr><td class="ilk">Blok</td><td>conv → BatchNorm → ReLU (×2)</td></tr>
+<tr><td class="ilk"><b>Parametre</b></td><td><b>7.763.041</b></td></tr>
+</tbody>
+</table>
+
+<table class="veri genis">
+<thead><tr><th>Metrik</th><th>Değer</th><th>Metrik</th><th>Değer</th></tr></thead>
+<tbody>
+<tr><td class="ilk">Test IoU</td><td><b>%71,28</b></td><td class="ilk">Precision</td><td>%89,82</td></tr>
+<tr><td class="ilk">Test Dice</td><td><b>%83,23</b></td><td class="ilk">Recall</td><td class="kotu">%77,54</td></tr>
+<tr><td class="ilk">Görüntü başına IoU</td><td>%68,47</td><td class="ilk">Train IoU</td><td>%69,49</td></tr>
+<tr><td class="ilk">Piksel doğruluğu</td><td>%89,71</td><td class="ilk">Overfit farkı</td><td>+0,15</td></tr>
+<tr><td class="ilk">En iyi epoch</td><td>18 / 20</td><td class="ilk">Süre</td><td>645,9 sn</td></tr>
+</tbody>
+</table>
+
+<div class="bulgu">
+<b>Beklenmedik bulgu: overfitting yok, tam tersi.</b> Train IoU (%69,49) test IoU'dan
+(%71,28) <i>düşük</i>. Görev 3'te baseline +16,87 puan overfit etmişti; burada +0,15.
+Sorun ezberleme değil, <b>yetersiz öğrenme</b>. En iyi epoch'un 18/20 olması da modelin
+hâlâ yükselirken durdurulduğunu gösterir. Bu ölçüm, Adım A2'nin (augmentation) sonucunu
+baştan haber vermektedir: kırılacak bir ezber yoksa augmentation'ın kıracak bir şeyi
+de yoktur.
+</div>
+
+<div class="bulgu">
+<b>Model çekingen.</b> Precision %89,82 iken recall %77,54. Yani "su" dediğine
+güvenilebilir ama <b>gerçek suyun %22'sini kaçırıyor</b>. Bu asimetri, sonraki
+adımlarda kazanılan puanın nereden geleceğini belirlemiştir — nihai modelde precision
+1,66, recall <b>12,12</b> puan artmıştır.
+</div>
+
+<h3>Baseline'ın görsel çıktısı</h3>
+
+<div class="gorsel-blok">
+<img src="gorseller/baseline_unet.png" alt="Baseline U-Net tahminleri">
+<div class="gorsel-alt">Baseline U-Net — test setinden su oranı %2,1'den %100'e sıralanmış
+altı örnek. Sütunlar: görüntü | gerçek maske | tahmin | üst üste bindirme.
+Yeşil = doğru su, kırmızı = kaçırılan su, mavi = fazladan su. Kırmızının maviye baskın
+olması modelin çekingenliğinin görsel karşılığıdır.</div>
+</div>
+
+<h2 class="sayfa-kes">Adım A1 — Loss Fonksiyonu</h2>
+
+<p>Segmentasyonun sınıflandırmadan en çok ayrıldığı yer burasıdır. Görev 1–3'te
+CrossEntropy dışında pratik bir seçenek yoktu; segmentasyonda loss seçimi ayrı bir
+tasarım kararıdır. Model, epoch, seed, lr ve augmentation baseline ile aynı tutulmuş,
+yalnızca loss değiştirilmiştir.</p>
+
+<table class="veri genis">
+<thead><tr><th>Loss</th><th>Val IoU</th><th>Test IoU</th><th>Test Dice</th>
+<th>Görüntü-IoU</th><th>Precision</th><th>Recall</th><th>Overfit</th></tr></thead>
+<tbody>
+<tr class="vurgu-iyi"><td class="ilk"><b>BCE+Dice</b></td><td><b>73,37</b></td><td><b>74,25</b></td>
+    <td><b>85,22</b></td><td><b>72,98</b></td><td>86,88</td><td>83,63</td><td>+0,02</td></tr>
+<tr><td class="ilk">BCE</td><td>69,68</td><td>71,42</td><td>83,33</td><td>67,74</td>
+    <td>91,36</td><td class="kotu">76,59</td><td>+0,14</td></tr>
+<tr><td class="ilk">Dice</td><td>67,34</td><td>68,59</td><td>81,37</td><td>67,76</td>
+    <td>81,93</td><td>80,82</td><td>−0,18</td></tr>
+<tr class="vurgu-kotu"><td class="ilk">Focal</td><td>63,42</td><td>63,52</td><td>77,69</td>
+    <td class="kotu">55,64</td><td>94,82</td><td class="kotu">65,80</td><td>−0,86</td></tr>
+</tbody>
+</table>
+
+<p>Dört loss'u aynı modelin dört farklı <b>cesaret ayarı</b> gibi okumak mümkündür.
+Precision/recall sütunu bunu doğrudan gösterir:</p>
+
+<ul class="liste">
+<li><b>Focal en çekingen</b> (precision %94,82 / recall %65,80). Focal loss kolay
+örnekleri bastırıp zorlara odaklanmak için tasarlandı ve <b>ağır sınıf dengesizliği
+varsayar</b>. Bu veri setinde su ortalama %32,89 — dengesizlik ılımlı. Yanlış araç,
+en kötü sonuç. Görüntü başına IoU'da %55,64'e düşmesi, küçük su kütlelerini tamamen
+ıskaladığını gösterir.</li>
+<li><b>BCE de çekingen</b> (%91,36 / %76,59). Her pikseli eşit sayar; arka plan çoğunlukta
+olduğu için model "kara de, güvende ol" davranışına kayar.</li>
+<li><b>Dice cesur ama kaba</b> (%81,93 / %80,82). Doğrudan örtüşmeyi optimize ettiği için
+recall yükselir, ancak piksel düzeyinde denetim vermediği için genel skor düşer.</li>
+<li><b>BCE+Dice ikisini dengeler</b> (%86,88 / %83,63). BCE piksel disiplinini,
+Dice bölge bütünlüğünü sağlar.</li>
+</ul>
+
+<div class="uyari">
+<b>Bu adımın sonucu kısmen gürültü sınırındadır ve öyle raporlanmıştır.</b>
+BCE+Dice ile BCE arasındaki toplam IoU farkı +2,83 puan (test) — eşik 2,33. Dice'ın
+BCE'ye göre dezavantajı (−2,83 test / −2,34 val) ise eşiğin <b>altındadır</b>, yani
+kanıtlanmamıştır. Sağlam olan iki bulgu şunlardır:
+<br>• <b>Focal açık farkla en kötüdür</b> (−7,90 puan test IoU) ve gerekçesi ölçülmüştür.
+<br>• <b>BCE+Dice'ın recall avantajı iki bağımsız koşuda da tutarlıdır</b>: BCE
+%76,59 / %77,54'e karşı BCE+Dice %83,63 / %84,07. Aralıklar hiç örtüşmüyor,
+ortalama fark +6,78 puan.
+<br>Bu iki gerekçeyle BCE+Dice sonraki adımlarda sabitlenmiştir.
+</div>
+
+<h2>Adım A2 — Augmentation</h2>
+
+<p>Segmentasyonda augmentation'ın kritik farkı: <b>görüntü dönerken maske de aynı
+rastgele parametrelerle dönmek zorundadır</b>. <code>albumentations</code> bunu görüntü
+ve maskeyi tek çağrıya alarak otomatik yapar; elle yazılsaydı en sık hata burada olurdu.</p>
+
+<div class="kutu">
+<b>Augmentation seçimi veri setine bağlıdır, kopyalanacak bir liste değildir.</b>
+Bu veri setinde <b>dikey çevirme ve 90° döndürme geçerlidir</b>, çünkü dikey (nadir)
+uydu görüntüsünde "yukarı" diye bir yön yoktur. Görev 3'ün manzara fotoğraflarında
+dikey çevirme yanlış olurdu (baş aşağı dağ yoktur); MNIST'te yatay çevirme bile felaket
+olurdu (aynalanmış 2 artık 2 değildir).
+</div>
+
+<table class="veri genis">
+<thead><tr><th>Profil</th><th>İçerik</th><th>Val IoU</th><th>Test IoU</th>
+<th>Precision</th><th>Recall</th><th>Overfit</th></tr></thead>
+<tbody>
+<tr><td class="ilk">hafif</td><td class="ilk">yatay/dikey çevirme + 90° döndürme</td>
+    <td>70,35</td><td>72,07</td><td>86,33</td><td>81,36</td><td>−0,61</td></tr>
+<tr><td class="ilk">yok</td><td class="ilk">—</td><td>70,13</td><td>71,92</td>
+    <td>83,26</td><td>84,07</td><td>+0,70</td></tr>
+<tr><td class="ilk">orta</td><td class="ilk">hafif + kaydırma/ölçekleme/döndürme + parlaklık-kontrast</td>
+    <td>69,87</td><td>71,52</td><td>84,52</td><td>82,30</td><td>−0,32</td></tr>
+<tr><td class="ilk">guclu</td><td class="ilk">orta + elastik deformasyon + ızgara bozulması</td>
+    <td>69,27</td><td>70,83</td><td>86,84</td><td>79,35</td><td>−0,53</td></tr>
+</tbody>
+</table>
+
+<div class="uyari">
+<b>Dört profilin tamamı 1,08 puanlık bir aralıkta; gürültü eşiği 2,33.</b> Bu tablo
+hiçbir profilin diğerinden iyi olduğunu göstermiyor. <b>Ölçüm karar veremedi.</b>
+</div>
+
+<p>Bu sonuç şaşırtıcı değildir ve mekanizması baştan bellidir: augmentation'ın klasik
+işi ezberi kırmaktır, ancak bu modelde kırılacak ezber yoktu — baseline'da overfit
++0,15, BCE+Dice'ta +0,02. Görev 3'te augmentation 16,87 puanlık overfit'i 8 puana
+indirmişti çünkü orada <b>gerçek bir ezber vardı</b>. Burada var olmayan hastalığa ilaç
+verilmiştir.</p>
+
+<p>Seçim skora değil ilkeye dayandırılmıştır: <b>hafif</b> profil seçilmiştir, çünkü
+çevirme ve 90° döndürme uydu görüntüsünde fiziksel olarak geçerli dönüşümlerdir,
+maliyeti sıfıra yakındır (647,8 sn / 642,6 sn) ve sonraki adımda model gerçekten
+overfit etmeye başlarsa hazırdır. <b>guclu</b> profilin hem validation hem test'te
+sonuncu olması, elastik deformasyonun su kıyılarını fiziksel olarak imkânsız şekillere
+büktüğü hipotezini destekler yönde olsa da tek koşuyla iddia edilemez.</p>
+
+<div class="bulgu">
+<b>Metodolojik ders — bu adım yanlış anda yapıldı.</b> Adım A3'te pretrained encoder
+gelince overfit farkı +0,02'den <b>+6,81</b>'e çıktı; yani ezber <i>sonradan</i> ortaya
+çıktı. "Her adımı sırayla dene" yaklaşımının kör noktası budur: bir adımın etkisi
+kendisinden <i>sonraki</i> adıma bağlı olabilir. Doğru sıralama, augmentation taramasını
+pretrained encoder sabitlendikten sonra yapmak olurdu.
+</div>
+
+<h2 class="sayfa-kes">Adım A3 — Pretrained Encoder <span style="font-size:10pt;color:#3f8f5c">(tek ölçülebilir iyileştirme)</span></h2>
+
+<p>Görev 3'te en büyük kazanç transfer learning'den gelmişti (13,33 puanın 8,30'u).
+Segmentasyonda aynı fikir U-Net'in <b>encoder yarısına</b> uygulanır: encoder aslında
+bir sınıflandırma ağından farksızdır — görüntüyü küçültüp özellik çıkarır. O hâlde
+ImageNet'te eğitilmiş bir ağ doğrudan encoder olarak kullanılabilir; decoder rastgele
+başlar ve sıfırdan öğrenir.</p>
+
+<p>Tablonun ilk satırı kasıtlıdır: <b>aynı mimari</b> (Unet + resnet34), tek farkı
+başlangıç ağırlıklarının rastgele olması. Böylece "kazandıran pretrained mi yoksa
+ResNet mimarisi mi" sorusu ayrışır.</p>
+
+<table class="veri genis">
+<thead><tr><th>Encoder</th><th>Pretrained</th><th>Parametre</th><th>Val IoU</th>
+<th>Test IoU</th><th>Test Dice</th><th>Recall</th><th>Overfit</th><th>Süre</th></tr></thead>
+<tbody>
+<tr class="vurgu-iyi"><td class="ilk"><b>efficientnet-b0</b></td><td>✔</td><td>6.251.469</td>
+    <td><b>80,23</b></td><td><b>81,80</b></td><td><b>89,99</b></td><td>88,41</td>
+    <td>+6,81</td><td>361,8 sn</td></tr>
+<tr><td class="ilk">resnet34</td><td>✔</td><td>24.436.369</td><td>79,79</td><td>81,55</td>
+    <td>89,84</td><td>90,18</td><td>+5,57</td><td>378,4 sn</td></tr>
+<tr><td class="ilk">mobilenet_v2</td><td>✔</td><td>6.628.945</td><td>77,86</td><td>80,22</td>
+    <td>89,02</td><td>88,12</td><td>+6,78</td><td><b>316,2 sn</b></td></tr>
+<tr class="vurgu-kotu"><td class="ilk">resnet34</td><td>✘</td><td>24.436.369</td>
+    <td class="kotu">68,84</td><td class="kotu">69,94</td><td>82,31</td><td>82,95</td>
+    <td>−0,81</td><td>399,4 sn</td></tr>
+</tbody>
+</table>
+
+<div class="bulgu">
+<b>Kontrollü karşılaştırma — aynı mimari, tek fark başlangıç ağırlıkları:</b>
+<br><br>
+<span style="font-size:12pt"><b>%69,94 → %81,55 &nbsp;=&nbsp; +11,61 puan IoU</b></span>
+<br><br>
+Gürültü eşiği 2,33 puan; bu fark onun <b>beş katı</b>. Çalışmadaki dört iyileştirme
+kaldıracından <b>ölçülebilir etki üreten tek kaldıraç budur.</b>
+</div>
+
+<div class="bulgu">
+<b>Sıfırdan resnet34 başarısız oldu ve bu ayrı bir bulgudur.</b> 24,4 milyon parametreyle
+%69,94 aldı; el yazması <b>7,8 milyonluk</b> U-Net aynı koşulda %72,07 almıştı.
+<b>3,1 kat parametre, daha düşük skor.</b> Görev 2'nin "büyük model her zaman kazanmıyor"
+bulgusunun burada çok daha net bir versiyonudur: pretrained ağırlıklar olmadan büyük
+mimari, yalnızca daha zor optimize edilen bir modeldir.
+</div>
+
+<h3>Yakınsama: pretrained model 1. epoch'ta sıfırdan modelin 20. epoch'una eşit</h3>
+
+<table class="veri genis">
+<thead><tr><th>Deney</th><th>Epoch 1</th><th>Epoch 5</th><th>Epoch 10</th><th>Epoch 20</th>
+<th>Val IoU %70'e ulaşma</th><th>%78'e ulaşma</th></tr></thead>
+<tbody>
+<tr><td class="ilk">baseline_unet</td><td>54,72</td><td>62,39</td><td>65,66</td><td>69,35</td>
+    <td>18. epoch</td><td class="ilk">ulaşamadı</td></tr>
+<tr><td class="ilk">aug_hafif (sıfırdan)</td><td>55,27</td><td>60,00</td><td>65,48</td><td>70,35</td>
+    <td>18. epoch</td><td class="ilk">ulaşamadı</td></tr>
+<tr><td class="ilk">enc_resnet34_scratch</td><td>47,29</td><td>63,34</td><td>68,48</td><td>68,84</td>
+    <td>15. epoch</td><td class="ilk">ulaşamadı</td></tr>
+<tr class="vurgu-iyi"><td class="ilk"><b>enc_efficientnet_b0_pretrained</b></td>
+    <td><b>68,99</b></td><td>77,27</td><td>78,48</td><td>80,23</td>
+    <td><b>2. epoch</b></td><td><b>7. epoch</b></td></tr>
+</tbody>
+</table>
+<div class="dipnot">Pretrained model <b>1. epoch sonunda %68,99</b> almıştır — sıfırdan
+eğitilen modellerin <b>20 epoch sonunda</b> ulaştığı seviye. Transfer learning yalnızca
+daha yüksek tavan değil, aynı zamanda çok daha hızlı yakınsama sağlar. Sıfırdan modeller
+hiçbir epoch'ta %78'e ulaşamamıştır.</div>
+
+<p><b>Seçim: efficientnet-b0.</b> resnet34 ile arasındaki fark (test 0,25 / val 0,44 puan)
+gürültünün içindedir, yani skor karar verememektedir. Aynı skoru <b>3,9 kat az
+parametreyle</b> (6,25M / 24,44M) ve daha kısa sürede vermesi kararı belirlemiştir.
+<i>Skor eşitken maliyet karar verir.</i></p>
+
+<h2 class="sayfa-kes">Adım A4 — Segmentasyon Mimarisi</h2>
+
+<p>Loss, augmentation ve encoder sabitlendi; son değişken decoder mimarisinin kendisidir.
+Dördü de aynı efficientnet-b0 encoder'ı kullanır, yalnızca decoder tarafı farklıdır.</p>
+
+<table class="veri genis">
+<thead><tr><th>Mimari</th><th>Fikir</th><th>Parametre</th><th>Val IoU</th>
+<th>Test IoU</th><th>Görüntü-IoU</th><th>Süre</th></tr></thead>
+<tbody>
+<tr class="vurgu-iyi"><td class="ilk"><b>Unet</b></td>
+    <td class="ilk">klasik skip bağlantı</td><td>6.251.469</td>
+    <td><b>79,91</b></td><td>82,75</td><td>79,25</td><td>375,9 sn</td></tr>
+<tr><td class="ilk">UnetPlusPlus</td><td class="ilk">yoğunlaştırılmış skip, ara evrişimler</td>
+    <td>6.569.581</td><td>78,69</td><td><b>82,92</b></td><td>79,26</td><td>542,7 sn</td></tr>
+<tr><td class="ilk">FPN</td><td class="ilk">özellik piramidi, her ölçekten ayrı tahmin</td>
+    <td>5.759.485</td><td>79,58</td><td>81,33</td><td>77,38</td><td><b>285,5 sn</b></td></tr>
+<tr><td class="ilk">DeepLabV3Plus</td><td class="ilk">atrous konvolüsyon, skip yerine geniş bağlam</td>
+    <td>4.907.469</td><td>78,59</td><td>80,38</td><td class="kotu">76,98</td><td>301,7 sn</td></tr>
+</tbody>
+</table>
+
+<div class="uyari">
+<b>Val IoU aralığı 1,32 puan; gürültü eşiği 3,24 (validation).</b> Dört mimari
+istatistiksel olarak eşittir. Decoder seçimi bu veri setinde ölçülebilir bir fark
+yaratmamıştır.
+</div>
+
+<div class="bulgu">
+<b>Çalışma öncesi tahmin yanlış çıktı ve gerekçesi anlaşıldı.</b> Su kütleleri büyük ve
+bütünlüklü olduğu için DeepLabV3+'ın atrous konvolüsyonunun ve FPN'in çok ölçekli
+yapısının avantajlı olacağı öngörülmüştü. İkisi de sonuncu oldu. Gözden kaçan nokta:
+<b>DeepLabV3+'ın ince skip bağlantısı yoktur</b> — sonda 4× tek seferde büyütür, bu yüzden
+sınırlar kaba kalır. Bu veri setinde ise sınır hassasiyeti kritiktir (aşağıdaki kıyı
+halkası örneği). Görüntü başına IoU'da en düşük olması (%76,98) tam bunu gösterir.
+Öngörü, ölçümün yerini tutmamaktadır.
+</div>
+
+<p><b>Nihai seçim: Unet.</b> UnetPlusPlus test IoU'da 0,17 puan önde, ancak validation'da
+1,22 puan geridedir. Seçimi test skoruna bakarak yapmak, Görev 3'ten beri özellikle
+kaçınılan <b>test set leakage</b> olurdu. Üstelik Unet %44 daha hızlıdır (375,9 sn /
+542,7 sn).</p>
+
+<h2>Nihai Sonuç</h2>
+
+<div class="zincir">
+Unet + efficientnet-b0 (ImageNet pretrained) + BCE+Dice loss + hafif augmentation<br>
+6.251.469 parametre &nbsp;|&nbsp; lr 0,0001 &nbsp;|&nbsp; 20 epoch &nbsp;|&nbsp; 375,9 sn
+</div>
+
+<table class="veri genis">
+<thead><tr><th>Metrik</th><th>Baseline</th><th>Nihai</th><th>Kazanç</th></tr></thead>
+<tbody>
+<tr class="vurgu-iyi"><td class="ilk"><b>Test IoU</b></td><td>%71,28</td><td><b>%82,75</b></td>
+    <td class="fark"><b>+11,47</b></td></tr>
+<tr class="vurgu-iyi"><td class="ilk"><b>Test Dice</b></td><td>%83,23</td><td><b>%90,56</b></td>
+    <td class="fark"><b>+7,33</b></td></tr>
+<tr><td class="ilk">Görüntü başına IoU</td><td>%68,47</td><td>%79,25</td><td class="fark">+10,78</td></tr>
+<tr><td class="ilk">Görüntü başına Dice</td><td>%78,51</td><td>%87,04</td><td class="fark">+8,53</td></tr>
+<tr class="vurgu-iyi"><td class="ilk"><b>Recall</b></td><td>%77,54</td><td><b>%89,66</b></td>
+    <td class="fark"><b>+12,12</b></td></tr>
+<tr><td class="ilk">Precision</td><td>%89,82</td><td>%91,48</td><td class="fark">+1,66</td></tr>
+<tr class="vurgu-orta"><td class="ilk">Piksel doğruluğu</td><td>%89,71</td><td>%93,84</td>
+    <td class="fark">+4,13</td></tr>
+</tbody>
+</table>
+
+<div class="bulgu">
+<b>Kazancın kaynağı recall'dur.</b> Precision 1,66 puan artarken recall 12,12 puan
+artmıştır. Yani model <b>kaçırdığı suyu bulmayı</b> öğrenmiştir, su uydurmayı değil.
+Baseline'ın teşhis edilen zaafı (çekingenlik) doğrudan kapanmıştır.
+</div>
+
+<div class="uyari">
+<b>Aynı satırın son üç sütunu, belgenin uyarısının kanıtıdır.</b> Piksel doğruluğu
+%89,71'den %93,84'e çıkmıştır — <b>4,13 puan</b>. Aynı iyileştirme IoU'da
+<b>11,47 puandır</b>. Sadece doğruluk raporlansaydı iyileştirmenin yaklaşık
+<b>üçte ikisi görünmeyecekti</b>.
+</div>
+
+<h2 class="sayfa-kes">Hangi Bölgeler İyi, Hangileri Kötü Segmentleniyor</h2>
+
+<p>Belgenin dördüncü maddesi bunu ayrıca istemektedir. Değerlendirme, test setinden su
+oranı en düşükten en yükseğe sıralanarak seçilen <b>altı sabit örnek</b> üzerinden
+yapılmıştır; aynı indeksler her deneyde kullanıldığı için deneyler arası görsel
+karşılaştırma anlamlıdır.</p>
+
+<table class="veri genis">
+<thead><tr><th>Örnek</th><th>Gerçek su</th><th>Zorluk tipi</th><th>Baseline IoU</th>
+<th>A3 (pretrained)</th><th>Nihai IoU</th><th>Değişim</th></tr></thead>
+<tbody>
+<tr class="vurgu-kotu"><td class="ilk">water_body_7891</td><td>%2,1</td>
+    <td class="ilk">çok küçük, dağınık su lekeleri</td><td>%38,2</td><td>%41,7</td>
+    <td class="kotu">%48,2</td><td class="fark">+10,0</td></tr>
+<tr class="vurgu-iyi"><td class="ilk">water_body_8672</td><td>%12,9</td>
+    <td class="ilk">ince, dallanan nehir kolu</td><td class="kotu">%36,3</td><td>%74,3</td>
+    <td><b>%71,3</b></td><td class="fark"><b>+35,0</b></td></tr>
+<tr><td class="ilk">water_body_811</td><td>%22,4</td>
+    <td class="ilk">kompakt göl, bulanık kıyı</td><td>%67,0</td><td>%69,5</td>
+    <td>%78,2</td><td class="fark">+11,2</td></tr>
+<tr><td class="ilk">water_body_890</td><td>%34,5</td>
+    <td class="ilk">büyük, tek parça, kontrastlı</td><td>%87,1</td><td>%89,5</td>
+    <td><b>%91,0</b></td><td class="fark">+3,9</td></tr>
+<tr class="vurgu-iyi"><td class="ilk">water_body_1093</td><td>%47,9</td>
+    <td class="ilk">sığ kıyı halkası, kademeli sınır</td><td>%67,6</td><td>%83,8</td>
+    <td><b>%85,4</b></td><td class="fark"><b>+17,8</b></td></tr>
+<tr><td class="ilk">water_body_7868</td><td>%100,0</td>
+    <td class="ilk">tamamı su (sığ lagün)</td><td>%62,0</td><td>%88,4</td>
+    <td>%99,9</td><td class="fark">+37,9</td></tr>
+</tbody>
+</table>
+
+<h3>İyi segmentlenen bölgeler</h3>
+<ul class="liste">
+<li><b>Büyük, tek parça, kontrastlı su kütleleri.</b> Baseline bile %87 alıyordu, nihai
+model %91. Bu kategori zaten çözülmüştü; iyileştirmeye yer azdı.</li>
+<li><b>Homojen sahneler.</b> Tamamı su olan görüntüde nihai model %99,9'a ulaşmıştır.
+Baseline'ın %62'de kalması, bu tür sahneleri "fazla iyi görünüyor, olamaz" diye
+reddetmesindendi.</li>
+</ul>
+
+<h3>İyileşen ama hâlâ zayıf bölgeler</h3>
+<ul class="liste">
+<li><b>İnce, dallanan nehir kolları.</b> En büyük kazanç burada: %36,3 → %71,3
+(+35,0 puan). Baseline yalnızca nehrin en geniş yerindeki lekeyi buluyordu; nihai model
+kolları da izliyor. Yine de dar uçlar kaybediliyor.</li>
+<li><b>Sığ kıyı halkaları ve kademeli sınırlar.</b> %67,6 → %85,4. Suyun karaya kademeli
+geçtiği bantlar, maskede keskin sınır olarak etiketlenmiştir; model ise geçişi görür.
+Bu, kısmen <b>etiketin kendisindeki belirsizliktir</b>, tamamen modelin hatası değildir.</li>
+</ul>
+
+<h3>Çözülmeyen bölge</h3>
+<div class="uyari">
+<b>Çok küçük ve dağınık su lekeleri (su oranı &lt; %5) hâlâ bulunamamaktadır.</b>
+water_body_7891'de gerçek su %2,1 iken nihai model %1,3 tahmin ediyor; IoU %48,2.
+Dört iyileştirme adımının hiçbiri bu kategoriyi çözmemiştir. En olası neden
+<b>çözünürlük</b>: görüntü 256 × 256'ya küçültüldüğünde o lekeler birkaç piksele iner
+ve encoder'ın ilk indirgeme adımlarında tamamen kaybolur. Bu, mimari değişikliğiyle
+değil <b>daha yüksek girdi çözünürlüğüyle</b> ele alınabilecek bir sınırlılıktır ve
+bu çalışmanın kapsamı dışında bırakılmıştır.
+</div>
+
+<h3>Nihai modelin görsel çıktısı</h3>
+
+<div class="gorsel-blok">
+<img src="gorseller/mim_Unet.png" alt="Nihai model tahminleri">
+<div class="gorsel-alt">Nihai model (Unet + efficientnet-b0 pretrained) — baseline ile
+<b>aynı altı örnek</b>. Baseline görselindeki kırmızı baskınlığın büyük ölçüde
+kaybolduğu, özellikle 2. satırdaki nehir kolunun ve 5. satırdaki kıyı halkasının artık
+yakalandığı görülmektedir. 1. satırdaki küçük su lekeleri hâlâ bulunamamaktadır.</div>
+</div>
+
+<h2 class="sayfa-kes">Tüm Deneyler</h2>
+
+<table class="veri genis">
+<thead><tr><th>Deney</th><th>Aşama</th><th>Parametre</th><th>Val IoU</th><th>Test IoU</th>
+<th>Test Dice</th><th>Görüntü-IoU</th><th>Piksel Acc</th><th>Prec.</th><th>Recall</th>
+<th>Overfit</th><th>Süre</th></tr></thead>
+<tbody>
+<tr><td class="ilk">baseline_unet</td><td>Baseline</td><td>7.763.041</td><td>69,35</td>
+    <td>71,28</td><td>83,23</td><td>68,47</td><td>89,71</td><td>89,82</td><td>77,54</td>
+    <td>+0,15</td><td>645,9</td></tr>
+<tr><td class="ilk">loss_BCE</td><td>A1</td><td>7.763.041</td><td>69,68</td><td>71,42</td>
+    <td>83,33</td><td>67,74</td><td>89,90</td><td>91,36</td><td>76,59</td><td>+0,14</td><td>649,4</td></tr>
+<tr><td class="ilk">loss_Dice</td><td>A1</td><td>7.763.041</td><td>67,34</td><td>68,59</td>
+    <td>81,37</td><td>67,76</td><td>87,81</td><td>81,93</td><td>80,82</td><td>−0,18</td><td>629,1</td></tr>
+<tr class="vurgu-iyi"><td class="ilk">loss_BCE_Dice</td><td>A1</td><td>7.763.041</td><td>73,37</td>
+    <td>74,25</td><td>85,22</td><td>72,98</td><td>90,45</td><td>86,88</td><td>83,63</td>
+    <td>+0,02</td><td>634,8</td></tr>
+<tr class="vurgu-kotu"><td class="ilk">loss_Focal</td><td>A1</td><td>7.763.041</td><td>63,42</td>
+    <td>63,52</td><td>77,69</td><td>55,64</td><td>87,55</td><td>94,82</td><td>65,80</td>
+    <td>−0,86</td><td>638,1</td></tr>
+<tr><td class="ilk">aug_yok</td><td>A2</td><td>7.763.041</td><td>70,13</td><td>71,92</td>
+    <td>83,67</td><td>70,59</td><td>89,19</td><td>83,26</td><td>84,07</td><td>+0,70</td><td>642,6</td></tr>
+<tr class="vurgu-iyi"><td class="ilk">aug_hafif</td><td>A2</td><td>7.763.041</td><td>70,35</td>
+    <td>72,07</td><td>83,77</td><td>69,59</td><td>89,62</td><td>86,33</td><td>81,36</td>
+    <td>−0,61</td><td>647,8</td></tr>
+<tr><td class="ilk">aug_orta</td><td>A2</td><td>7.763.041</td><td>69,87</td><td>71,52</td>
+    <td>83,39</td><td>70,13</td><td>89,21</td><td>84,52</td><td>82,30</td><td>−0,32</td><td>649,7</td></tr>
+<tr><td class="ilk">aug_guclu</td><td>A2</td><td>7.763.041</td><td>69,27</td><td>70,83</td>
+    <td>82,93</td><td>69,31</td><td>89,24</td><td>86,84</td><td>79,35</td><td>−0,53</td><td>651,8</td></tr>
+<tr class="vurgu-kotu"><td class="ilk">enc_resnet34_scratch</td><td>A3</td><td>24.436.369</td>
+    <td>68,84</td><td>69,94</td><td>82,31</td><td>67,13</td><td>88,26</td><td>81,68</td>
+    <td>82,95</td><td>−0,81</td><td>399,4</td></tr>
+<tr><td class="ilk">enc_resnet34_pretrained</td><td>A3</td><td>24.436.369</td><td>79,79</td>
+    <td>81,55</td><td>89,84</td><td>78,25</td><td>93,28</td><td>89,49</td><td>90,18</td>
+    <td>+5,57</td><td>378,4</td></tr>
+<tr class="vurgu-iyi"><td class="ilk">enc_efficientnet_b0_pretrained</td><td>A3</td>
+    <td>6.251.469</td><td>80,23</td><td>81,80</td><td>89,99</td><td>78,59</td><td>93,52</td>
+    <td>91,64</td><td>88,41</td><td>+6,81</td><td>361,8</td></tr>
+<tr><td class="ilk">enc_mobilenet_v2_pretrained</td><td>A3</td><td>6.628.945</td><td>77,86</td>
+    <td>80,22</td><td>89,02</td><td>77,32</td><td>92,84</td><td>89,94</td><td>88,12</td>
+    <td>+6,78</td><td>316,2</td></tr>
+<tr class="vurgu-iyi"><td class="ilk"><b>mim_Unet</b></td><td>A4</td><td>6.251.469</td>
+    <td><b>79,91</b></td><td><b>82,75</b></td><td><b>90,56</b></td><td>79,25</td><td>93,84</td>
+    <td>91,48</td><td>89,66</td><td>+6,92</td><td>375,9</td></tr>
+<tr><td class="ilk">mim_UnetPlusPlus</td><td>A4</td><td>6.569.581</td><td>78,69</td>
+    <td>82,92</td><td>90,66</td><td>79,26</td><td>93,92</td><td>91,79</td><td>89,56</td>
+    <td>+6,94</td><td>542,7</td></tr>
+<tr><td class="ilk">mim_DeepLabV3Plus</td><td>A4</td><td>4.907.469</td><td>78,59</td>
+    <td>80,38</td><td>89,12</td><td>76,98</td><td>92,95</td><td>90,64</td><td>87,66</td>
+    <td>+6,42</td><td>301,7</td></tr>
+<tr><td class="ilk">mim_FPN</td><td>A4</td><td>5.759.485</td><td>79,58</td><td>81,33</td>
+    <td>89,70</td><td>77,38</td><td>93,20</td><td>89,52</td><td>89,88</td><td>+5,57</td><td>285,5</td></tr>
+</tbody>
+</table>
+<div class="dipnot">17 deney, toplam 8.751 saniye = <b>145,8 dakika</b> GPU süresi
+(RTX 4060 Laptop, 8 GB). Tüm ham sonuçlar <code>sonuclar_gorev4.csv</code>, epoch bazlı
+geçmişler <code>epoch_gecmisi_*.csv</code>, görsel karşılaştırmalar
+<code>gorseller/</code> altındadır.</div>
+
+<h2 class="sayfa-kes">Bulgular</h2>
+
+<ol class="adimlar">
+<li><b>Dört iyileştirme kaldıracından yalnızca biri ölçülebilir etki üretti.</b>
+Pretrained encoder +11,61 puan kazandırdı (gürültünün 5 katı). Loss, augmentation ve
+mimari seçimlerinin etkisi ölçüm gürültüsünün içinde veya sınırında kaldı. Bu, çalışmanın
+en önemli ve en dürüst sonucudur — dört adımın dördüne de "kazanan" atamak mümkündü,
+ancak ölçüm bunu desteklemiyordu.</li>
+
+<li><b>Piksel doğruluğu iyileştirmenin üçte ikisini gizler.</b> Aynı iyileştirme IoU'da
+11,47, Dice'ta 7,33, piksel doğruluğunda yalnızca 4,13 puan görünmektedir. Belgenin
+"accuracy yeterli değildir" uyarısı sayısal olarak doğrulanmıştır.</li>
+
+<li><b>Baseline'ın hastalığı overfit değil, yetersiz öğrenmeydi.</b> Train IoU test
+IoU'nun altındaydı (%69,49 / %71,28). Görev 3'te baseline +16,87 puan overfit etmişti;
+buradaki +0,15. Aynı reçete (augmentation) farklı hastalığa uygulanınca işe yaramadı.</li>
+
+<li><b>Augmentation yanlış anda test edildi.</b> A2'de overfit yoktu (+0,02); A3'te
+pretrained encoder gelince +6,81'e çıktı. Bir adımın etkisi kendisinden sonraki adıma
+bağlı olabilir — "her adımı sırayla dene" yaklaşımının kör noktası budur.</li>
+
+<li><b>Loss seçiminin etkisi asimetriktir.</b> Toplam IoU farkı gürültü sınırındayken
+recall farkı sağlamdır (BCE %77 / BCE+Dice %84, iki bağımsız koşuda da aralıklar
+örtüşmüyor). Ortalama skora bakmak, loss'un ne yaptığını göstermez; hata profiline
+bakmak gösterir.</li>
+
+<li><b>Focal loss veri setine uymadı ve nedeni ölçülmüştü.</b> Focal ağır sınıf
+dengesizliği varsayar; bu veri setinde su oranı %32,89. Veri setinin özelliğini
+varsaymak yerine ölçmek, yanlış araç seçmekten korumuştur.</li>
+
+<li><b>Pretrained ağırlıklar olmadan büyük mimari dezavantajdır.</b> Sıfırdan resnet34
+(24,4M parametre) %69,94; el yazması U-Net (7,8M) %72,07. Görev 2'nin aynı bulgusunun
+çok daha net bir versiyonu.</li>
+
+<li><b>Transfer learning yalnızca tavanı değil hızı da değiştirir.</b> Pretrained model
+1. epoch sonunda %68,99 aldı — sıfırdan modellerin 20 epoch sonunda ulaştığı seviye.</li>
+
+<li><b>Skor eşitken maliyet karar verir.</b> efficientnet-b0 ile resnet34 arasındaki
+0,25 puanlık fark anlamsızdı; 3,9 kat parametre farkı anlamlıydı.</li>
+
+<li><b>Ölçüm gürültüsü ölçülmelidir, varsayılmamalıdır.</b> Aynı konfigürasyonun üç
+tekrarı 0,14 / 0,95 / 2,33 puan fark verdi. İlk çift görülüp "gürültü 0,14" denseydi
+bu raporun neredeyse tüm sonuçları yanlış yorumlanacaktı.</li>
+</ol>
+
+<h2>Sınırlılıklar</h2>
+
+<ul class="liste">
+<li><b>Her deney tek seed ile koşuldu.</b> Gürültü tabanı üç tekrar çiftinden kestirilmiş
+olsa da, adım içi sıralamalar (örneğin dört mimari arasındaki sıra) çoklu seed ile
+doğrulanmamıştır. Manşet iddia (+11,47 puan) gürültünün beş katı olduğu için bundan
+etkilenmez; adım içi sıralamalar ise zaten "karar verilemedi" olarak raporlanmıştır.</li>
+
+<li><b>Epoch bütçesi bağlayıcıydı.</b> Birçok deneyde en iyi validation skoru 18–20.
+epoch'ta gerçekleşti, yani modeller hâlâ yükselirken durduruldu. Daha uzun eğitim
+mutlak skorları yükseltebilir; adımlar arası karşılaştırma bundan etkilenmez çünkü
+bütçe tüm deneylerde aynıdır.</li>
+
+<li><b>Girdi çözünürlüğü 256 × 256 ile sabitlendi.</b> Çözülmeyen tek bölge kategorisi
+(&lt; %5 su oranı) muhtemelen bu sınırdan kaynaklanmaktadır ve test edilmemiştir.</li>
+
+<li><b>Maske etiketlerinde belirsizlik vardır.</b> Sığ kıyı bantları maskede keskin
+sınırla etiketlenmiştir; model kademeli geçişi görür. Bu bölgelerdeki hatanın ne
+kadarının model, ne kadarının etiket kaynaklı olduğu ayrıştırılmamıştır.</li>
+
+<li><b>Adım sırası sonucu etkiledi.</b> Augmentation taraması pretrained encoder'dan
+önce yapıldığı için etkisi ölçülemedi. Doğru sıralama A3 → A2 olurdu; bu, tasarımın
+kabul edilmiş bir zaafıdır.</li>
+</ul>
+
+<div class="altbilgi">
+Görev 4 — Satellite Images of Water Bodies (Kaggle) · 17 deney · 145,8 dakika GPU ·
+RTX 4060 Laptop GPU (8 GB) · PyTorch 2.5.1+cu124 · segmentation_models_pytorch 0.5.0 ·
+albumentations 1.4.18 · seed 27
+</div>
