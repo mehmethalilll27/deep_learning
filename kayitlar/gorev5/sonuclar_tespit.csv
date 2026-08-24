@@ -1,0 +1,2 @@
+deney,asama,model,backbone,pretrained,augmentation,seed,epochs,min_boyut,batch,lr,parametre,egitim_goruntu,val_map50,val_map,test_map50,test_map75,test_map,test_precision,test_recall,test_f1,test_sinif_dogrulugu,test_ort_iou,test_tp,test_fp,test_fn,en_iyi_val_map50,en_iyi_epoch,sure_sn,cihaz,notlar
+ref_coco_egitimsiz,Referans,FasterRCNN,ResNet50-FPN,coco (egitimsiz),-,27,0,512,4,0,41755286,0,84.36,58.17,81.03,60.51,54.67,60.15,83.8,70.03,94.87,83.36,2033,1347,393,0.0,0,0.0,GPU,"COCO agirliklari, VOC'ta hic egitim yok, etiketler eslendi"

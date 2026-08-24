@@ -173,23 +173,27 @@ Görev 3'ün veri seti kullanılamadı: `seg_train` / `seg_test` / `seg_pred` kl
 
 Ortak yardımcı kod `gorev4/ortak.py` içinde toplandı — Görev 2 ve 3'teki "her script kendi içinde çalışsın" düzeninden bilinçli sapma. Segmentasyon yardımcıları (veri okuma, maske eşikleme, IoU/Dice, görsel üretme) beş scripte kopyalanamayacak kadar büyük.
 
-| Script | Deney | Ne değişiyor |
-| ------ | ----- | ------------ |
-| `egitim_baseline.py` | 1 | Sıfırdan U-Net (7.763.041 param), BCE, augmentation **yok** |
-| `egitim_loss.py` | 4 | BCE / Dice / BCE+Dice / Focal |
-| `egitim_augmentation.py` | 4 | yok / hafif / orta / güçlü |
-| `egitim_encoder.py` | 4 | resnet34 sıfırdan, resnet34 / efficientnet-b0 / mobilenet_v2 pretrained |
-| `egitim_mimari.py` | 4 | Unet / UnetPlusPlus / DeepLabV3Plus / FPN (encoder sabit) |
+
+| Script                   | Deney | Ne değişiyor                                                            |
+| ------------------------ | ----- | ----------------------------------------------------------------------- |
+| `egitim_baseline.py`     | 1     | Sıfırdan U-Net (7.763.041 param), BCE, augmentation **yok**             |
+| `egitim_loss.py`         | 4     | BCE / Dice / BCE+Dice / Focal                                           |
+| `egitim_augmentation.py` | 4     | yok / hafif / orta / güçlü                                              |
+| `egitim_encoder.py`      | 4     | resnet34 sıfırdan, resnet34 / efficientnet-b0 / mobilenet_v2 pretrained |
+| `egitim_mimari.py`       | 4     | Unet / UnetPlusPlus / DeepLabV3Plus / FPN (encoder sabit)               |
+
 
 **Sonuç.** 17 deney, toplam 145.8 dakika.
 
-| Aşama | Kazanan | Test IoU | Test Dice | Baseline'a göre |
-| ----- | ------- | -------- | --------- | --------------- |
-| Baseline | `baseline_unet` | %71.28 | %83.23 | — |
-| A1 Loss | `loss_BCE_Dice` | %74.25 | %85.22 | +2.97 |
-| A2 Augmentation | `aug_hafif` | %72.07 | %83.77 | *gürültü içinde* |
-| **A3 Encoder** | `enc_efficientnet_b0_pretrained` | **%81.80** | **%89.99** | **+10.52** |
-| A4 Mimari | `mim_Unet` | **%82.75** | **%90.56** | **+11.47** |
+
+| Aşama           | Kazanan                          | Test IoU   | Test Dice  | Baseline'a göre  |
+| --------------- | -------------------------------- | ---------- | ---------- | ---------------- |
+| Baseline        | `baseline_unet`                  | %71.28     | %83.23     | —                |
+| A1 Loss         | `loss_BCE_Dice`                  | %74.25     | %85.22     | +2.97            |
+| A2 Augmentation | `aug_hafif`                      | %72.07     | %83.77     | *gürültü içinde* |
+| **A3 Encoder**  | `enc_efficientnet_b0_pretrained` | **%81.80** | **%89.99** | **+10.52**       |
+| A4 Mimari       | `mim_Unet`                       | **%82.75** | **%90.56** | **+11.47**       |
+
 
 Nihai model: `Unet + efficientnet-b0 (ImageNet pretrained) + BCE+Dice + hafif augmentation`, 6.251.469 parametre.
 
@@ -276,6 +280,11 @@ kayitlar/
     rapor_gorev3.html       ayrıntılı rapor
   gorev4/                   Görev 4 sonuçları
     gorseller/              deney başına 6 örneklik görsel karşılaştırma (png)
+      baseline/             aşamaya göre ayrılmış: baseline, a1_loss,
+      a1_loss/              a2_augmentation, a3_encoder, a4_mimari
+      a2_augmentation/
+      a3_encoder/
+      a4_mimari/
     sonuclar_gorev4.csv     tüm deneylerin ortak tablosu
     su_oranlari.csv         maske başına su piksel oranı (önbellek)
     epoch_gecmisi_*.csv     deney başına epoch epoch seyir
@@ -290,7 +299,7 @@ csvler/                     eski koşuların sonuçları (arşiv)
 - Tüm rastgelelik kaynakları seed 27 ile sabitlenmiştir; her model aynı başlangıç ağırlıklarıyla kurulur.
 - `csvler/` klasörü scriptlerin daha eski bir sürümüyle alınmış, konfigürasyon adları farklı olan tam koşuları içerir; güncel scriptler bu klasöre yazmaz.
 - Metrikler tek geçişte confusion matrix'ten türetilir (`metricler_hesapla`), bu yüzden her epoch sonunda tam test seti ölçümü almanın maliyeti düşüktür.
-- Görev 4'te `cv2.imread` kullanılmaz. Windows'ta yolu ANSI olarak işler ve Türkçe karakter içeren yolu açamaz — **sessizce `None` döner**. Proje yolu `nöron` içerdiği için tüm okumalar başarısız oluyordu. Yerine `goruntu_oku()` (`np.fromfile` + `cv2.imdecode`) kullanılır ve okunamama durumunda istisna fırlatır.
+- Görev 4'te `cv2.imread` kullanılmaz. Windows'ta yolu ANSI olarak işler ve Türkçe karakter içeren yolu açamaz — **sessizce** `None` **döner**. Proje yolu `nöron` içerdiği için tüm okumalar başarısız oluyordu. Yerine `goruntu_oku()` (`np.fromfile` + `cv2.imdecode`) kullanılır ve okunamama durumunda istisna fırlatır.
 - Görev 4'te eğitim loader'ında `drop_last=True` zorunludur. Son batch tek örnek kalırsa DeepLabV3+'ın ASPP katmanı 1×1 uzamsal çıktı üretir ve BatchNorm `Expected more than 1 value per channel` hatasıyla düşer.
 - `albumentations` her import'ta sürüm kontrolü yapıp uyarı basar; `NUM_WORKERS=4` olduğu için her işçi süreci ayrı basar. `ortak.py` bunu `NO_ALBUMENTATIONS_UPDATE=1` ile susturur (import'tan **önce** ayarlanmalı).
 

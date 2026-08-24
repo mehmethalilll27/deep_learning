@@ -427,6 +427,18 @@ def train_model(model, loaderlar, criterion, device, epochs=EPOCHS, lr=LEARNING_
 
 
 # 8) GORSEL KARSILASTIRMA (belge madde 2: "gorsel olarak karsilastirin")
+def gorsel_klasoru(asama):
+    """Gorselleri asamaya gore alt klasore ayirir.
+
+    17 gorsel tek klasorde birikince hangi deneyin hangi asamaya ait oldugu
+    kayboluyordu. Klasor adi konfigdeki "asama" alanindan turetilir
+    ("A1 Loss" -> "a1_loss"), yani yeni asama eklendiginde burasi degismez.
+    """
+    yol = os.path.join(GORSEL_DIR, asama.lower().replace(" ", "_"))
+    os.makedirs(yol, exist_ok=True)
+    return yol
+
+
 def gorsel_ornekler_sec(oranlar, test_idx, adet=6):
     """Test setinden su orani dusukten yuksege siralanmis ornekler secer.
 
@@ -588,7 +600,7 @@ def deney_calistir(konfig, model_kurucu, loaderlar, adlar, gorsel_idx, device):
     gecmis_kaydet(gecmis, konfig["ad"])
     gorsel = gorsel_kaydet(
         model, adlar, gorsel_idx, device,
-        os.path.join(GORSEL_DIR, f"{konfig['ad']}.png"),
+        os.path.join(gorsel_klasoru(konfig["asama"]), f"{konfig['ad']}.png"),
         f"{konfig['ad']}  —  Test IoU %{satir['test_iou']:.2f} / "
         f"Dice %{satir['test_dice']:.2f}")
 
