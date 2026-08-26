@@ -1,15 +1,16 @@
 # Derin Öğrenme Deneyleri
 
-PyTorch ile yapılmış karşılaştırmalı eğitim deneyleri. Dört bölümden oluşur:
+PyTorch ile yapılmış karşılaştırmalı eğitim deneyleri. Beş bölümden oluşur:
 
 - **Görev 1** — Sıfırdan sinir ağı implementasyonu + MLP/CNN mimari ve dropout taraması (MNIST)
 - **Görev 2** — Veri miktarı azaltma, sınıf dengesizliği ve accuracy dışındaki metrikler (precision / recall / F1 / confusion matrix) (MNIST)
 - **Görev 3** — Kaggle veri setinde serbest deney: düşük bir baseline'dan başlayıp skoru adım adım yükseltme (Intel Image Classification)
 - **Görev 4** — Semantik segmentasyon: maskeli veri setinde U-Net eğitimi, IoU/Dice ile değerlendirme ve skor yükseltme (Satellite Images of Water Bodies)
+- **Görev 5** — Nesne tespiti (Faster R-CNN, mAP) ve semantik bölütleme (DeepLabV3, mIoU) — aynı veri setinin iki etiket katmanı üzerinde iki ayrı problem (PASCAL VOC 2012)
 
 Görev 1 ve 2'de test seti **daima tam ve dengeli 10.000'lik MNIST test setidir**. Yalnızca eğitim seti değiştirilir — aksi halde azınlık sınıflarının recall'ü ölçülemezdi.
 
-Görev 3 ve 4'te düzen farklıdır: veri train/validation/test olarak üçe bölünür, **iyileştirme kararları validation setine bakarak verilir**, test seti her konfigürasyon için yalnızca bir kez ölçülür. Sebebi, o görevlerde tekrar tekrar ayar yapılması — her denemeyi test setine bakarak seçmek test set leakage olurdu.
+Görev 3, 4 ve 5'te düzen farklıdır: veri train/validation/test olarak üçe bölünür, **iyileştirme kararları validation setine bakarak verilir**, test seti her konfigürasyon için yalnızca bir kez ölçülür. Sebebi, o görevlerde tekrar tekrar ayar yapılması — her denemeyi test setine bakarak seçmek test set leakage olurdu.
 
 ## Kurulum
 
@@ -48,6 +49,15 @@ kaggle datasets download -d franciscoescobar/satellite-images-of-water-bodies -p
 
 Görev 4'ün encoder scripti ilk çalıştırmada `segmentation_models_pytorch` üzerinden ImageNet ağırlıklarını indirir (~100 MB toplam).
 
+Görev 5 ek paket gerektirmez (Görev 4'ün kurulumu yeterli), ama ayrı bir Kaggle veri seti gerekir (~2 GB indirme, açılınca ~3.7 GB; repoda tutulmaz):
+
+```bash
+kaggle datasets download -d gopalbhattrai/pascal-voc-2012-dataset -p kayitlar/data/voc
+# zip kayitlar/data/voc/ icine acilir; VOC2012_train_val/ ve VOC2012_test/ olusur
+```
+
+Görev 5 scriptleri ilk çalıştırmada torchvision'ın hazır ağırlıklarını indirir: Faster R-CNN (COCO, ~160 MB), DeepLabV3 (COCO+VOC, ~160 MB) ve ResNet50 (ImageNet, ~100 MB).
+
 ## Çalıştırma
 
 Scriptler konumlarına göre yol çözer, herhangi bir dizinden çalıştırılabilir.
@@ -77,7 +87,21 @@ python gorev4/egitim_loss.py           #  4 deney  (~42 dk)
 python gorev4/egitim_augmentation.py   #  4 deney  (~43 dk)
 python gorev4/egitim_encoder.py        #  4 deney  (~24 dk)
 python gorev4/egitim_mimari.py         #  4 deney  (~25 dk)
+
+# Görev 5 / tespit — sırayla çalıştırılmalı
+python gorev5/egitim_tespit_baseline.py       #  2 deney  (~18 dk)
+python gorev5/egitim_tespit_transfer.py       #  2 deney  (~43 dk)
+python gorev5/egitim_tespit_augmentation.py   #  2 deney  (~34 dk)
+
+# Görev 5 / bölütleme — sırayla çalıştırılmalı
+python gorev5/egitim_bolutleme_baseline.py       #  2 deney  (~15 dk)
+python gorev5/egitim_bolutleme_augmentation.py   #  3 deney  (~45 dk)
+python gorev5/egitim_bolutleme_duzen.py          #  3 deney  (~46 dk)
 ```
+
+Görev 5'te adım numaraları dosya adlarıyla aynı sırada değildir: tespitte transfer **A1**, augmentation **A2**'dir. Yukarıdaki sıra doğru sıradır.
+
+Görev 3, 4 ve 5'te bazı scriptler bir önceki adımın kazananını sabit olarak tutar (`LOSS`, `TABAN_KATMAN`, `TABAN_AUG` gibi). İlgili adım bittikten sonra validation kazananı varsayılandan farklıysa bu sabit elle güncellenmelidir.
 
 Süreler RTX 4060 Laptop üzerinde ölçülmüştür.
 
@@ -199,6 +223,48 @@ Nihai model: `Unet + efficientnet-b0 (ImageNet pretrained) + BCE+Dice + hafif au
 
 Kazancın kaynağı recall: precision %89.82 → %91.48 (+1.66) iken recall %77.54 → %89.66 (**+12.12**). Model kaçırdığı suyu bulmayı öğrendi, su uydurmayı değil.
 
+## Görev 5 — Nesne Tespiti ve Semantik Bölütleme
+
+Veri seti: [PASCAL VOC 2012](https://www.kaggle.com/datasets/gopalbhattrai/pascal-voc-2012-dataset) — 17.125 görüntü, 20 nesne kategorisi. Aynı veri setinin **iki etiket katmanı** kullanılır ve her biri ayrı bir problem oluşturur:
+
+| Problem | Etiket | Etiketli görüntü | Model | Metrik |
+| ------- | ------ | ---------------- | ----- | ------ |
+| Nesne tespiti | `Annotations/*.xml` | train 5.717 / val 5.823 | Faster R-CNN + ResNet50-FPN | mAP@0.5, mAP@0.5:0.95 |
+| Semantik bölütleme | `SegmentationClass/*.png` | train 1.464 / val 1.449 | DeepLabV3 + ResNet50 | mIoU, Dice |
+
+VOC 2012'nin resmi test setinin etiketleri yayınlanmaz (skor ancak VOC değerlendirme sunucusuna gönderilerek alınır). Bu yüzden resmi `val` listesi seed 27 ile ikiye bölünür: **val** (karar seti) ve **test** (rapor seti).
+
+Ortak kod üç dosyaya ayrıldı — Görev 4'ün tek `ortak.py` düzeninden sapma. Ortak olan şey veri setinin kendisi, bölme çizgisi oradan geçiyor:
+
+| Dosya | İçerik |
+| ----- | ------ |
+| `ortak.py` | VOC okuma, bölme, CSV kayıt — her iki problemin ortağı |
+| `tespit.py` | Faster R-CNN, mAP/IoU hesabı, kutu görselleştirme |
+| `bolutleme.py` | DeepLabV3, mIoU/Dice hesabı, maske görselleştirme |
+
+**VOC'a özgü üç tuzak:**
+
+- **`void` (255) pikseller yok sayılmalı.** Nesne sınırlarındaki belirsiz şeritte VOC 255 etiketi kullanır — ne arka plan ne nesne. `ignore_index=255` verilmezse model imkânsız bir hedefi öğrenmeye çalışır.
+- **Maske PNG'leri paletli (mode "P").** `np.array(Image.open(...))` doğrudan sınıf indekslerini verir; `convert("RGB")` çağırmak etiketleri renklere dönüştürür ve **sessizce bozar**.
+- **Arşivde iki VOC klasörü var.** `VOC2012_test/` de `Annotations/` + `JPEGImages/` içerir ama etiketleri boştur. Alfabetik sırada "test" önce geldiği için basit bir klasör araması önce onu bulur ve tüm küme listeleri sessizce boş döner. Klasör tanınırken `SegmentationClass/` varlığı da şart koşulur.
+
+**Sonuç.** 14 deney, toplam 201.0 dakika (tespit 95.0, bölütleme 105.9).
+
+| Problem | Aşama | Kazanan | Test skoru | Baseline'a göre |
+| ------- | ----- | ------- | ---------- | --------------- |
+| Tespit | *Referans (eğitimsiz)* | `ref_coco_egitimsiz` | *%81.00 mAP@0.5* | — |
+| Tespit | Baseline | `tespit_baseline` | %51.48 | — |
+| Tespit | A1 Transfer | `tespit_coco_ft` | %77.10 | +25.62 |
+| Tespit | A2 Augmentation | `tespit_aug_orta` | **%77.74** | **+26.26** |
+| Bölütleme | *Referans (eğitimsiz)* | `ref_hazir_voc` | *%75.46 mIoU* | — |
+| Bölütleme | Baseline | `bolut_baseline` | %56.41 | — |
+| Bölütleme | A1 Augmentation | `bolut_aug_orta` | %62.35 | +5.94 |
+| Bölütleme | A2 Eğitim düzeni | `bolut_aux` | **%64.78** | **+8.37** |
+
+**Her iki problemde de hiç eğitilmemiş hazır model, eğitilen en iyi modeli geçti** — tespitte 3.26, bölütlemede 10.68 puan farkla. Tespitte karşılaştırma adildir (ikisi de COCO ağırlıklarıyla başlar): 2.000 görüntülük alt kümede 6 epoch ince ayar, güçlü bir dedektörü iyileştirmedi, bozdu.
+
+Görev 4'ten farklı olarak **ölçüm gürültüsü bu görevde ölçülmedi** — hiçbir eğitim konfigürasyonu tekrarlanmadı. Elde olan tek tekrar eğitimsiz referansındır (0.03 puan) ve o yalnızca değerlendirme gürültüsüdür. Sonuç olarak küçük farklar (tespitte augmentation +0.69, bölütlemede `orta`/`guclu` 1.07) rapor boyunca **iddia edilmemiştir**.
+
 ## Öne Çıkan Bulgular
 
 **Veri azaltma ayırt ediciliği artırıyor.** Konfigürasyonlar arası fark tam veride 1.28 puan, 3.000 örnekte 3.72 puan. Karşılaştırmalı deney için 3.000–5.000 aralığı öneriliyor.
@@ -247,11 +313,24 @@ Kazancın kaynağı recall: precision %89.82 → %91.48 (+1.66) iken recall %77.
 
 **Öngörü ölçümün yerini tutmuyor.** Görev 4'te su kütleleri büyük ve bütünlüklü olduğu için DeepLabV3+ ve FPN'in öne çıkacağı öngörülmüştü; ikisi de sonuncu oldu. Gözden kaçan şey DeepLabV3+'ın ince skip bağlantısının olmaması — sınırlar kaba kalıyor, bu veri setinde ise sınır hassasiyeti kritik.
 
+**Eğitim her zaman iyileştirmiyor — Görev 5'te iki kez ölçüldü.** Hiç eğitilmemiş hazır model, eğitilen en iyi modeli tespitte 3.26, bölütlemede 10.68 puan geçti. Tespitte fine-tune COCO ağırlıklarıyla *başlıyordu*: küçük veri bütçesi ve kısa eğitimle ince ayar, güçlü bir dedektörü bozdu. Küçük bütçede hazır modeli olduğu gibi kullanmak daha iyi olabilir.
+
+**Aynı reçetenin çalıştığı durum da ölçüldü.** Görev 4'te augmentation işe yaramamıştı çünkü overfit yoktu (+0.15). Görev 5 bölütlemesinde overfit +36.66'ydı ve augmentation onu +19.11'e indirip skoru 5.94 puan yükseltti. Teşhis doğruydu: araç değil, hastalık belirleyici.
+
+**Pretrained ağırlık opsiyonel değil — sıfırdan model hiç çalışmadı.** Görev 5'te `bolut_scratch` 20 epoch boyunca öğrenmeye başlamadı (mIoU %6.99). Görev 4'te sıfırdan resnet34 en azından %69.94 alıyordu; 1.464 görüntüde 21 sınıf için sıfırdan eğitim tamamen imkânsız.
+
+**Doğruluk metriği tamamen başarısız bir modeli çalışıyor gösterebiliyor.** `bolut_scratch` piksel doğruluğunda %73.32 alırken mIoU'da %6.99 aldı — piksellerin %74'ü arka plan olduğu için "her şey arka plan" demek doğruluğu yüksek tutuyor. Tespitte aynı olgu: sınıf doğruluğu 1.63 puanlık bir bantta kalırken mAP@0.5 29.52 puan oynadı.
+
+**Learning rate çizelgesinin önemi probleme bağlı.** Görev 3'te OneCycle/AdamW gibi düzen değişiklikleri puan ondalıklarıyla oynuyordu. Görev 5 bölütlemesinde poly azaltmayı kaldırmak 19.25 puan kaybettirdi ve model 10. epoch'ta *geriledi*. Varsayılamaz, ölçülmeli.
+
+**Transfer learning'in katkısı problem karmaşıklığıyla büyüyor.** Görev 3'te 8.30 puan, Görev 4'te 11.61, Görev 5 tespitinde 25.83.
+
 Ayrıntılı raporlar:
 
-- `[kayitlar/gorev2/rapor_gorev2.html](kayitlar/gorev2/rapor_gorev2.html)` — 48 deneyin tam tabloları, karşılaştırmalar ve confusion matrix analizleri. PDF sürümü aynı klasörde.
-- `[kayitlar/gorev3/rapor_gorev3.html](kayitlar/gorev3/rapor_gorev3.html)` — 15 deneyin tabloları, aşama aşama kazanç, confusion matrix ve sınıf bazlı analizler.
-- `[kayitlar/gorev4/rapor_gorev4.html](kayitlar/gorev4/rapor_gorev4.html)` — 17 deneyin tabloları, IoU/Dice metodolojisi, gürültü eşiği analizi, bölge bazlı görsel karşılaştırma.
+- [kayitlar/gorev2/rapor_gorev2.html](kayitlar/gorev2/rapor_gorev2.html) — 48 deneyin tam tabloları, karşılaştırmalar ve confusion matrix analizleri. PDF sürümü aynı klasörde.
+- [kayitlar/gorev3/rapor_gorev3.html](kayitlar/gorev3/rapor_gorev3.html) — 15 deneyin tabloları, aşama aşama kazanç, confusion matrix ve sınıf bazlı analizler.
+- [kayitlar/gorev4/rapor_gorev4.html](kayitlar/gorev4/rapor_gorev4.html) — 17 deneyin tabloları, IoU/Dice metodolojisi, gürültü eşiği analizi, bölge bazlı görsel karşılaştırma.
+- [kayitlar/gorev5/rapor_gorev5.html](kayitlar/gorev5/rapor_gorev5.html) — 14 deneyin tabloları, mAP/mIoU metodolojisi, iki problemin karşılaştırması, sınıf bazlı zorluk analizi.
 
 
 
@@ -264,10 +343,15 @@ gorev3/                     Görev 3 scriptleri
 gorev4/                     Görev 4 scriptleri
   ortak.py                  paylaşılan katman (veri, metrik, loss, eğitim, görsel)
   unet.py                   sıfırdan U-Net tanımı
+gorev5/                     Görev 5 scriptleri
+  ortak.py                  VOC okuma/bölme/kayıt — iki problemin ortağı
+  tespit.py                 Faster R-CNN, mAP hesabı, kutu görselleştirme
+  bolutleme.py              DeepLabV3, mIoU hesabı, maske görselleştirme
 kayitlar/
   data/                     MNIST (indirilir, repoda tutulmaz)
     intel/                  Intel Image Classification (Kaggle, repoda tutulmaz)
     water/                  Satellite Images of Water Bodies (Kaggle, repoda tutulmaz)
+    voc/                    PASCAL VOC 2012 (Kaggle, repoda tutulmaz)
   gorev1/                   Görev 1 sonuçları
   gorev2/                   Görev 2 sonuçları
     confusion/              48 adet 10x10 confusion matrix
@@ -289,6 +373,15 @@ kayitlar/
     su_oranlari.csv         maske başına su piksel oranı (önbellek)
     epoch_gecmisi_*.csv     deney başına epoch epoch seyir
     rapor_gorev4.html       ayrıntılı rapor
+  gorev5/                   Görev 5 sonuçları
+    gorseller/              önce probleme, sonra aşamaya göre ayrılmış (png)
+      tespit/               referans, baseline, a1_transfer, a2_augmentation
+      bolutleme/            referans, baseline, a1_augmentation, a2_egitim_duzeni
+    sonuclar_tespit.csv     tespit deneylerinin ortak tablosu
+    sonuclar_bolutleme.csv  bölütleme deneylerinin ortak tablosu
+    sinif_bazli_*.csv       deney başına sınıf bazlı metrikler
+    epoch_gecmisi_*.csv     deney başına epoch epoch seyir
+    rapor_gorev5.html       ayrıntılı rapor
 csvler/                     eski koşuların sonuçları (arşiv)
 ```
 
@@ -302,4 +395,7 @@ csvler/                     eski koşuların sonuçları (arşiv)
 - Görev 4'te `cv2.imread` kullanılmaz. Windows'ta yolu ANSI olarak işler ve Türkçe karakter içeren yolu açamaz — **sessizce** `None` **döner**. Proje yolu `nöron` içerdiği için tüm okumalar başarısız oluyordu. Yerine `goruntu_oku()` (`np.fromfile` + `cv2.imdecode`) kullanılır ve okunamama durumunda istisna fırlatır.
 - Görev 4'te eğitim loader'ında `drop_last=True` zorunludur. Son batch tek örnek kalırsa DeepLabV3+'ın ASPP katmanı 1×1 uzamsal çıktı üretir ve BatchNorm `Expected more than 1 value per channel` hatasıyla düşer.
 - `albumentations` her import'ta sürüm kontrolü yapıp uyarı basar; `NUM_WORKERS=4` olduğu için her işçi süreci ayrı basar. `ortak.py` bunu `NO_ALBUMENTATIONS_UPDATE=1` ile susturur (import'tan **önce** ayarlanmalı).
+- Görev 5'te VOC klasörü aranırken `SegmentationClass/` varlığı şart koşulur. Arşivdeki `VOC2012_test/` de `Annotations/` + `JPEGImages/` içerir ama etiketleri boştur; alfabetik sırada önce geldiği için basit bir arama onu bulur ve tüm küme listeleri **sessizce boş döner**.
+- Görev 5'te tespit eğitim seti 2.000 görüntüyle sınırlandı. `min_boyut=512` / `batch=4` ile 0.274 sn/adım ölçüldü; `batch=8` denendiğinde 8.49 sn/adım'a çıktı — 8 GB VRAM yetmiyor, sürekli takas oluyor.
+- Görev 5 bölütlemesinde mIoU hem 21 sınıf üzerinden hem **arka plansız** kaydedilir. Piksellerin ~%74'ü arka plan olduğu için arka plan dahil edildiğinde skor olduğundan iyi görünür.
 

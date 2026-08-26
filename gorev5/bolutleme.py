@@ -552,7 +552,8 @@ def deney_calistir(konfig, loaderlar, gorsel_idx, device):
 
     gorsel = gorsel_kaydet(
         model, gorsel_idx, device,
-        f"{ortak.GORSEL_DIR}/bolut_{konfig['ad']}.png",
+        os.path.join(ortak.gorsel_klasoru("bolutleme", konfig["asama"]),
+                     f"bolut_{konfig['ad']}.png"),
         f"{konfig['ad']}  —  Test mIoU %{satir['test_miou']:.2f} / "
         f"Dice %{satir['test_dice']:.2f}")
 

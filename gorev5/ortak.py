@@ -54,6 +54,21 @@ BOLUTLEME_SONUC = os.path.join(SONUC_DIR, "sonuclar_bolutleme.csv")
 TESPIT_SINIF_SONUC = os.path.join(SONUC_DIR, "sinif_bazli_tespit.csv")
 BOLUTLEME_SINIF_SONUC = os.path.join(SONUC_DIR, "sinif_bazli_bolutleme.csv")
 
+
+def gorsel_klasoru(problem, asama):
+    """Gorselleri once probleme, sonra asamaya gore alt klasore ayirir.
+
+    Gorev 4'te tek seviye yetiyordu; burada iki problem AYNI asama adlarini
+    kullaniyor ("Referans", "Baseline"), o yuzden ust seviyede problem adi
+    gerekiyor — yoksa tespitin ve bolutlemenin referanslari ayni klasora
+    duserdi. Asama adi konfigden turetilir ("A1 Transfer" -> "a1_transfer"),
+    boylece yeni asama eklendiginde burasi degismez.
+    """
+    yol = os.path.join(GORSEL_DIR, problem, asama.lower().replace(" ", "_"))
+    os.makedirs(yol, exist_ok=True)
+    return yol
+
+
 _voc_kok_onbellek = None
 
 

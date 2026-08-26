@@ -21,6 +21,7 @@ OLCUM
                  performansi olcusu.
 """
 
+import os
 import time
 
 import numpy as np
@@ -694,7 +695,8 @@ def deney_calistir(konfig, loaderlar, gorsel_idx, device):
 
     gorsel = gorsel_kaydet(
         model, gorsel_idx, device,
-        f"{ortak.GORSEL_DIR}/tespit_{konfig['ad']}.png",
+        os.path.join(ortak.gorsel_klasoru("tespit", konfig["asama"]),
+                     f"tespit_{konfig['ad']}.png"),
         f"{konfig['ad']}  —  Test mAP@0.5 %{satir['test_map50']:.2f} / "
         f"mAP@0.5:0.95 %{satir['test_map']:.2f}", eslesme)
 

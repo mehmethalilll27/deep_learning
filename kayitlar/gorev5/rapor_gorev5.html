@@ -1,0 +1,871 @@
+<meta charset="utf-8">
+<title>Deney Sonuçları Raporu — PASCAL VOC'ta Nesne Tespiti ve Semantik Bölütleme</title>
+<style>
+@page { size: A4; margin: 18mm 15mm 16mm 15mm; }
+* { box-sizing: border-box; }
+body { font-family: "Segoe UI", Calibri, Arial, sans-serif; font-size: 10pt;
+       color: #222; line-height: 1.5; margin: 0; }
+h1 { font-size: 21pt; color: #1F3864; margin: 0 0 2px 0; letter-spacing: -.3px; }
+.altbaslik { font-size: 11.5pt; color: #2E5496; font-weight: 600; margin-bottom: 14px; }
+.cizgi { border-bottom: 2px solid #1F3864; margin-bottom: 16px; }
+h2 { font-size: 14pt; color: #1F3864; margin: 26px 0 10px 0;
+      padding-bottom: 4px; border-bottom: 1px solid #cfd8e8; page-break-after: avoid; }
+h3 { font-size: 11.5pt; color: #2E5496; margin: 18px 0 8px 0; page-break-after: avoid; }
+.bolum-basligi { background: #1F3864; color: #fff; font-size: 13pt; font-weight: 600;
+                 padding: 8px 14px; margin: 28px 0 12px 0; page-break-after: avoid; }
+.kutu { background: #eef3fa; border-left: 4px solid #2E5496; padding: 10px 14px;
+        margin: 12px 0; font-size: 9.5pt; }
+.uyari { background: #fdf3ea; border-left: 4px solid #d98032; padding: 10px 14px;
+         margin: 12px 0; font-size: 9.5pt; }
+.bulgu { background: #eef7f0; border-left: 4px solid #3f8f5c; padding: 10px 14px;
+         margin: 12px 0; font-size: 9.5pt; }
+table.veri { border-collapse: collapse; width: 92%; margin: 0 0 10px 0; font-size: 9pt;
+             page-break-inside: avoid; }
+table.veri.genis { width: 100%; }
+table.veri th { background: #1F3864; color: #fff; font-weight: 600; padding: 6px 8px;
+                text-align: center; border: 1px solid #1F3864; font-size: 8.5pt; }
+table.veri td { padding: 5px 8px; text-align: center; border: 1px solid #d5dced; }
+table.veri td.ilk { text-align: left; }
+table.veri tbody tr:nth-child(even) td { background: #f6f8fc; }
+tr.vurgu-kotu td { background: #fdeeea !important; }
+tr.vurgu-orta td { background: #fdf6ea !important; }
+tr.vurgu-iyi td { background: #eef7f0 !important; }
+tr.vurgu-ref td { background: #eaf0f8 !important; font-style: italic; }
+td.kotu { color: #b8321f; font-weight: 600; }
+td.fark { color: #1F3864; }
+ul.liste { margin: 6px 0 10px 0; padding-left: 20px; font-size: 9.5pt; }
+ul.liste li { margin-bottom: 4px; }
+ol.adimlar { font-size: 9.5pt; }
+.dipnot { font-size: 8.5pt; color: #6a7484; font-style: italic; margin-top: 4px; }
+.sayfa-kes { page-break-before: always; }
+.altbilgi { margin-top: 26px; padding-top: 8px; border-top: 1px solid #d5dced;
+            font-size: 8.5pt; color: #8a919e; font-style: italic; }
+.zincir { font-family: Consolas, "Courier New", monospace; font-size: 9pt;
+          background: #f6f8fc; border: 1px solid #d5dced; padding: 10px 14px; margin: 12px 0; }
+.gorsel-blok { margin: 10px 0 14px 0; page-break-inside: avoid; }
+.gorsel-blok img { width: 100%; border: 1px solid #d5dced; }
+.gorsel-alt { font-size: 8.5pt; color: #6a7484; font-style: italic; margin-top: 3px; }
+.formul { font-family: Consolas, "Courier New", monospace; font-size: 9.5pt;
+          background: #f6f8fc; border: 1px solid #d5dced; padding: 8px 14px;
+          margin: 8px 0; text-align: center; }
+</style>
+
+<h1>Deney Sonuçları Raporu</h1>
+<div class="altbaslik">Görev 5 — PASCAL VOC 2012'de Nesne Tespiti ve Semantik Bölütleme</div>
+<div class="cizgi"></div>
+
+<div class="kutu">
+Bu rapor iki ayrı görme problemini aynı veri seti üzerinde ele alır: <b>nesne tespiti</b>
+(Faster R-CNN) ve <b>semantik bölütleme</b> (DeepLabV3). Toplam <b>14 eğitim</b>
+yapılmıştır — tespitte 6, bölütlemede 8. Toplam süre <b>201,0 dakika</b>
+(RTX 4060 Laptop GPU).
+<br><br>
+Her iki problemde de baseline'dan başlanıp adım adım skor yükseltilmiştir:
+tespitte <b>%51,48 → %77,74 mAP@0,5 (+26,26 puan)</b>, bölütlemede
+<b>%56,41 → %64,78 mIoU (+8,37 puan)</b>.
+<br><br>
+Ancak bu çalışmanın asıl sonucu skor artışı değil: <b>her iki problemde de hiç
+eğitilmemiş hazır model, eğitilen en iyi modelden daha yüksek skor almıştır</b>
+(tespitte 3,26 puan, bölütlemede 10,68 puan farkla). Bu beklenen bir sonuç değildi
+ve raporun merkezinde bu bulgu vardır.
+</div>
+
+<h2>Veri Seti ve Deney Kurulumu</h2>
+
+<p><b>PASCAL VOC 2012</b> (Kaggle: <code>gopalbhattrai/pascal-voc-2012-dataset</code>) —
+17.125 JPEG görüntü, 20 nesne kategorisi. Aynı veri setinin iki farklı etiket katmanı var
+ve Görev 5 ikisini de kullanıyor:</p>
+
+<table class="veri genis">
+<thead><tr><th>Problem</th><th>Etiket kaynağı</th><th>Etiketli görüntü</th><th>Ne öğreniliyor</th></tr></thead>
+<tbody>
+<tr><td class="ilk">Nesne tespiti</td><td class="ilk"><code>Annotations/*.xml</code></td>
+    <td>train 5.717 / val 5.823</td><td class="ilk">nesnenin sınıfı + sınırlayıcı kutusu</td></tr>
+<tr><td class="ilk">Semantik bölütleme</td><td class="ilk"><code>SegmentationClass/*.png</code></td>
+    <td>train 1.464 / val 1.449</td><td class="ilk">her pikselin sınıfı</td></tr>
+</tbody>
+</table>
+<div class="dipnot">Bölütleme etiketleri tespitin alt kümesidir — aynı görüntünün hem kutusu
+hem maskesi olabilir, ama maskeli görüntü sayısı yaklaşık dörtte bir. Bu fark bölütleme
+tarafının neden daha zorlandığını kısmen açıklar.</div>
+
+<div class="uyari">
+<b>Test seti neden resmi test setinden alınmadı.</b> VOC 2012'nin resmi test setinin
+etiketleri yayınlanmaz; skor ancak VOC değerlendirme sunucusuna gönderilerek alınır.
+Elimizdeki etiketli iki küme train ve val. Görev 3 ve 4'teki düzeni korumak için resmi
+val listesi seed 27 ile ikiye bölünmüştür: <b>val</b> (iyileştirme kararları buna bakılarak
+verilir) ve <b>test</b> (her konfigürasyon için yalnızca bir kez ölçülür). Böylece test set
+leakage olmadan "karar seti / rapor seti" ayrımı korunur.
+</div>
+
+<div class="uyari">
+<b>Karşılaşılan tuzak: arşivde iki VOC klasörü var.</b> Kaggle arşivi
+<code>VOC2012_train_val/</code> yanında <code>VOC2012_test/</code> de içerir ve ikincisinin
+de <code>Annotations/</code> + <code>JPEGImages/</code> klasörleri vardır — ama etiketleri
+boştur. Alfabetik sırada "test" önce geldiği için basit bir klasör araması <b>önce onu
+bulur ve tüm küme listeleri sessizce boş döner</b>. Çözüm, klasörü tanırken
+<code>SegmentationClass/</code> varlığını da şart koşmak oldu.
+</div>
+
+<h3>Kullanılan alt kümeler</h3>
+
+<table class="veri genis">
+<thead><tr><th>Problem</th><th>Train</th><th>Val (karar)</th><th>Test (rapor)</th>
+<th>Epoch sonu takip</th></tr></thead>
+<tbody>
+<tr><td class="ilk">Tespit</td><td>2.000</td><td>500</td><td>1.000</td><td class="ilk">val'in 500'ü</td></tr>
+<tr><td class="ilk">Bölütleme</td><td>1.464 <span style="color:#6a7484">(tamamı)</span></td>
+    <td>724</td><td>725</td><td class="ilk">300</td></tr>
+</tbody>
+</table>
+<div class="dipnot">Tespitte 2.000'lik alt küme donanım kısıtından geldi: min_boyut=512 /
+batch=4 ile 0,274 sn/adım ölçüldü; batch 8 denendiğinde 8,49 sn/adım'a çıktı — 8 GB VRAM
+yetmiyor, sürekli takas oluyor. Bölütlemede eğitim setinin tamamı kullanılabildi çünkü
+maskeli görüntü zaten yalnızca 1.464 tane.</div>
+
+<h3>Tüm deneylerde sabit tutulanlar</h3>
+
+<table class="veri genis">
+<thead><tr><th>Parametre</th><th>Tespit</th><th>Bölütleme</th><th>Gerekçe</th></tr></thead>
+<tbody>
+<tr><td class="ilk">Model</td><td>Faster R-CNN + ResNet50-FPN</td><td>DeepLabV3 + ResNet50</td>
+    <td class="ilk">tek değişken kalsın diye sabit</td></tr>
+<tr><td class="ilk">Epoch</td><td>6</td><td>20</td><td class="ilk">süre bütçesi</td></tr>
+<tr><td class="ilk">Batch</td><td>4</td><td>8</td><td class="ilk">8 GB VRAM sınırı</td></tr>
+<tr><td class="ilk">Optimizer</td><td>SGD (mom. 0,9)</td><td>SGD (mom. 0,9)</td>
+    <td class="ilk">torchvision referans düzeni</td></tr>
+<tr><td class="ilk">Learning rate</td><td>0,005</td><td>0,01</td>
+    <td class="ilk">referans değerlerin yarısı / DeepLab makalesi</td></tr>
+<tr><td class="ilk">Girdi boyutu</td><td>kısa kenar 512</td><td>320 kırpma (taban 384)</td>
+    <td class="ilk">hız / bellek dengesi</td></tr>
+<tr><td class="ilk">Seed</td><td colspan="2">27</td><td class="ilk">her deney başında yeniden kurulur</td></tr>
+</tbody>
+</table>
+
+<h2 class="sayfa-kes">Ölçüm: Neden Doğruluk Yetmez</h2>
+
+<p>Görev 4'te bu uyarı piksel doğruluğu üzerinden ölçülmüştü. Görev 5 aynı dersi
+<b>iki farklı problemde bağımsız olarak</b> tekrar üretmiştir — ve bu kez çok daha keskin.</p>
+
+<div class="formul">
+IoU = kesişim / birleşim &nbsp;·&nbsp; mIoU = 21 sınıf ortalaması &nbsp;·&nbsp;
+mAP@0,5 = PR eğrisi altındaki alan, 20 sınıf ortalaması
+</div>
+
+<h3>Tespitte: sınıf doğruluğu neredeyse sabit, mAP 30 puan oynuyor</h3>
+
+<p>Tespitte "doğruluk" standart bir metrik değildir. Anlamlı olan tek tanım şudur:
+<i>nesneyi doğru yerde bulan tahminlerin kaçının sınıfı da doğru.</i> Bu tanımla ölçüldüğünde:</p>
+
+<table class="veri genis">
+<thead><tr><th>Deney</th><th>Sınıf doğruluğu</th><th>Test mAP@0,5</th><th>Test mAP@0,75</th></tr></thead>
+<tbody>
+<tr class="vurgu-ref"><td class="ilk">ref_coco_egitimsiz</td><td>94,87</td><td>81,00</td><td>60,55</td></tr>
+<tr class="vurgu-kotu"><td class="ilk">tespit_baseline</td><td>93,24</td><td class="kotu">51,48</td>
+    <td class="kotu">15,55</td></tr>
+<tr><td class="ilk">tespit_aug_orta</td><td>94,52</td><td>77,74</td><td>53,97</td></tr>
+<tr><td class="ilk"><b>Tüm deneylerin aralığı</b></td><td><b>93,24 – 94,87</b></td>
+    <td><b>51,48 – 81,00</b></td><td><b>15,55 – 60,55</b></td></tr>
+</tbody>
+</table>
+
+<div class="bulgu">
+<b>Sınıf doğruluğu 1,63 puanlık bir bantta hapis, aynı deneylerde mAP@0,5 29,52 puan
+oynuyor.</b> Baseline ile referans arasında sınıf doğruluğu bakımından neredeyse hiç fark
+yok (%93,24 / %94,87), ama biri diğerinin skorunun üçte ikisi kadar. Sebep basit: model
+nesneyi <i>doğru yerde bulduğunda</i> adını da doğru koyuyor — sorun sınıflandırma değil,
+<b>nesneyi bulmak ve kutuyu oturtmak</b>. Yalnızca doğruluk raporlansaydı bu iki model
+denk görünecekti.
+</div>
+
+<h3>Bölütlemede: piksel doğruluğu %73, mIoU %7</h3>
+
+<p>VOC bölütlemesinde piksellerin yaklaşık %74'ü arka plandır. Bunun sonucu
+<code>bolut_scratch</code> deneyinde uç bir örnekle görünür hale gelmiştir:</p>
+
+<table class="veri">
+<thead><tr><th>Deney</th><th>Piksel doğruluğu</th><th>mIoU</th><th>Arka plansız mIoU</th></tr></thead>
+<tbody>
+<tr class="vurgu-kotu"><td class="ilk">bolut_scratch</td><td><b>73,32</b></td>
+    <td class="kotu"><b>6,99</b></td><td class="kotu">3,53</td></tr>
+<tr><td class="ilk">bolut_baseline</td><td>90,16</td><td>56,41</td><td>54,67</td></tr>
+<tr class="vurgu-iyi"><td class="ilk">bolut_aux</td><td>92,02</td><td>64,78</td><td>63,40</td></tr>
+<tr class="vurgu-ref"><td class="ilk">ref_hazir_voc</td><td>94,09</td><td>75,46</td><td>74,57</td></tr>
+</tbody>
+</table>
+
+<div class="bulgu">
+<b><code>bolut_scratch</code> piksel doğruluğunda %73,32 alıyor, mIoU'da %6,99.</b>
+Model neredeyse her pikseli "arka plan" diyor; arka plan zaten piksellerin %74'ü olduğu
+için doğruluk yüksek görünüyor. Bu, "doğruluk yanıltıcıdır" uyarısının kitabi örneğidir:
+tamamen başarısız bir model, doğruluk metriğinde <b>çalışıyormuş gibi</b> görünmektedir.
+Görev 4'teki 4,13 / 11,47 puan farkı buna kıyasla ılımlı kalır.
+</div>
+
+<h2>Ölçüm Gürültüsü — ve Bu Raporun Kabul Ettiği Eksik</h2>
+
+<p>Görev 4'ün merkezinde ölçüm gürültüsü vardı: aynı konfigürasyonun üç tekrarı
+0,14 / 0,95 / 2,33 puan fark vermiş, <b>2,33 puanlık bir eşik</b> belirlenmiş ve bu eşiğin
+altındaki hiçbir fark iyileştirme sayılmamıştı.</p>
+
+<div class="uyari">
+<b>Görev 5'te bu ölçüm yapılamamıştır.</b> Deney tasarımında hiçbir eğitim konfigürasyonu
+iki kez koşulmadı — Görev 4'te gürültüyü bedavaya ölçmeyi sağlayan "aşama sınırında
+referans satırı tekrarla" düzeni burada kurulmadı. Elde edilen tek tekrar
+<code>ref_coco_egitimsiz</code>'in iki koşusudur ve <b>o eğitim içermez</b>:
+<br><br>
+<table class="veri genis" style="margin:6px 0">
+<thead><tr><th>Tekrar</th><th>Test mAP@0,5</th><th>Test mAP@0,5:0,95</th><th>TP</th></tr></thead>
+<tbody>
+<tr><td class="ilk">ref_coco_egitimsiz — 1. koşu</td><td>81,03</td><td>54,67</td><td>2.033</td></tr>
+<tr><td class="ilk">ref_coco_egitimsiz — 2. koşu</td><td>81,00</td><td>54,65</td><td>2.031</td></tr>
+<tr><td class="ilk"><b>Fark</b></td><td><b>0,03</b></td><td><b>0,02</b></td><td><b>2</b></td></tr>
+</tbody>
+</table>
+Bu yalnızca <b>değerlendirme gürültüsüdür</b> (veri sırası + CUDA toplama sırası) ve
+0,03 puandır. <b>Eğitim gürültüsü bundan çok daha büyüktür</b> — Görev 4'te aynı ayrım
+0,03 değil 2,33 puandı. Dolayısıyla bu 0,03, eğitimli deneyleri karşılaştırmak için
+kullanılamaz.
+</div>
+
+<p><b>Sonucu:</b> bu raporda <b>birkaç puanlık farklar üstünlük kanıtı sayılmamıştır.</b>
+Ölçülmüş bir eşik olmadığı için Görev 4'teki gibi kesin bir sayı verilemiyor; bunun yerine
+her adımda farkın büyüklüğü açıkça yazılmış ve küçük farklarda "ölçüm karar veremedi"
+denmiştir. Aşağıdaki iki sonuç bu yüzden <i>iddia edilmemektedir</i>:</p>
+
+<ul class="liste">
+<li>Tespitte augmentation'ın katkısı: val <b>+0,69</b>, test <b>+0,64</b> puan.</li>
+<li>Bölütlemede <code>orta</code> ile <code>guclu</code> profil arasındaki fark: val <b>1,07</b> puan.</li>
+</ul>
+
+<p>Buna karşılık aşağıdaki farklar herhangi bir makul gürültü eşiğinin <b>çok üstündedir</b>
+ve güvenle yorumlanabilir: transfer learning'in tespitteki katkısı (+25,83 val),
+<code>bolut_scratch</code>'in çöküşü (−54,30 val), sabit learning rate'in maliyeti
+(−19,25 val) ve eğitimsiz referansların üstünlüğü.</p>
+
+<div class="bolum-basligi">BÖLÜM 1 — NESNE TESPİTİ</div>
+
+<p><b>Model:</b> Faster R-CNN + ResNet50-FPN. İki aşamalı dedektör — önce RPN aday bölge
+önerir, sonra ROI başlığı her adayı sınıflandırıp kutusunu düzeltir. Tek aşamalı
+dedektörlerden (SSD, RetinaNet, YOLO) daha yavaş ama küçük nesnelerde daha güçlü; VOC'ta
+görüntü başına ortalama 2,4 nesne var ve çoğu görüntünün küçük bir bölümünü kaplıyor.</p>
+
+<h2>Adım 1 — Referans ve Baseline</h2>
+
+<p>Bu adımda iki ölçüm var ve ikisi farklı işlev görüyor:</p>
+
+<ul class="liste">
+<li><b><code>ref_coco_egitimsiz</code></b> — torchvision'ın COCO ağırlıklarıyla gelen
+Faster R-CNN. VOC görüntülerini hiç görmedi, <b>eğitim süresi 0</b>. COCO'nun 80 sınıfı
+VOC'un 20 sınıfına eşlendi. Ulaşılması zor bir tavan olarak konuldu.</li>
+<li><b><code>tespit_baseline</code></b> — yalnızca ImageNet gövdesi hazır; FPN, RPN ve
+ROI başlığının tamamı sıfırdan. Ölçüm sıfır noktası.</li>
+</ul>
+
+<table class="veri genis">
+<thead><tr><th>Deney</th><th>Val mAP@0,5</th><th>Test mAP@0,5</th><th>mAP@0,75</th>
+<th>mAP@0,5:0,95</th><th>Precision</th><th>Recall</th><th>Ort. IoU</th><th>Süre</th></tr></thead>
+<tbody>
+<tr class="vurgu-ref"><td class="ilk">ref_coco_egitimsiz</td><td><b>84,36</b></td>
+    <td><b>81,00</b></td><td><b>60,55</b></td><td><b>54,65</b></td><td>60,07</td>
+    <td>83,72</td><td>83,35</td><td><b>0 sn</b></td></tr>
+<tr class="vurgu-kotu"><td class="ilk">tespit_baseline</td><td class="kotu">55,35</td>
+    <td class="kotu">51,48</td><td class="kotu">15,55</td><td class="kotu">22,99</td>
+    <td>42,60</td><td>63,48</td><td>72,39</td><td>1.088,7 sn</td></tr>
+</tbody>
+</table>
+
+<div class="bulgu">
+<b>Baseline'ın sorunu sınıflandırma değil, yerelleştirme.</b> mAP@0,5 (gevşek eşik)
+farkı 29,52 puan iken mAP@0,75 (sıkı eşik) farkı <b>45,00 puan</b>. Yani baseline
+nesneleri kabaca doğru yerde buluyor ama kutuların kenarları tutmuyor. Ortalama IoU'nun
+%83,35'ten %72,39'a düşmesi aynı şeyi söylüyor.
+<br><br>
+Bu beklenen bir sonuç: baseline'da yalnızca gövde hazır, <b>kutu regresyonunu öğrenen
+kısımların hepsi (FPN, RPN, ROI) sıfırdan</b>. 2.000 görüntü ve 6 epoch buna yetmiyor.
+</div>
+
+<div class="bulgu">
+<b>Baseline hem kaçırıyor hem uyduruyor.</b> Yanlış pozitif 2.075 (referansta 1.350),
+kaçırılan 886 (referansta 395). Precision %42,60 / recall %63,48 — her iki yönde de zayıf.
+<code>en_iyi_epoch = 6</code>, yani son epoch: model hâlâ yükselirken durduruldu
+(Görev 4 baseline'ındaki 18/20 deseniyle aynı).
+</div>
+
+<div class="gorsel-blok">
+<img src="gorseller/tespit/baseline/tespit_tespit_baseline.png" alt="Baseline tespit çıktıları">
+<div class="gorsel-alt">tespit_baseline — test setinden sabit örnekler. Aynı indeksler her
+deneyde kullanıldığı için deneyler arası görsel karşılaştırma anlamlıdır.</div>
+</div>
+
+<h2>Adım A1 — Transfer Learning</h2>
+
+<p>Baseline ile referans arasındaki 29,52 puanlık açığın kaynağı belli: referans COCO'da
+<b>tespit görevi için</b> eğitilmiş, baseline yalnızca ImageNet sınıflandırma gövdesiyle
+başlıyor. Bu adımda COCO ağırlıklarıyla başlanıp VOC'ta ince ayar yapılır. Tek değişken
+<b>gövdenin kaç bloğunun eğitilebilir olduğu</b>.</p>
+
+<table class="veri genis">
+<thead><tr><th>Deney</th><th>Eğitilebilir katman</th><th>Val mAP@0,5</th><th>Test mAP@0,5</th>
+<th>mAP@0,75</th><th>Precision</th><th>Recall</th><th>Süre</th></tr></thead>
+<tbody>
+<tr class="vurgu-iyi"><td class="ilk"><b>tespit_coco_ft</b></td><td>3</td><td><b>81,18</b></td>
+    <td><b>77,10</b></td><td><b>54,90</b></td><td>72,82</td><td>78,07</td><td><b>1.096,9 sn</b></td></tr>
+<tr><td class="ilk">tespit_coco_ft_katman5</td><td>5 (tamamı)</td><td>79,66</td><td>76,17</td>
+    <td>53,94</td><td>72,56</td><td>77,70</td><td class="kotu">1.478,1 sn</td></tr>
+</tbody>
+</table>
+
+<div class="bulgu">
+<b>Transfer learning bu çalışmanın en büyük tek kaldıracı: val +25,83 puan</b>
+(55,35 → 81,18), test +25,62 puan (51,48 → 77,10). Görev 3'te aynı bulgu 8,30 puandı,
+Görev 4'te 11,61. Burada 25,83 — problem ne kadar karmaşıksa hazır ağırlığın katkısı
+o kadar büyüyor.
+</div>
+
+<div class="bulgu">
+<b>Gövdenin tamamını açmak zarar veriyor.</b> <code>katman5</code> val'de 1,52 puan geride
+ve <b>%35 daha yavaş</b> (1.478 sn / 1.097 sn). Görev 3'teki "yüksek learning rate hazır
+ImageNet filtrelerini ilk epoch'ta bozar" bulgusunun tespit karşılığı: ne kadar çok katman
+açılırsa hazır bilgiden o kadar çok kaybediliyor. Ayrıca <code>katman5</code>'in en iyi
+epoch'u 5, yani 6. epoch'ta <i>gerilemiş</i> — aşırı esnekliğin işareti.
+<br><br>
+<i>Not: 1,52 puanlık fark ölçülmüş bir eşiğin üstünde olduğu gösterilemez. Ancak süre farkı
+(+%35) tek başına <code>katman5</code>'i elemeye yeter — skor eşitken maliyet karar verir.</i>
+</div>
+
+<h2>Adım A2 — Augmentation</h2>
+
+<p>A1'in kazananı (<code>tespit_coco_ft</code>, 3 eğitilebilir katman) sabitlenir, üzerine
+augmentation eklenir.</p>
+
+<table class="veri genis">
+<thead><tr><th>Deney</th><th>Profil</th><th>Val mAP@0,5</th><th>Test mAP@0,5</th>
+<th>Precision</th><th>Recall</th><th>TP</th><th>FP</th><th>FN</th></tr></thead>
+<tbody>
+<tr class="vurgu-iyi"><td class="ilk"><b>tespit_aug_orta</b></td>
+    <td class="ilk">çevirme + renk + ölçekleme</td><td><b>81,87</b></td><td>77,74</td>
+    <td>68,91</td><td>80,05</td><td>1.942</td><td>876</td><td>484</td></tr>
+<tr><td class="ilk">tespit_aug_hafif</td><td class="ilk">yatay çevirme</td><td>81,30</td>
+    <td><b>78,11</b></td><td>69,21</td><td>80,05</td><td>1.942</td><td>864</td><td>484</td></tr>
+<tr><td class="ilk">tespit_coco_ft <span style="color:#6a7484">(A1, referans)</span></td>
+    <td class="ilk">yok</td><td>81,18</td><td>77,10</td><td>72,82</td><td>78,07</td>
+    <td>1.894</td><td>707</td><td>532</td></tr>
+</tbody>
+</table>
+
+<div class="uyari">
+<b>Üç konfigürasyon 0,69 puanlık bir aralıkta (val). Ölçüm karar veremedi.</b>
+Görev 4'ün eşiği (2,33) burada geçerli olsaydı bu farkların tamamı gürültü sayılırdı.
+Görev 5'te eşik ölçülmediği için kesin bir şey söylenemiyor, ancak <b>0,69 puanın bir
+iyileştirme kanıtı olmadığı</b> açıktır. <code>tespit_aug_orta</code> validation'a göre
+seçilmiştir; bu bir kural gereğidir, ölçülmüş bir üstünlük değildir.
+</div>
+
+<div class="bulgu">
+<b>Ortalama skor sabit kalırken hata profili değişti — asıl bulgu burada.</b>
+Augmentation precision'ı düşürüp recall'ü yükseltti: %72,82 → %68,91 precision,
+%78,07 → %80,05 recall. Somut olarak: <b>48 nesne daha bulundu</b> (TP 1.894 → 1.942,
+FN 532 → 484) ama <b>169 yanlış pozitif eklendi</b> (FP 707 → 876). Model daha cesur
+davranıyor.
+<br><br>
+Bu, Görev 4'teki "ortalama skor loss'un ne yaptığını göstermez, hata profili gösterir"
+bulgusunun tespit karşılığıdır. mAP neredeyse değişmedi çünkü kazanılan recall ile
+kaybedilen precision birbirini götürdü.
+</div>
+
+<h2>Tespit — Nihai Sonuç</h2>
+
+<div class="zincir">
+Faster R-CNN + ResNet50-FPN &nbsp;|&nbsp; COCO pretrained, 3 eğitilebilir katman<br>
+augmentation: çevirme + renk oynaması + ölçekleme &nbsp;|&nbsp; 6 epoch &nbsp;|&nbsp; 953,7 sn
+</div>
+
+<table class="veri genis">
+<thead><tr><th>Metrik</th><th>Baseline</th><th>Nihai</th><th>Kazanç</th>
+<th>Eğitimsiz referans</th><th>Referansa fark</th></tr></thead>
+<tbody>
+<tr class="vurgu-iyi"><td class="ilk"><b>Test mAP@0,5</b></td><td>51,48</td><td><b>77,74</b></td>
+    <td class="fark"><b>+26,26</b></td><td>81,00</td><td class="kotu"><b>−3,26</b></td></tr>
+<tr><td class="ilk">Test mAP@0,75</td><td>15,55</td><td>53,97</td><td class="fark">+38,42</td>
+    <td>60,55</td><td class="kotu">−6,58</td></tr>
+<tr><td class="ilk">Test mAP@0,5:0,95</td><td>22,99</td><td>50,24</td><td class="fark">+27,25</td>
+    <td>54,65</td><td class="kotu">−4,41</td></tr>
+<tr><td class="ilk">Precision</td><td>42,60</td><td>68,91</td><td class="fark">+26,31</td>
+    <td>60,07</td><td>+8,84</td></tr>
+<tr><td class="ilk">Recall</td><td>63,48</td><td>80,05</td><td class="fark">+16,57</td>
+    <td>83,72</td><td class="kotu">−3,67</td></tr>
+<tr class="vurgu-orta"><td class="ilk">Sınıf doğruluğu</td><td>93,24</td><td>94,52</td>
+    <td class="fark">+1,28</td><td>94,87</td><td>−0,35</td></tr>
+</tbody>
+</table>
+
+<div class="gorsel-blok">
+<img src="gorseller/tespit/a2_augmentation/tespit_tespit_aug_orta.png" alt="Nihai tespit modeli">
+<div class="gorsel-alt">tespit_aug_orta — baseline ile aynı örnekler. Kutuların hem sayısı
+hem oturması belirgin biçimde iyileşmiştir.</div>
+</div>
+
+<div class="bolum-basligi">BÖLÜM 2 — SEMANTİK BÖLÜTLEME</div>
+
+<p><b>Model:</b> DeepLabV3 + ResNet50. Görev 4'te U-Net ailesi denenmiş ve DeepLabV3+
+orada <b>sonuncu</b> olmuştu — su kütlelerinin sınırları için skip bağlantısı kritikti.
+VOC farklı bir problem: 21 sınıf, çok nesneli sahneler, geniş ölçek değişimi. Atrous
+Spatial Pyramid Pooling (ASPP) tam da bunun için tasarlandı — aynı katmanda farklı
+genişlemelerde konvolüsyon uygulayıp hem küçük hem büyük nesneyi aynı anda görür.</p>
+
+<div class="uyari">
+<b>Bu rapor "DeepLabV3 VOC'ta iyidir" iddiasını doğrudan test etmemektedir.</b>
+Görev 5'te tek bir bölütleme mimarisi kullanıldı; karşılaştırmalı bir mimari taraması
+yapılmadı. Görev 4 ile karşılaştırma yalnızca <i>farklı veri setlerinde farklı davranıyor</i>
+gözlemi düzeyindedir, kontrollü bir deney değildir.
+</div>
+
+<h3>VOC bölütlemesinde üç tuzak</h3>
+
+<ul class="liste">
+<li><b>void (255) pikseller.</b> Nesne sınırlarındaki belirsiz şeritte VOC 255 etiketi
+kullanır. Bunlar ne arka plan ne nesne — loss'ta ve metrikte <b>yok sayılmalıdır</b>
+(<code>ignore_index=255</code>). Sayılsaydı model imkânsız bir hedefi öğrenmeye çalışır
+ve mIoU yapay olarak düşerdi.</li>
+<li><b>Arka plan bir sınıf.</b> 21 sınıfın biri arka plan ve piksellerin ~%74'ü o.
+mIoU'yu 21 sınıf üzerinden ortalamak literatürün standardıdır, ama arka plan dahil
+edildiğinde skor olduğundan iyi görünür; bu yüzden <b>arka plansız mIoU da ayrıca
+kaydedilmiştir</b>.</li>
+<li><b>Maske PNG'leri paletli (mode "P").</b> <code>np.array(Image.open(...))</code>
+doğrudan sınıf indekslerini verir. <code>convert("RGB")</code> çağırmak etiketleri
+renklere dönüştürür ve <b>sessizce bozar</b>.</li>
+</ul>
+
+<h2>Adım 1 — Referans ve Baseline</h2>
+
+<table class="veri genis">
+<thead><tr><th>Deney</th><th>Val mIoU</th><th>Test mIoU</th><th>Arka plansız</th>
+<th>Piksel doğr.</th><th>Train mIoU</th><th>Overfit farkı</th><th>Süre</th></tr></thead>
+<tbody>
+<tr class="vurgu-ref"><td class="ilk">ref_hazir_voc</td><td><b>75,88</b></td><td><b>75,46</b></td>
+    <td><b>74,57</b></td><td>94,09</td><td>79,96</td><td>+4,08</td><td><b>0 sn</b></td></tr>
+<tr class="vurgu-kotu"><td class="ilk">bolut_baseline</td><td class="kotu">54,06</td>
+    <td class="kotu">56,41</td><td>54,67</td><td>90,16</td><td>90,71</td>
+    <td class="kotu"><b>+36,66</b></td><td>890,9 sn</td></tr>
+</tbody>
+</table>
+
+<div class="bulgu">
+<b>Görev 4'ün tam tersi bir baseline: burada ezber var, hem de çok.</b>
+Train mIoU %90,71, validation %54,06 — <b>36,66 puanlık overfit farkı</b>. Görev 4'ün
+baseline'ında bu fark +0,15'ti (train, test'in bile <i>altındaydı</i>) ve orada
+augmentation hiçbir şey değiştirmemişti.
+<br><br>
+Bu ölçüm A1'in sonucunu baştan haber vermektedir: <b>kırılacak gerçek bir ezber var,
+dolayısıyla augmentation'ın kıracak bir şeyi de var.</b> Görev 4'te tam tersi geçerliydi.
+</div>
+
+<h2>Adım A1 — Augmentation</h2>
+
+<table class="veri genis">
+<thead><tr><th>Deney</th><th>Profil</th><th>Val mIoU</th><th>Test mIoU</th>
+<th>Train mIoU</th><th>Overfit farkı</th><th>Sınıf doğr.</th></tr></thead>
+<tbody>
+<tr class="vurgu-iyi"><td class="ilk">bolut_aug_guclu</td>
+    <td class="ilk">ölçekleme + kırpma + çevirme + renk</td><td><b>62,00</b></td><td>62,20</td>
+    <td>81,11</td><td><b>+19,11</b></td><td>76,39</td></tr>
+<tr class="vurgu-iyi"><td class="ilk"><b>bolut_aug_orta</b></td>
+    <td class="ilk">ölçekleme 0,5×–1,5× + kırpma + çevirme</td><td>60,93</td><td><b>62,35</b></td>
+    <td>81,45</td><td>+20,52</td><td><b>76,76</b></td></tr>
+<tr><td class="ilk">bolut_aug_hafif</td><td class="ilk">yatay çevirme</td><td>55,51</td>
+    <td>58,82</td><td>87,98</td><td>+32,48</td><td>70,38</td></tr>
+<tr><td class="ilk">bolut_baseline <span style="color:#6a7484">(referans)</span></td>
+    <td class="ilk">yok</td><td class="kotu">54,06</td><td>56,41</td><td>90,71</td>
+    <td class="kotu">+36,66</td><td>67,25</td></tr>
+</tbody>
+</table>
+
+<div class="bulgu">
+<b>Görev 4'ün augmentation teşhisi burada doğrulanmıştır.</b> Görev 4 raporu şunu yazmıştı:
+<i>"augmentation'ın klasik işi ezberi kırmaktır, ancak bu modelde kırılacak ezber yoktu."</i>
+Burada ezber vardı ve augmentation tam da beklendiği gibi davrandı:
+<br><br>
+<b>Overfit farkı +36,66 → +19,11</b> (neredeyse yarıya indi) ve <b>test mIoU +5,94 puan</b>
+yükseldi (56,41 → 62,35). Aynı araç, farklı hastalık, farklı sonuç. Bu, Görev 4'ün
+"aynı reçete farklı hastalığa uygulanınca işe yaramıyor" bulgusunun karşı yönden
+doğrulanmasıdır.
+</div>
+
+<div class="bulgu">
+<b>Augmentation'ın gücü ölçeklemede, çevirmede değil.</b> <code>hafif</code> profil yalnızca
+yatay çevirme içerir ve baseline'a göre kazancı 2,41 puan. Ölçekleme + kırpma eklendiğinde
+(<code>orta</code>) kazanç 5,94 puana çıkıyor. VOC'ta nesneler çok farklı ölçeklerde
+göründüğü için ölçek augmentasyonu doğrudan problemin kendisine dokunuyor.
+</div>
+
+<div class="uyari">
+<b>Metodolojik sapma — açıkça belirtilmelidir.</b> Validation'a göre kazanan
+<code>bolut_aug_guclu</code>'dur (62,00 / 60,93), ancak A2 adımı <code>orta</code> profili
+sabitlenerek koşulmuştur. Aradaki fark <b>1,07 puandır</b> ve ölçülmüş bir gürültü eşiği
+olmadığı için anlamlı olduğu gösterilemez; ayrıca <code>orta</code> test'te öndedir
+(62,35 / 62,20) ve daha ucuzdur. Yine de <b>kuralın harfiyen uygulanmadığı</b> bir yerdir
+ve raporda gizlenmemiştir. Doğru davranış, ya <code>guclu</code> ile devam etmek ya da
+gürültü eşiğini ölçüp farkın anlamsız olduğunu göstermekti.
+</div>
+
+<h2>Adım A2 — Eğitim Düzeni</h2>
+
+<p>Augmentation profili sabitlenir (<code>orta</code>); bu adımda modelin kendisi değil
+<b>nasıl eğitildiği</b> değişir. Üç soru sorulur.</p>
+
+<table class="veri genis">
+<thead><tr><th>Deney</th><th>Ne değişiyor</th><th>Val mIoU</th><th>Test mIoU</th>
+<th>Arka plansız</th><th>Piksel doğr.</th><th>Overfit</th></tr></thead>
+<tbody>
+<tr class="vurgu-iyi"><td class="ilk"><b>bolut_aux</b></td>
+    <td class="ilk">yardımcı kayıp açık (ağırlık 0,4)</td><td><b>66,51</b></td>
+    <td><b>64,78</b></td><td><b>63,40</b></td><td><b>92,02</b></td><td>+19,36</td></tr>
+<tr><td class="ilk">bolut_aug_orta <span style="color:#6a7484">(A1, referans)</span></td>
+    <td class="ilk">—</td><td>60,93</td><td>62,35</td><td>60,92</td><td>90,79</td><td>+20,52</td></tr>
+<tr class="vurgu-kotu"><td class="ilk">bolut_sabit_lr</td>
+    <td class="ilk">poly çizelge yerine sabit lr</td><td class="kotu">41,68</td>
+    <td class="kotu">44,68</td><td>42,54</td><td>86,40</td><td>+25,72</td></tr>
+<tr class="vurgu-kotu"><td class="ilk">bolut_scratch</td>
+    <td class="ilk">hazır ağırlık yok, gövde de sıfırdan</td><td class="kotu"><b>6,63</b></td>
+    <td class="kotu"><b>6,99</b></td><td class="kotu">3,53</td><td>73,32</td><td>+1,79</td></tr>
+</tbody>
+</table>
+
+<div class="bulgu">
+<b><code>bolut_scratch</code> tamamen çöktü: mIoU %6,99.</b> Görev 4'te sıfırdan eğitilen
+resnet34 hiç değilse %69,94 alıyordu — burada ImageNet ağırlığı olmadan 1.464 görüntüde
+21 sınıf öğrenmek imkânsız. Epoch geçmişi bunu doğruluyor: 1. epoch %3,67, 20. epoch
+%6,55 — model hiçbir zaman öğrenmeye başlamadı.
+<br><br>
+"Pretrained ağırlık opsiyonel değildir" bulgusunun bu çalışmadaki en sert versiyonu.
+Görev 2'nin "büyük model her zaman kazanmıyor", Görev 4'ün "pretrained olmadan büyük
+mimari dezavantaj" bulgularının uç noktası: <b>pretrained olmadan model hiç çalışmıyor.</b>
+</div>
+
+<div class="bulgu">
+<b>Learning rate çizelgesi bölütlemede belirleyici: −19,25 puan (val).</b>
+<code>bolut_sabit_lr</code> yalnızca poly azaltmayı kaldırıyor ve skor 60,93'ten 41,68'e
+düşüyor. Epoch geçmişi neden olduğunu gösteriyor: 5. epoch'ta %35,16'ya çıkıyor, 10.
+epoch'ta %30,99'a <i>geriliyor</i> — sabit lr 0,01 ile SGD hiçbir zaman oturmuyor,
+optimum etrafında salınıyor.
+<br><br>
+Görev 3'te OneCycle / AdamW gibi düzen değişiklikleri puan ondalıklarıyla oynuyordu.
+Burada tek başına en büyük ikinci etki. <b>Eğitim düzeninin önemi probleme bağlıdır ve
+varsayılamaz.</b>
+</div>
+
+<div class="bulgu">
+<b>Yardımcı kayıp işe yaradı: val +5,58, test +2,43 puan.</b> DeepLabV3'ün ara katmanına
+eklenen ikinci sınıflandırma başlığı (ağırlık 0,4), gradyanın ağın derinlerine daha
+doğrudan ulaşmasını sağlıyor. Sınıf doğruluğu neredeyse değişmezken (76,76 → 76,71)
+mIoU'nun yükselmesi, kazancın <b>sınır kalitesinden</b> geldiğini gösteriyor.
+</div>
+
+<h2>Bölütleme — Nihai Sonuç</h2>
+
+<div class="zincir">
+DeepLabV3 + ResNet50 &nbsp;|&nbsp; ImageNet pretrained gövde &nbsp;|&nbsp; yardımcı kayıp açık<br>
+augmentation: ölçekleme 0,5×–1,5× + kırpma + çevirme &nbsp;|&nbsp; 20 epoch &nbsp;|&nbsp; 954,8 sn
+</div>
+
+<table class="veri genis">
+<thead><tr><th>Metrik</th><th>Baseline</th><th>Nihai</th><th>Kazanç</th>
+<th>Eğitimsiz referans</th><th>Referansa fark</th></tr></thead>
+<tbody>
+<tr class="vurgu-iyi"><td class="ilk"><b>Test mIoU</b></td><td>56,41</td><td><b>64,78</b></td>
+    <td class="fark"><b>+8,37</b></td><td>75,46</td><td class="kotu"><b>−10,68</b></td></tr>
+<tr><td class="ilk">Test Dice</td><td>70,32</td><td>76,86</td><td class="fark">+6,54</td>
+    <td>85,01</td><td class="kotu">−8,15</td></tr>
+<tr><td class="ilk">Arka plansız mIoU</td><td>54,67</td><td>63,40</td><td class="fark">+8,73</td>
+    <td>74,57</td><td class="kotu">−11,17</td></tr>
+<tr><td class="ilk">Sınıf doğruluğu</td><td>67,25</td><td>76,71</td><td class="fark">+9,46</td>
+    <td>87,91</td><td class="kotu">−11,20</td></tr>
+<tr class="vurgu-orta"><td class="ilk">Piksel doğruluğu</td><td>90,16</td><td>92,02</td>
+    <td class="fark">+1,86</td><td>94,09</td><td>−2,07</td></tr>
+<tr><td class="ilk">Overfit farkı</td><td>+36,66</td><td>+19,36</td>
+    <td class="fark">−17,30</td><td>+4,08</td><td>—</td></tr>
+</tbody>
+</table>
+
+<div class="uyari">
+<b>Son iki satır yine "doğruluk yetmez"in kanıtı.</b> mIoU 8,37 puan yükselirken piksel
+doğruluğu yalnızca <b>1,86 puan</b> yükselmiştir — iyileştirmenin yaklaşık <b>beşte
+dördü</b> doğruluk metriğinde görünmemektedir. Görev 4'te bu oran üçte ikiydi; burada
+arka plan oranı daha yüksek olduğu için gizleme etkisi daha güçlü.
+</div>
+
+<div class="gorsel-blok">
+<img src="gorseller/bolutleme/a2_egitim_duzeni/bolut_bolut_aux.png" alt="Nihai bölütleme modeli">
+<div class="gorsel-alt">bolut_aux — nihai bölütleme modeli. Baseline görseliyle
+(<code>gorseller/bolutleme/baseline/</code>) karşılaştırıldığında sınıf karışıklıklarının
+ve sınır bulanıklığının azaldığı görülür.</div>
+</div>
+
+<h2 class="sayfa-kes">İki Problemin Ortak Bulgusu: Eğitimsiz Referans Kazandı</h2>
+
+<p>Bu, Görev 5'in en önemli sonucudur ve iki bağımsız problemde de aynı yönde çıkmıştır.</p>
+
+<table class="veri genis">
+<thead><tr><th>Problem</th><th>Metrik</th><th>Baseline</th><th>En iyi eğitilen</th>
+<th>Eğitimsiz referans</th><th>Referansın üstünlüğü</th><th>Referansın eğitim süresi</th></tr></thead>
+<tbody>
+<tr><td class="ilk">Tespit</td><td>mAP@0,5</td><td>51,48</td><td>77,74</td><td><b>81,00</b></td>
+    <td class="kotu"><b>+3,26</b></td><td><b>0 sn</b></td></tr>
+<tr><td class="ilk">Bölütleme</td><td>mIoU</td><td>56,41</td><td>64,78</td><td><b>75,46</b></td>
+    <td class="kotu"><b>+10,68</b></td><td><b>0 sn</b></td></tr>
+</tbody>
+</table>
+
+<div class="bulgu">
+<b>Tespitte bu sonuç özellikle çarpıcıdır, çünkü orada karşılaştırma adildir.</b>
+<code>tespit_coco_ft</code> zaten COCO ağırlıklarıyla <i>başladı</i> ve VOC'ta 6 epoch
+eğitildi. Sonuç: ağırlıklara <b>hiç dokunmamaktan daha kötü</b> (77,10 / 81,00).
+Yani 2.000 görüntülük bir alt kümede yapılan ince ayar, güçlü bir dedektörü iyileştirmedi
+— <b>bozdu</b>.
+<br><br>
+Bölütlemede karşılaştırma daha az adildir: <code>bolut_*</code> deneyleri ImageNet
+(yalnızca sınıflandırma) ağırlıklarıyla başlarken referans COCO+VOC <i>bölütleme</i>
+ağırlıklarıyla gelir. Aradaki 10,68 puanlık fark kısmen bu başlangıç avantajından
+kaynaklanır.
+</div>
+
+<div class="kutu">
+<b>Bu bulgunun pratik anlamı.</b> Küçük bir veri bütçesi ve kısa bir eğitim süresi varken,
+göreve uygun bir hazır modeli <b>olduğu gibi kullanmak</b>, onu kendi verinizde ince ayar
+yapmaktan daha iyi olabilir. İnce ayarın kazanç sağlaması için ya daha çok veri ya da
+daha dikkatli bir eğitim düzeni (düşük lr, katman dondurma, daha çok epoch) gerekir.
+Bu çalışma bu eşiğin <i>nerede</i> olduğunu ölçmemiştir; yalnızca mevcut bütçenin
+altında kaldığını göstermiştir.
+</div>
+
+<h2>Yakınsama</h2>
+
+<table class="veri genis">
+<thead><tr><th>Deney</th><th>Epoch 1</th><th>Epoch 5</th><th>Epoch 10</th><th>Son epoch</th>
+<th>Yorum</th></tr></thead>
+<tbody>
+<tr><td class="ilk">tespit_baseline</td><td class="kotu">9,42</td><td>54,24</td><td>—</td>
+    <td>55,35</td><td class="ilk">sıfırdan başlıyor, 6 epoch yetmiyor</td></tr>
+<tr class="vurgu-iyi"><td class="ilk">tespit_coco_ft</td><td><b>72,84</b></td><td>80,96</td>
+    <td>—</td><td>81,18</td><td class="ilk">1. epoch'ta baseline'ın tavanının üstünde</td></tr>
+<tr class="vurgu-kotu"><td class="ilk">bolut_scratch</td><td>3,67</td><td>3,94</td><td>4,41</td>
+    <td class="kotu">6,55</td><td class="ilk">hiç öğrenmeye başlamadı</td></tr>
+<tr class="vurgu-kotu"><td class="ilk">bolut_sabit_lr</td><td>6,92</td><td>35,16</td>
+    <td class="kotu">30,99</td><td>38,80</td><td class="ilk">10. epoch'ta <b>geriledi</b></td></tr>
+<tr class="vurgu-iyi"><td class="ilk">bolut_aux</td><td>10,14</td><td>30,23</td><td>44,20</td>
+    <td><b>63,97</b></td><td class="ilk">son epoch'a kadar yükseliyor</td></tr>
+</tbody>
+</table>
+
+<div class="bulgu">
+<b><code>tespit_coco_ft</code> 1. epoch sonunda %72,84 aldı — <code>tespit_baseline</code>'ın
+6 epoch sonunda ulaştığı seviyenin (%55,35) 17 puan üstünde.</b> Görev 4'te aynı gözlem
+yapılmıştı (pretrained model 1. epoch'ta sıfırdan modelin 20. epoch'una eşit). Transfer
+learning yalnızca tavanı değil, yakınsama hızını da değiştiriyor.
+</div>
+
+<div class="uyari">
+<b>Bölütleme deneylerinin çoğu hâlâ yükselirken durduruldu.</b> <code>bolut_aux</code>'un
+en iyi epoch'u 20/20, <code>bolut_aug_*</code>'ların 19/20. Epoch bütçesi bağlayıcıydı;
+daha uzun eğitim mutlak skorları yükseltebilir. Adımlar arası karşılaştırma bundan
+etkilenmez çünkü bütçe tüm deneylerde aynıdır.
+</div>
+
+<h2 class="sayfa-kes">Hangi Sınıflar Zor</h2>
+
+<p>Her iki problemde de sınıf bazlı sonuçlar kaydedilmiştir
+(<code>sinif_bazli_tespit.csv</code>, <code>sinif_bazli_bolutleme.csv</code>).
+Zorlanılan sınıflar <b>iki problemde de büyük ölçüde aynıdır</b>.</p>
+
+<table class="veri genis">
+<thead><tr><th>Problem</th><th>En zor 4 sınıf</th><th>En kolay 4 sınıf</th></tr></thead>
+<tbody>
+<tr><td class="ilk">Tespit <span style="color:#6a7484">(AP@0,5, nihai model)</span></td>
+    <td class="ilk">pottedplant 48,4 · boat 52,6 · diningtable 64,2 · chair 68,2</td>
+    <td class="ilk">aeroplane 90,6 · cat 90,4 · bicycle 90,0 · person 87,8</td></tr>
+<tr><td class="ilk">Bölütleme <span style="color:#6a7484">(IoU, nihai model)</span></td>
+    <td class="ilk">chair 18,8 · pottedplant 36,8 · cow 39,4 · sofa 40,4</td>
+    <td class="ilk">arkaplan 92,3 · bus 87,9 · aeroplane 84,1 · cat 80,9</td></tr>
+</tbody>
+</table>
+
+<div class="bulgu">
+<b>Zorluk sınıfın kendisinden değil, geometrisinden geliyor.</b> Her iki listede de aynı
+sınıflar zorlanıyor: <code>pottedplant</code>, <code>chair</code>, <code>diningtable</code>,
+<code>sofa</code>, <code>boat</code>. Ortak özellikleri:
+<ul class="liste" style="margin-top:6px">
+<li><b>İnce ve delikli yapı</b> (sandalye bacakları, saksı bitkisinin yaprakları) —
+düşük çözünürlükte kayboluyor.</li>
+<li><b>Birbirini kapatan sahneler</b> (masa + sandalye + kanepe genelde aynı odada,
+üst üste) — sınırlar belirsiz.</li>
+<li><b>Tanımı belirsiz sınırlar</b> (masanın nerede bitip sandalyenin başladığı).</li>
+</ul>
+<code>chair</code> bölütlemede %18,84 IoU ile en düşük sınıf; aynı sınıf tespitte %68,18
+alıyor. <b>Kutuyla bulmak kolay, pikselini çizmek zor</b> — iki problemin zorluk profilinin
+nerede ayrıştığını gösteriyor.
+</div>
+
+<div class="bulgu">
+<b>Referansın da zorlandığı sınıflar aynı.</b> <code>ref_hazir_voc</code>'ta en düşük
+sınıflar bicycle (38,15), chair (47,23), sofa (56,53) — yani bu zorluk modele değil
+<b>probleme</b> ait. Eğitimle kapatılabilecek bir açık değil.
+</div>
+
+<h2 class="sayfa-kes">Tüm Deneyler</h2>
+
+<h3>Nesne tespiti</h3>
+<table class="veri genis">
+<thead><tr><th>Deney</th><th>Aşama</th><th>Val mAP@0,5</th><th>Test mAP@0,5</th>
+<th>mAP@0,75</th><th>mAP@0,5:0,95</th><th>Prec.</th><th>Recall</th><th>F1</th>
+<th>Sınıf doğr.</th><th>Ort. IoU</th><th>Süre</th></tr></thead>
+<tbody>
+<tr class="vurgu-ref"><td class="ilk">ref_coco_egitimsiz</td><td>Referans</td><td>84,36</td>
+    <td>81,00</td><td>60,55</td><td>54,65</td><td>60,07</td><td>83,72</td><td>69,95</td>
+    <td>94,87</td><td>83,35</td><td>0,0</td></tr>
+<tr class="vurgu-kotu"><td class="ilk">tespit_baseline</td><td>Baseline</td><td>55,35</td>
+    <td>51,48</td><td>15,55</td><td>22,99</td><td>42,60</td><td>63,48</td><td>50,98</td>
+    <td>93,24</td><td>72,39</td><td>1.088,7</td></tr>
+<tr class="vurgu-iyi"><td class="ilk">tespit_coco_ft</td><td>A1 Transfer</td><td>81,18</td>
+    <td>77,10</td><td>54,90</td><td>50,01</td><td>72,82</td><td>78,07</td><td>75,35</td>
+    <td>94,20</td><td>83,00</td><td>1.096,9</td></tr>
+<tr><td class="ilk">tespit_coco_ft_katman5</td><td>A1 Transfer</td><td>79,66</td><td>76,17</td>
+    <td>53,94</td><td>48,92</td><td>72,56</td><td>77,70</td><td>75,04</td><td>94,65</td>
+    <td>82,49</td><td>1.478,1</td></tr>
+<tr><td class="ilk">tespit_aug_hafif</td><td>A2 Aug</td><td>81,30</td><td>78,11</td>
+    <td>55,03</td><td>50,28</td><td>69,21</td><td>80,05</td><td>74,24</td><td>94,80</td>
+    <td>82,76</td><td>1.083,3</td></tr>
+<tr class="vurgu-iyi"><td class="ilk"><b>tespit_aug_orta</b></td><td>A2 Aug</td>
+    <td><b>81,87</b></td><td>77,74</td><td>53,97</td><td>50,24</td><td>68,91</td>
+    <td>80,05</td><td>74,07</td><td>94,52</td><td>82,81</td><td>953,7</td></tr>
+</tbody>
+</table>
+
+<h3>Semantik bölütleme</h3>
+<table class="veri genis">
+<thead><tr><th>Deney</th><th>Aşama</th><th>Val mIoU</th><th>Test mIoU</th><th>Test Dice</th>
+<th>Arka plansız</th><th>Piksel doğr.</th><th>Sınıf doğr.</th><th>fwIoU</th>
+<th>Train mIoU</th><th>Overfit</th><th>Süre</th></tr></thead>
+<tbody>
+<tr class="vurgu-ref"><td class="ilk">ref_hazir_voc</td><td>Referans</td><td>75,88</td>
+    <td>75,46</td><td>85,01</td><td>74,57</td><td>94,09</td><td>87,91</td><td>89,68</td>
+    <td>79,96</td><td>+4,08</td><td>0,0</td></tr>
+<tr class="vurgu-kotu"><td class="ilk">bolut_baseline</td><td>Baseline</td><td>54,06</td>
+    <td>56,41</td><td>70,32</td><td>54,67</td><td>90,16</td><td>67,25</td><td>83,28</td>
+    <td>90,71</td><td>+36,66</td><td>890,9</td></tr>
+<tr><td class="ilk">bolut_aug_hafif</td><td>A1 Aug</td><td>55,51</td><td>58,82</td>
+    <td>72,47</td><td>57,19</td><td>90,67</td><td>70,38</td><td>84,03</td><td>87,98</td>
+    <td>+32,48</td><td>891,5</td></tr>
+<tr class="vurgu-iyi"><td class="ilk">bolut_aug_orta</td><td>A1 Aug</td><td>60,93</td>
+    <td>62,35</td><td>75,45</td><td>60,92</td><td>90,79</td><td>76,76</td><td>84,51</td>
+    <td>81,45</td><td>+20,52</td><td>887,5</td></tr>
+<tr class="vurgu-iyi"><td class="ilk">bolut_aug_guclu</td><td>A1 Aug</td><td><b>62,00</b></td>
+    <td>62,20</td><td>75,04</td><td>60,74</td><td>90,89</td><td>76,39</td><td>84,83</td>
+    <td>81,11</td><td>+19,11</td><td>906,6</td></tr>
+<tr class="vurgu-kotu"><td class="ilk">bolut_scratch</td><td>A2 Düzen</td><td>6,63</td>
+    <td>6,99</td><td>9,98</td><td>3,53</td><td>73,32</td><td>9,85</td><td>57,93</td>
+    <td>8,41</td><td>+1,79</td><td>920,4</td></tr>
+<tr class="vurgu-iyi"><td class="ilk"><b>bolut_aux</b></td><td>A2 Düzen</td><td><b>66,51</b></td>
+    <td><b>64,78</b></td><td><b>76,86</b></td><td><b>63,40</b></td><td><b>92,02</b></td>
+    <td>76,71</td><td>86,39</td><td>85,87</td><td>+19,36</td><td>954,8</td></tr>
+<tr class="vurgu-kotu"><td class="ilk">bolut_sabit_lr</td><td>A2 Düzen</td><td>41,68</td>
+    <td>44,68</td><td>59,15</td><td>42,54</td><td>86,40</td><td>55,37</td><td>76,97</td>
+    <td>67,40</td><td>+25,72</td><td>905,0</td></tr>
+</tbody>
+</table>
+<div class="dipnot">14 deney, toplam 12.057 saniye = <b>201,0 dakika</b> GPU süresi
+(RTX 4060 Laptop, 8 GB) — tespit 95,0 dk, bölütleme 105,9 dk. Ham sonuçlar
+<code>sonuclar_tespit.csv</code> ve <code>sonuclar_bolutleme.csv</code>, sınıf bazlı
+sonuçlar <code>sinif_bazli_*.csv</code>, epoch geçmişleri <code>epoch_gecmisi_*.csv</code>,
+görseller <code>gorseller/{tespit,bolutleme}/{aşama}/</code> altındadır.</div>
+
+<h2 class="sayfa-kes">Bulgular</h2>
+
+<ol class="adimlar">
+<li><b>Her iki problemde de eğitimsiz hazır model, eğitilen en iyi modeli geçti.</b>
+Tespitte 3,26, bölütlemede 10,68 puan farkla — ve referansların eğitim süresi 0.
+Tespitte karşılaştırma adildir (ikisi de COCO ağırlıklarıyla başlar), dolayısıyla sonuç
+nettir: <b>2.000 görüntülük bir alt kümede 6 epoch ince ayar, güçlü bir dedektörü
+iyileştirmedi, bozdu.</b></li>
+
+<li><b>Doğruluk metriği iki problemde de yanılttı — biri uç örnek.</b> Tespitte sınıf
+doğruluğu 1,63 puanlık bir bantta kalırken mAP@0,5 29,52 puan oynadı. Bölütlemede
+<code>bolut_scratch</code> piksel doğruluğunda %73,32 alırken mIoU'da %6,99 aldı:
+tamamen başarısız bir model, doğruluk metriğinde çalışıyormuş gibi göründü.</li>
+
+<li><b>Görev 4'ün augmentation teşhisi karşı yönden doğrulandı.</b> Görev 4'te
+augmentation işe yaramamıştı çünkü baseline'da overfit yoktu (+0,15). Burada overfit
++36,66'ydı ve augmentation onu +19,11'e indirip skoru 5,94 puan yükseltti.
+<b>Aynı araç, farklı hastalık, farklı sonuç.</b></li>
+
+<li><b>Pretrained ağırlık opsiyonel değil — <code>bolut_scratch</code> hiç çalışmadı.</b>
+mIoU %6,99, 20 epoch boyunca öğrenmeye başlamadı. Görev 4'te sıfırdan resnet34 en azından
+%69,94 alıyordu; 1.464 görüntüde 21 sınıf için sıfırdan eğitim tamamen imkânsız.</li>
+
+<li><b>Transfer learning'in katkısı problem karmaşıklığıyla büyüyor.</b> Görev 3'te
+8,30 puan, Görev 4'te 11,61, Görev 5 tespitte <b>25,83</b>. Ayrıca yakınsama hızını da
+değiştiriyor: <code>tespit_coco_ft</code> 1. epoch'ta baseline'ın 6 epoch'luk tavanının
+17 puan üstünde.</li>
+
+<li><b>Fazla katman açmak zarar veriyor.</b> Gövdenin tamamı eğitilebilir yapıldığında
+(<code>katman5</code>) val 1,52 puan düştü ve süre %35 arttı. Görev 3'ün "yüksek lr hazır
+filtreleri bozar" bulgusunun tespit karşılığı.</li>
+
+<li><b>Learning rate çizelgesi bölütlemede en büyük ikinci etki: −19,25 puan.</b>
+Sabit lr ile model 10. epoch'ta <i>geriledi</i>. Görev 3'te aynı tür değişiklikler puan
+ondalıklarıyla oynuyordu — <b>eğitim düzeninin önemi probleme bağlıdır ve varsayılamaz.</b></li>
+
+<li><b>Augmentation ortalama skoru değiştirmeden hata profilini değiştirebilir.</b>
+Tespitte mAP neredeyse sabit kalırken 48 nesne daha bulundu (recall +1,98) ve 169 yanlış
+pozitif eklendi (precision −3,91). Ortalamaya bakan biri "hiçbir şey olmadı" derdi.</li>
+
+<li><b>Zorlanılan sınıflar iki problemde de aynı ve zorluk geometriden geliyor.</b>
+pottedplant, chair, diningtable, sofa, boat — ince/delikli yapı, birbirini kapatan
+sahneler, tanımı belirsiz sınırlar. Referans model de aynı sınıflarda zorlanıyor, yani
+bu açık eğitimle kapatılabilecek bir açık değil.</li>
+
+<li><b>Ölçüm gürültüsü ölçülmedi ve bu raporun kabul edilmiş eksiğidir.</b> Görev 4'te
+gürültü üç kez ölçülmüş, 2,33 puanlık eşik tüm sonuçları yeniden okutmuştu. Görev 5'te
+hiçbir eğitim konfigürasyonu tekrarlanmadı. Sonuç olarak küçük farklar (tespitte
+augmentation +0,69, bölütlemede orta/guclu 1,07) <b>iddia edilememektedir.</b></li>
+</ol>
+
+<h2>Sınırlılıklar</h2>
+
+<ul class="liste">
+<li><b>Ölçüm gürültüsü ölçülmedi.</b> Görev 4'ün en önemli metodolojik kazanımı burada
+tekrarlanmadı. Elde edilen tek tekrar eğitim içermeyen referansındır (0,03 puan) ve
+eğitimli deneyleri karşılaştırmak için kullanılamaz. Manşet bulgular (eğitimsiz referansın
+üstünlüğü, transfer learning'in +25,83'ü, <code>bolut_scratch</code>'in çöküşü,
+sabit lr'nin −19,25'i) herhangi bir makul eşiğin çok üstünde olduğu için bundan
+etkilenmez; <b>adım içi küçük farklar ise yorumlanmamıştır.</b></li>
+
+<li><b>A2 bölütleme, validation kazananıyla koşulmadı.</b> A1'in validation kazananı
+<code>bolut_aug_guclu</code> (62,00) iken A2 <code>orta</code> profiliyle (60,93)
+sabitlenmiştir. Fark 1,07 puandır ve anlamlı olduğu gösterilemez, ancak kural harfiyen
+uygulanmamıştır.</li>
+
+<li><b>Tespitte eğitim seti 2.000 görüntüyle sınırlandı.</b> Donanım kısıtından
+(8 GB VRAM, batch 4). Mevcut 5.717 görüntünün yalnızca %35'i. Bu, "ince ayar referansı
+geçemedi" bulgusunun doğrudan sebebi olabilir — daha büyük bir bütçede sonuç değişebilir
+ve bu <b>test edilmemiştir</b>.</li>
+
+<li><b>Epoch bütçesi bağlayıcıydı.</b> Tespitte 6, bölütlemede 20 epoch. Bölütleme
+deneylerinin çoğunda en iyi validation skoru 19–20. epoch'ta gerçekleşti; modeller hâlâ
+yükselirken durduruldu.</li>
+
+<li><b>Tek mimari, tek seed.</b> Her iki problemde de tek bir model ailesi kullanıldı
+(Faster R-CNN, DeepLabV3); mimari karşılaştırması yapılmadı. Dolayısıyla "DeepLabV3 VOC'ta
+uygundur" gibi bir iddia bu çalışmayla desteklenmemektedir. Tüm deneyler seed 27 ile
+tek koşudur.</li>
+
+<li><b>Bölütlemede referans karşılaştırması adil değil.</b> Referans COCO+VOC
+<i>bölütleme</i> ağırlıklarıyla gelirken eğitilen modeller ImageNet <i>sınıflandırma</i>
+ağırlıklarıyla başlar. 10,68 puanlık farkın ne kadarının bu başlangıç avantajından
+geldiği ayrıştırılmamıştır. Tespitte böyle bir sorun yoktur.</li>
+</ul>
+
+<div class="altbilgi">
+Görev 5 — PASCAL VOC 2012 (Kaggle) · 14 deney · 201,0 dakika GPU ·
+RTX 4060 Laptop GPU (8 GB) · PyTorch 2.5.1+cu124 · torchvision · albumentations 1.4.18 · seed 27
+</div>
