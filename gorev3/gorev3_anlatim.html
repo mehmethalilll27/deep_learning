@@ -1,0 +1,1050 @@
+<title>Ezberden Genellemeye</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --bg:        #f5f6f9;
+    --surface:   #ffffff;
+    --surface-2: #eceff4;
+    --line:      #d9dee6;
+    --line-soft: #e6eaf0;
+    --text:      #171c24;
+    --muted:     #5b6472;
+    --faint:     #8b95a3;
+
+    /* gorev3'un ekseni: genelleme (val/test) vs ezber (train) */
+    --fwd:       #5c53c9;   /* validation / gercek performans */
+    --fwd-soft:  #e6e4f7;
+    --bwd:       #b1541d;   /* train / ezber */
+    --bwd-soft:  #fae7d9;
+    --warn:      #8a5a08;
+    --warn-soft: #fbeed2;
+
+    --code-bg:   #eef1f6;
+    --code-line: #dee3ec;
+    --syn-kw:    #8a2f8f;
+    --syn-fn:    #1a5fb4;
+    --syn-num:   #a3541b;
+    --syn-str:   #1c6b4a;
+    --syn-com:   #79838f;
+
+    --step--1: clamp(.78rem, .76rem + .1vw, .84rem);
+    --step-0:  clamp(1rem, .97rem + .15vw, 1.075rem);
+    --step-1:  clamp(1.2rem, 1.12rem + .35vw, 1.4rem);
+    --step-2:  clamp(1.55rem, 1.4rem + .7vw, 2rem);
+    --step-3:  clamp(2.1rem, 1.7rem + 1.9vw, 3.4rem);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:        #10141a;
+      --surface:   #171d25;
+      --surface-2: #1e262f;
+      --line:      #2c3742;
+      --line-soft: #232c36;
+      --text:      #e6ebf2;
+      --muted:     #9daab9;
+      --faint:     #6f7c8b;
+
+      --fwd:       #8b83e0;
+      --fwd-soft:  #1f1c3d;
+      --bwd:       #c9803f;
+      --bwd-soft:  #32210f;
+      --warn:      #e5b567;
+      --warn-soft: #38290f;
+
+      --code-bg:   #0d1218;
+      --code-line: #202a34;
+      --syn-kw:    #d69dd8;
+      --syn-fn:    #8ab4f8;
+      --syn-num:   #e0a373;
+      --syn-str:   #7fca9f;
+      --syn-com:   #667585;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg:        #10141a;
+    --surface:   #171d25;
+    --surface-2: #1e262f;
+    --line:      #2c3742;
+    --line-soft: #232c36;
+    --text:      #e6ebf2;
+    --muted:     #9daab9;
+    --faint:     #6f7c8b;
+
+    --fwd:       #8b83e0;
+    --fwd-soft:  #1f1c3d;
+    --bwd:       #c9803f;
+    --bwd-soft:  #32210f;
+    --warn:      #e5b567;
+    --warn-soft: #38290f;
+
+    --code-bg:   #0d1218;
+    --code-line: #202a34;
+    --syn-kw:    #d69dd8;
+    --syn-fn:    #8ab4f8;
+    --syn-num:   #e0a373;
+    --syn-str:   #7fca9f;
+    --syn-com:   #667585;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: var(--step-0);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 { font-family: Fraunces, "Iowan Old Style", Georgia, serif; text-wrap: balance; margin: 0; font-weight: 600; }
+  p { margin: 0; }
+  a { color: var(--fwd); }
+  :focus-visible { outline: 2px solid var(--fwd); outline-offset: 3px; border-radius: 3px; }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: var(--step--1);
+    letter-spacing: .14em; text-transform: uppercase; color: var(--faint);
+  }
+
+  .shell {
+    max-width: 1240px; margin-inline: auto; padding: 0 20px 96px;
+    display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 56px;
+  }
+  @media (min-width: 1080px) {
+    .shell { grid-template-columns: 208px minmax(0, 1fr); padding-inline: 32px; }
+  }
+
+  .hero {
+    grid-column: 1 / -1; padding: 72px 0 40px;
+    border-bottom: 1px solid var(--line); display: grid; gap: 22px;
+  }
+  .hero h1 { font-size: var(--step-3); line-height: 1.02; letter-spacing: -.02em; }
+  .hero h1 em { font-style: italic; color: var(--fwd); }
+  .hero .lede { max-width: 62ch; color: var(--muted); font-size: var(--step-1); line-height: 1.5; }
+  .hero-meta { display: flex; flex-wrap: wrap; gap: 10px 28px; padding-top: 6px; }
+  .hero-meta div { display: grid; gap: 2px; }
+  .hero-meta .k { font-family: "IBM Plex Mono", monospace; font-size: var(--step--1); color: var(--faint); letter-spacing: .08em; text-transform: uppercase; }
+  .hero-meta .v { font-size: .95rem; color: var(--text); }
+
+  .rail { display: none; }
+  @media (min-width: 1080px) {
+    .rail {
+      display: block; position: sticky; top: 0; align-self: start;
+      max-height: 100vh; overflow-y: auto; padding: 48px 0; font-size: .84rem;
+    }
+    .rail ol { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 1px; }
+    .rail a {
+      display: grid; grid-template-columns: 22px 1fr; gap: 8px;
+      padding: 5px 8px 5px 10px; color: var(--muted); text-decoration: none;
+      border-left: 2px solid transparent; line-height: 1.3;
+    }
+    .rail a:hover { color: var(--text); border-left-color: var(--line); }
+    .rail a .num { font-family: "IBM Plex Mono", monospace; color: var(--faint); font-size: .78rem; }
+    .rail .rail-sep { margin-top: 14px; }
+  }
+
+  main { display: grid; gap: 64px; padding-top: 48px; min-width: 0; }
+  section { display: grid; gap: 20px; scroll-margin-top: 24px; min-width: 0; }
+  section > p, section > .prose { max-width: 68ch; }
+  .prose { display: grid; gap: 14px; }
+
+  .sec-head { display: grid; gap: 6px; }
+  .sec-head h2 { font-size: var(--step-2); letter-spacing: -.015em; line-height: 1.15; }
+  .sec-head .what { color: var(--muted); max-width: 62ch; }
+  h3 { font-size: var(--step-1); margin-top: 6px; }
+
+  .code {
+    background: var(--code-bg); border: 1px solid var(--code-line); border-radius: 8px;
+    overflow-x: auto; font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .855rem; line-height: 1.75; padding: 16px 18px; tab-size: 4;
+  }
+  .code pre { margin: 0; }
+  .k  { color: var(--syn-kw); }
+  .fn { color: var(--syn-fn); }
+  .nu { color: var(--syn-num); }
+  .st { color: var(--syn-str); }
+  .cm { color: var(--syn-com); font-style: italic; }
+  .hl { background: var(--fwd-soft); border-radius: 3px; padding: 0 3px; margin: 0 -3px; }
+
+  code:not(.code code) {
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .88em;
+    background: var(--surface-2); border-radius: 4px; padding: .1em .34em;
+  }
+
+  .notes { display: grid; gap: 0; margin: 0; border-top: 1px solid var(--line-soft); }
+  .notes .row {
+    display: grid; gap: 4px 24px; padding: 13px 2px;
+    border-bottom: 1px solid var(--line-soft); align-items: baseline;
+  }
+  @media (min-width: 760px) { .notes .row { grid-template-columns: minmax(180px, 34%) 1fr; } }
+  .notes .row > .line { font-family: "IBM Plex Mono", monospace; font-size: .82rem; color: var(--fwd); word-break: break-word; }
+  .notes .row.alt > .line { color: var(--bwd); }
+  .notes .row > .why { color: var(--muted); font-size: .95rem; }
+  .notes .row > .why strong { color: var(--text); font-weight: 600; }
+
+  .callout {
+    border-radius: 8px; padding: 16px 18px; display: grid; gap: 6px;
+    font-size: .95rem; max-width: 72ch; border: 1px solid var(--line); background: var(--surface);
+  }
+  .callout .tag { font-family: "IBM Plex Mono", monospace; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; }
+  .callout.amac { border-left: 3px solid var(--fwd); background: var(--fwd-soft); border-color: transparent; }
+  .callout.amac .tag { color: var(--fwd); }
+  .callout.dikkat { border-left: 3px solid var(--warn); background: var(--warn-soft); border-color: transparent; }
+  .callout.dikkat .tag { color: var(--warn); }
+  .callout.geri { border-left: 3px solid var(--bwd); background: var(--bwd-soft); border-color: transparent; }
+  .callout.geri .tag { color: var(--bwd); }
+  .callout strong { color: var(--text); }
+
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line-soft); }
+  thead th {
+    font-family: "IBM Plex Mono", monospace; font-size: .74rem; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 500;
+    background: var(--surface-2); white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.num, th.num { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  td.mono-cell { font-family: "IBM Plex Mono", monospace; font-size: .82rem; }
+  td.win { color: var(--fwd); font-weight: 600; }
+
+  figure { margin: 0; display: grid; gap: 10px; }
+  figure svg { width: 100%; height: auto; display: block; }
+  .figbox { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; overflow-x: auto; }
+  figcaption { font-size: .86rem; color: var(--muted); max-width: 64ch; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .82rem; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+
+  .cards { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .card {
+    border: 1px solid var(--line); border-radius: 8px; padding: 16px;
+    background: var(--surface); display: grid; gap: 6px; align-content: start;
+  }
+  .card .t { font-weight: 600; font-size: .95rem; }
+  .card .d { color: var(--muted); font-size: .88rem; }
+  .card .n { font-family: "IBM Plex Mono", monospace; font-size: .75rem; color: var(--faint); letter-spacing: .1em; text-transform: uppercase; }
+
+  .steps {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0;
+    border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface);
+  }
+  .steps .st-cell { padding: 14px 16px; border-right: 1px solid var(--line-soft); display: grid; gap: 3px; }
+  .steps .st-cell:last-child { border-right: none; }
+  .steps .st-cell .lbl { font-family: "IBM Plex Mono", monospace; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+  .steps .st-cell .val { font-family: "IBM Plex Mono", monospace; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+  .steps .st-cell .sub { font-size: .8rem; color: var(--muted); }
+  .steps .st-cell.good .val { color: var(--fwd); }
+  .steps .st-cell.bad .val { color: var(--bwd); }
+
+  ul.plain { margin: 0; padding-left: 1.1em; display: grid; gap: 7px; color: var(--muted); max-width: 66ch; }
+  ul.plain strong { color: var(--text); }
+
+  .divider { border: none; border-top: 1px solid var(--line); margin: 0; }
+  .footnote { color: var(--faint); font-size: .86rem; max-width: 64ch; }
+
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<div class="shell">
+
+  <header class="hero">
+    <div class="eyebrow">deep_learning / gorev3 · satır satır okuma</div>
+    <h1>Ezberden <em>Genellemeye</em></h1>
+    <p class="lede">
+      Görev 3, tek bir soruya verilen dört dosyalık cevaptır: <strong>dürüst bir başlangıç noktası
+      kur, sonra tek seferde tek şey değiştirerek yükselt.</strong> Intel manzara veri setinde
+      %81'den %94.33'e giden yol — ve o yolu ölçülebilir kılan kod.
+    </p>
+    <div class="hero-meta">
+      <div><span class="k">Veri</span><span class="v">Intel Image Classification · 6 sınıf · 128×128</span></div>
+      <div><span class="k">Deney</span><span class="v">15 koşu · 4 dosya</span></div>
+      <div><span class="k">Sabitler</span><span class="v">seed 27 · 15 epoch · batch 64</span></div>
+      <div><span class="k">Yeni kavram</span><span class="v">validation seti · overfit farkı</span></div>
+    </div>
+  </header>
+
+  <nav class="rail" aria-label="Bölümler">
+    <div class="eyebrow">Bölümler</div>
+    <ol>
+      <li><a href="#genel"><span class="num">00</span><span>Boru hattı</span></a></li>
+      <li><a href="#b1"><span class="num">01</span><span>Üçlü veri ayrımı</span></a></li>
+      <li><a href="#b2"><span class="num">02</span><span>Katmanlı bölme</span></a></li>
+      <li><a href="#b3"><span class="num">03</span><span>İki ImageFolder hilesi</span></a></li>
+      <li><a href="#b4"><span class="num">04</span><span>Augmentation profilleri</span></a></li>
+      <li><a href="#b5"><span class="num">05</span><span>Baseline model</span></a></li>
+      <li><a href="#b6"><span class="num">06</span><span>Overfit'i ölçmek</span></a></li>
+      <li><a href="#b7"><span class="num">07</span><span>A2: mimari ve optimizasyon</span></a></li>
+      <li><a href="#b8"><span class="num">08</span><span>A3: transfer learning</span></a></li>
+      <li><a href="#b9"><span class="num">09</span><span>Ortak CSV'ye yazma</span></a></li>
+      <li class="rail-sep"><a href="#sonuc"><span class="num">10</span><span>15 deneyin tablosu</span></a></li>
+      <li><a href="#ek"><span class="num">Ek</span><span>Dersler</span></a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <!-- ============ 00 ============ -->
+    <section id="genel">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 00</div>
+        <h2>Dört dosya, tek boru hattı</h2>
+        <p class="what">
+          Her dosya bir öncekinin bıraktığı yerden devam eder ve <strong>tek bir değişkeni</strong>
+          oynatır. Bu disiplin olmasa, sonundaki 13 puanlık artışın hangi kararımızdan geldiğini
+          söyleyemezdik.
+        </p>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <div class="n">Adım 2</div>
+          <div class="t">egitim_baseline.py</div>
+          <div class="d">Süssüz CNN. Augmentation, BatchNorm, dropout, scheduler <strong>bilerek yok</strong>. Amaç yüksek skor değil, dürüst bir referans.</div>
+        </div>
+        <div class="card">
+          <div class="n">A1</div>
+          <div class="t">egitim_augmentation.py</div>
+          <div class="d">Model sabit, sadece veri artırma profili değişir: yok / hafif / orta / güçlü.</div>
+        </div>
+        <div class="card">
+          <div class="n">A2</div>
+          <div class="t">egitim_mimari.py</div>
+          <div class="d">Augmentation sabit ("orta"), model ve optimizasyon değişir. Her deney bir öncekine tek şey ekler.</div>
+        </div>
+        <div class="card">
+          <div class="n">A3</div>
+          <div class="t">egitim_transfer.py</div>
+          <div class="d">ImageNet'te önceden eğitilmiş ağırlıklarla başlamak. Görev 2'de kapalı olan anahtarın açılması.</div>
+        </div>
+      </div>
+
+      <figure>
+        <div class="figbox">
+          <svg viewBox="0 0 660 452" role="img" aria-label="On beş deneyin test doğruluğu, baseline 81.00'a göre; en yüksek EfficientNetB0 fine-tune 94.33">
+            <g stroke="var(--line-soft)" stroke-width="1">
+              <line x1="222.9" y1="40" x2="222.9" y2="418"></line>
+              <line x1="355.3" y1="40" x2="355.3" y2="418"></line>
+              <line x1="487.6" y1="40" x2="487.6" y2="418"></line>
+              <line x1="620" y1="40" x2="620" y2="418"></line>
+            </g>
+            <line x1="249.4" y1="34" x2="249.4" y2="424" stroke="var(--bwd)" stroke-width="1.4" stroke-dasharray="5 4"></line>
+            <text x="253" y="32" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--bwd)">baseline 81.00</text>
+
+            <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--faint)" text-anchor="middle">
+              <text x="222.9" y="438">80</text>
+              <text x="355.3" y="438">85</text>
+              <text x="487.6" y="438">90</text>
+              <text x="620" y="438">95</text>
+              <text x="420" y="450" fill="var(--faint)">test accuracy (%)</text>
+            </g>
+
+            <g font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--muted)" text-anchor="end">
+              <text x="158" y="50">baseline_cnn</text>
+              <text x="158" y="76">aug_yok</text>
+              <text x="158" y="102">aug_hafif</text>
+              <text x="158" y="128">aug_orta</text>
+              <text x="158" y="154">aug_guclu</text>
+              <text x="158" y="180">mim_bn</text>
+              <text x="158" y="206">mim_bn_dropout</text>
+              <text x="158" y="232">mim_gap</text>
+              <text x="158" y="258">mim_gap_adamw</text>
+              <text x="158" y="284">mim_gap_onecycle</text>
+              <text x="158" y="310">ResNet18_scratch</text>
+              <text x="158" y="336">ResNet18_donuk</text>
+              <text x="158" y="362">ResNet18_finetune</text>
+              <text x="158" y="388">MobileNetV2_ft</text>
+              <text x="158" y="414">EfficientNetB0_ft</text>
+            </g>
+
+            <g>
+              <circle cx="249.4" cy="46" r="5.5" fill="var(--bwd)"></circle>
+              <circle cx="282.0" cy="72" r="5.5" fill="var(--fwd)"></circle>
+              <circle cx="322.7" cy="98" r="5.5" fill="var(--fwd)"></circle>
+              <circle cx="342.0" cy="124" r="5.5" fill="var(--fwd)"></circle>
+              <circle cx="299.0" cy="150" r="5.5" fill="var(--fwd)"></circle>
+              <circle cx="271.4" cy="176" r="5.5" fill="var(--fwd)"></circle>
+              <circle cx="288.3" cy="202" r="5.5" fill="var(--fwd)"></circle>
+              <circle cx="336.7" cy="228" r="5.5" fill="var(--fwd)"></circle>
+              <circle cx="294.4" cy="254" r="5.5" fill="var(--fwd)"></circle>
+              <circle cx="382.5" cy="280" r="5.5" fill="var(--fwd)"></circle>
+              <circle cx="201.8" cy="306" r="5.5" fill="var(--fwd)"></circle>
+              <circle cx="386.2" cy="332" r="5.5" fill="var(--fwd)"></circle>
+              <circle cx="561.7" cy="358" r="5.5" fill="var(--fwd)"></circle>
+              <circle cx="558.2" cy="384" r="5.5" fill="var(--fwd)"></circle>
+              <circle cx="602.1" cy="410" r="6.5" fill="var(--fwd)"></circle>
+            </g>
+
+            <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--text)">
+              <text x="259" y="50">81.00</text>
+              <text x="292" y="76">82.23</text>
+              <text x="333" y="102">83.77</text>
+              <text x="352" y="128">84.50</text>
+              <text x="309" y="154">82.87</text>
+              <text x="281" y="180">81.83</text>
+              <text x="298" y="206">82.47</text>
+              <text x="347" y="232">84.30</text>
+              <text x="304" y="258">82.70</text>
+              <text x="392" y="284">86.03</text>
+              <text x="212" y="310">79.20</text>
+              <text x="396" y="336">86.17</text>
+              <text x="571" y="362">92.80</text>
+              <text x="568" y="388">92.67</text>
+              <text x="612" y="414">94.33</text>
+            </g>
+          </svg>
+        </div>
+        <div class="legend">
+          <span><i style="background: var(--bwd)"></i> baseline (referans çizgisi)</span>
+          <span><i style="background: var(--fwd)"></i> iyileştirme denemeleri</span>
+        </div>
+        <figcaption>
+          On beş deneyin test doğruluğu, dosya sırasına göre. Kesikli çizgi baseline'ın 81.00'ı.
+          Sıfırdan eğitilen ResNet18'in referansın <em>altında</em> kalması bu görevin en öğretici
+          sonuçlarından biri. Kaynak: <code>kayitlar/gorev3/sonuclar_gorev3.csv</code>.
+        </figcaption>
+      </figure>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 01 ============ -->
+    <section id="b1">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 01 · veri ayrımı</div>
+        <h2>Görev 2'de iki küme vardı, burada üç var</h2>
+        <p class="what">
+          Bu görevin en önemli kavramsal yeniliği modelde değil, veri bölümünde. Skoru
+          <em>iyileştirmeye</em> çalıştığınız anda üçüncü bir kümeye ihtiyacınız doğar.
+        </p>
+      </div>
+
+      <div class="code"><pre><span class="cm"># seg_train %80 -&gt; train        model burada ogrenir</span>
+<span class="cm"># seg_train %20 -&gt; validation   iyilestirme kararlari BURAYA bakarak verilir</span>
+<span class="cm"># seg_test      -&gt; test         yalnizca final olcum, konfig basina 1 kez</span>
+
+TRAIN_DIR = os.path.join(DATA_DIR, <span class="st">"seg_train"</span>, <span class="st">"seg_train"</span>)
+TEST_DIR  = os.path.join(DATA_DIR, <span class="st">"seg_test"</span>, <span class="st">"seg_test"</span>)
+VAL_ORAN  = <span class="nu">0.20</span></pre></div>
+
+      <div class="prose">
+        <p>
+          Neden gerekli: 15 deney koşup en yüksek test skorunu seçerseniz, test setini fiilen
+          <strong>eğitim sinyali olarak kullanmış</strong> olursunuz. Skor iyimser çıkar, çünkü
+          o kümeye 15 kez bakıp en iyi görüneni seçtiniz. Validation seti bu seçimi üstlenir;
+          test seti el değmemiş kalır ve gerçek genelleme performansını verir.
+        </p>
+        <p>
+          Kodda bu ilke tek bir satırla korunuyor: <code>train_model</code> fonksiyonu
+          <code>test_loader</code>'ı hiç görmez. Test ölçümü yalnızca <code>main()</code> içinde,
+          eğitim bittikten sonra bir kez yapılır.
+        </p>
+      </div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">train (%80)</div>
+          <div class="why">Ağırlıkların güncellendiği tek küme. Model bu veriyi <em>görür</em>.</div>
+        </div>
+        <div class="row">
+          <div class="line">validation (%20)</div>
+          <div class="why">"Augmentation profillerinden hangisi daha iyi?" gibi kararlar buraya bakılarak verilir. Model bu veriyle <strong>eğitilmez</strong> ama seçimleriniz üzerinden dolaylı olarak etkilenir — bu yüzden nihai skor olarak kullanılamaz.</div>
+        </div>
+        <div class="row alt">
+          <div class="line">test (seg_test)</div>
+          <div class="why">Konfigürasyon başına bir kez. Raporlanan skor budur. <code>en_iyi_val_acc</code> sütununun varlığı da bu yüzden anlamlı: "en iyi epoch"u val'e göre seçiyoruz, test'e göre değil.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 02 ============ -->
+    <section id="b2">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 02 · katmanli_bol</div>
+        <h2>Rastgele bölmek yetmez: her sınıftan aynı oranda</h2>
+      </div>
+
+      <div class="code"><pre><span class="k">def</span> <span class="fn">katmanli_bol</span>(dataset, val_oran=VAL_ORAN, seed=SEED):
+    etiketler = np.array(dataset.targets)
+    rng = np.random.default_rng(seed)
+
+    train_idx, val_idx = [], []
+    <span class="k">for</span> sinif <span class="k">in</span> np.unique(etiketler):
+        idx = np.where(etiketler == sinif)[<span class="nu">0</span>]
+        rng.shuffle(idx)
+        kesme = int(round(len(idx) * val_oran))
+        val_idx.extend(idx[:kesme].tolist())
+        train_idx.extend(idx[kesme:].tolist())
+
+    rng.shuffle(train_idx)
+    rng.shuffle(val_idx)
+    <span class="k">return</span> train_idx, val_idx</pre></div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">sınıf sınıf döngü</div>
+          <div class="why">Düz rastgele bölme, şansa bağlı olarak bir sınıfın validation'da az temsil edilmesine yol açabilir. <strong>Katmanlı (stratified)</strong> bölme her sınıfın %20'sini ayırarak val setinin eğitim setiyle aynı dağılıma sahip olmasını garantiler.</div>
+        </div>
+        <div class="row">
+          <div class="line">np.array(dataset.targets)</div>
+          <div class="why">Görev 2'de <code>train_data.targets.numpy()</code> yazıyordu çünkü MNIST etiketleri tensördü. <code>ImageFolder</code>'da <code>.targets</code> <strong>düz bir Python listesi</strong>; <code>.numpy()</code> burada hata verir. Aynı fikrin farklı veri sınıfındaki karşılığı.</div>
+        </div>
+        <div class="row">
+          <div class="line">idx[:kesme] / idx[kesme:]</div>
+          <div class="why">Karıştırılmış indeks listesinin ilk %20'si validation, kalanı train. Kesişim imkânsız — aynı görüntünün iki kümede birden bulunması (veri sızıntısı) bu yapıyla zaten olamaz.</div>
+        </div>
+        <div class="row">
+          <div class="line">seed=SEED</div>
+          <div class="why">Bölme her dosyada aynı seed'le yapıldığı için baseline, A1, A2 ve A3 <strong>birebir aynı</strong> train/val kümelerini kullanır. Bu olmadan dosyalar arası karşılaştırma anlamsız olurdu.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 03 ============ -->
+    <section id="b3">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 03 · veri_yukle · vitrin</div>
+        <h2>Aynı klasörü iki kez açmak — ve neden şart olduğu</h2>
+        <p class="what">
+          Bu fonksiyon ilk bakışta gereksiz tekrar gibi görünür. Aslında augmentation'ın en sık
+          yapılan hatasını yapısal olarak imkânsız kılar.
+        </p>
+      </div>
+
+      <div class="code"><pre><span class="k">def</span> <span class="fn">veri_yukle</span>(profil):
+    egitim_tf = transform_olustur(profil)      <span class="cm"># augmentation VAR</span>
+    olcum_tf  = transform_olustur(<span class="st">"yok"</span>)       <span class="cm"># augmentation YOK</span>
+
+    <span class="hl">tam_egitim = datasets.ImageFolder(TRAIN_DIR, transform=egitim_tf)</span>
+    <span class="hl">tam_olcum  = datasets.ImageFolder(TRAIN_DIR, transform=olcum_tf)</span>
+    test_data  = datasets.ImageFolder(TEST_DIR,  transform=olcum_tf)
+
+    train_idx, val_idx = katmanli_bol(tam_olcum)
+
+    train_set       = Subset(tam_egitim, train_idx)   <span class="cm"># egitim: bozulmus goruntuler</span>
+    val_set         = Subset(tam_olcum,  val_idx)     <span class="cm"># olcum: temiz goruntuler</span>
+    train_olcum_set = Subset(tam_olcum,  train_idx)   <span class="cm"># overfit olcumu icin temiz train</span>
+
+    <span class="k">return</span> train_set, val_set, test_data, train_olcum_set, tam_olcum.classes</pre></div>
+
+      <div class="prose">
+        <p>
+          PyTorch'ta transform <strong>dataset nesnesine</strong> bağlıdır, <code>Subset</code>'e değil.
+          Tek bir <code>ImageFolder</code> açıp onu ikiye bölseydiniz, validation görüntüleri de
+          rastgele döndürülüp renkleri oynatılarak ölçülürdü. Sonuç: her ölçümde farklı bir val
+          skoru ve hangi profilin daha iyi olduğunu asla söyleyemezsiniz — çünkü ölçüm aletinin
+          kendisi rastgele.
+        </p>
+      </div>
+
+      <div class="notes">
+        <div class="row alt">
+          <div class="line">train_olcum_set</div>
+          <div class="why">Üçüncü ve en ince ayrıntı: <strong>aynı</strong> eğitim görüntüleri, ama augmentation'sız. Overfit farkını hesaplarken train accuracy'nin bozulmamış görüntülerde ölçülmesi gerekir; yoksa "train %86" derken aslında modelin zor versiyonlardaki skorunu okur, ezberi olduğundan küçük görürsünüz.</div>
+        </div>
+        <div class="row">
+          <div class="line">katmanli_bol(tam_olcum)</div>
+          <div class="why">Bölme hangi nesne üzerinden yapılırsa yapılsın indeksler aynı — iki <code>ImageFolder</code> aynı klasörü aynı sırada okur. Yine de ölçüm nesnesi üzerinden bölmek, niyeti okunur kılar.</div>
+        </div>
+        <div class="row">
+          <div class="line">tam_olcum.classes</div>
+          <div class="why">Klasör adlarından türeyen sınıf listesi: <code>buildings, forest, glacier, mountain, sea, street</code>. Alfabetik sıraya göre 0–5 numaralanır; confusion matrisindeki satır sırası da budur.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 04 ============ -->
+    <section id="b4">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 04 · augment_adimlari</div>
+        <h2>Dört profil, artan şiddet</h2>
+        <p class="what">
+          Veri artırma, modele aynı görüntüyü her epoch'ta biraz farklı göstererek ezberi
+          zorlaştırır. Ama dozu vardır — bu bölüm o dozu bir tarama ile bulur.
+        </p>
+      </div>
+
+      <div class="code"><pre><span class="k">def</span> <span class="fn">augment_adimlari</span>(profil):
+    <span class="k">if</span> profil == <span class="st">"yok"</span>:
+        <span class="k">return</span> []
+    <span class="k">if</span> profil == <span class="st">"hafif"</span>:
+        <span class="k">return</span> [transforms.RandomHorizontalFlip(),
+                transforms.RandomRotation(<span class="nu">15</span>)]
+    <span class="k">if</span> profil == <span class="st">"orta"</span>:
+        <span class="k">return</span> [transforms.RandomHorizontalFlip(),
+                transforms.RandomRotation(<span class="nu">15</span>),
+                transforms.ColorJitter(brightness=<span class="nu">0.2</span>, contrast=<span class="nu">0.2</span>, saturation=<span class="nu">0.2</span>)]
+    <span class="k">if</span> profil == <span class="st">"guclu"</span>:
+        <span class="k">return</span> [transforms.RandomResizedCrop(IMG_SIZE, scale=(<span class="nu">0.7</span>, <span class="nu">1.0</span>)),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomRotation(<span class="nu">20</span>),
+                transforms.ColorJitter(brightness=<span class="nu">0.3</span>, contrast=<span class="nu">0.3</span>, saturation=<span class="nu">0.3</span>)]</pre></div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">RandomHorizontalFlip</div>
+          <div class="why">Manzara fotoğrafında ayna simetrisi <strong>anlamı bozmaz</strong>: ters çevrilmiş bir orman hâlâ ormandır. Aynı dönüşüm rakam tanımada felaket olurdu (aynalanmış "2" artık 2 değildir) — augmentation seçimi daima veriye özgüdür.</div>
+        </div>
+        <div class="row">
+          <div class="line">RandomRotation(15)</div>
+          <div class="why">Fotoğrafın hafif eğik çekilmiş hâli. Açı büyüdükçe köşelerde siyah üçgenler oluşur ve model bu yapay kenarları öğrenmeye başlar; 15–20 derece bu yüzden pratik bir üst sınırdır.</div>
+        </div>
+        <div class="row">
+          <div class="line">ColorJitter</div>
+          <div class="why">Parlaklık/kontrast/doygunluk oynatma — farklı hava ve ışık koşullarını taklit eder. Manzara veri setinde doğrudan karşılığı olan bir çeşitlilik.</div>
+        </div>
+        <div class="row alt">
+          <div class="line">RandomResizedCrop(scale=(0.7, 1.0))</div>
+          <div class="why">Görüntünün %70–100'ünü kesip yeniden büyütür. En agresif adım: bazı kırpmalar sınıfı belirleyen nesneyi tamamen dışarıda bırakabilir; model o karede <strong>yanlış etiketli</strong> bir örnek görmüş olur.</div>
+        </div>
+      </div>
+
+      <h3>Taramanın sonucu: "orta" kazanıyor</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Profil</th><th class="num">Train acc</th><th class="num">Val acc</th><th class="num">Test acc</th><th class="num">Overfit farkı</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono-cell">yok</td><td class="num">99.78</td><td class="num">82.68</td><td class="num">82.23</td><td class="num">17.10</td></tr>
+            <tr><td class="mono-cell">hafif</td><td class="num">92.62</td><td class="num">83.61</td><td class="num">83.77</td><td class="num">9.01</td></tr>
+            <tr><td class="mono-cell">orta</td><td class="num">93.72</td><td class="num">85.67</td><td class="win num">84.50</td><td class="num">8.05</td></tr>
+            <tr><td class="mono-cell">guclu</td><td class="num">86.87</td><td class="num">83.82</td><td class="num">82.87</td><td class="num">3.05</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout geri">
+        <span class="tag">En önemli satır: guclu</span>
+        <p>
+          "guclu" profili overfit farkını 3.05'e kadar indirdi — ezberleme neredeyse tamamen bitti.
+          Ama test skoru <strong>düştü</strong> (82.87). Ders: overfit farkını küçültmek amaç değil,
+          araçtır. Görüntüyü o kadar bozarsanız model öğrenilecek sinyali de kaybeder.
+          <em>Doğru hedef en küçük fark değil, en yüksek validation skoru.</em>
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 05 ============ -->
+    <section id="b5">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 05 · BasitCNN</div>
+        <h2>Baseline modeli ve parametrelerin nerede biriktiği</h2>
+      </div>
+
+      <div class="code"><pre><span class="k">class</span> <span class="fn">BasitCNN</span>(nn.Module):
+    <span class="k">def</span> <span class="fn">__init__</span>(self, sinif_sayisi=<span class="nu">6</span>, img_size=IMG_SIZE):
+        super().__init__()
+        self.ozellik = nn.Sequential(
+            nn.Conv2d(<span class="nu">3</span>, <span class="nu">32</span>, kernel_size=<span class="nu">3</span>, padding=<span class="nu">1</span>), nn.ReLU(), nn.MaxPool2d(<span class="nu">2</span>),   <span class="cm"># 128 -&gt; 64</span>
+            nn.Conv2d(<span class="nu">32</span>, <span class="nu">64</span>, kernel_size=<span class="nu">3</span>, padding=<span class="nu">1</span>), nn.ReLU(), nn.MaxPool2d(<span class="nu">2</span>),  <span class="cm"># 64 -&gt; 32</span>
+            nn.Conv2d(<span class="nu">64</span>, <span class="nu">128</span>, kernel_size=<span class="nu">3</span>, padding=<span class="nu">1</span>), nn.ReLU(), nn.MaxPool2d(<span class="nu">2</span>), <span class="cm"># 32 -&gt; 16</span>
+        )
+        kenar = img_size // <span class="nu">8</span>                      <span class="cm"># 3 kez yariya inildi</span>
+        self.siniflandirici = nn.Sequential(
+            nn.Flatten(),
+            <span class="hl">nn.Linear(<span class="nu">128</span> * kenar * kenar, <span class="nu">256</span>),</span>  <span class="cm"># 32768 -&gt; 256 : 8.4 milyon parametre</span>
+            nn.ReLU(),
+            nn.Linear(<span class="nu">256</span>, sinif_sayisi),
+        )</pre></div>
+
+      <div class="steps">
+        <div class="st-cell"><span class="lbl">Toplam parametre</span><span class="val">8.483.654</span><span class="sub">baseline</span></div>
+        <div class="st-cell bad"><span class="lbl">Tek FC katmanında</span><span class="val">8.388.864</span><span class="sub">toplamın %98.9'u</span></div>
+        <div class="st-cell"><span class="lbl">3 conv katmanında</span><span class="val">92.672</span><span class="sub">asıl işi yapanlar</span></div>
+        <div class="st-cell bad"><span class="lbl">Overfit farkı</span><span class="val">16.87</span><span class="sub">train − val, puan</span></div>
+      </div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">padding=1 ile 3×3 conv</div>
+          <div class="why">Kenar bilgisini korur: <code>padding=1</code> sayesinde çıktı boyutu girdiyle aynı kalır, küçülme sadece <code>MaxPool2d</code>'den gelir. Böylece boyut hesabı temiz kalır: 128 → 64 → 32 → 16.</div>
+        </div>
+        <div class="row">
+          <div class="line">kenar = img_size // 8</div>
+          <div class="why">Üç havuzlama, her biri yarıya indiriyor: 2³ = 8. Bu satırı sabit yazmak yerine hesaplamak, <code>IMG_SIZE</code> değiştiğinde modelin kendiliğinden uyum sağlamasını sağlar.</div>
+        </div>
+        <div class="row alt">
+          <div class="line">128 × 16 × 16 = 32.768</div>
+          <div class="why">Düzleştirilmiş vektörün uzunluğu. Bunu 256'ya bağlayan katman tek başına <strong>8.4 milyon</strong> ağırlık taşır. Modelin ezber kapasitesi buradan gelir — ve A2'de Global Average Pooling'in hedefi tam olarak bu katmandır.</div>
+        </div>
+        <div class="row">
+          <div class="line">BatchNorm/dropout yokluğu</div>
+          <div class="why">Kasıtlı. Baseline'ın görevi iyi skor almak değil, sonraki adımların neyi düzelttiğini ölçülebilir kılmak. Bu yüzden dosyanın docstring'inde "bilerek YOK" listesi var.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 06 ============ -->
+    <section id="b6">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 06 · train_model · vitrin</div>
+        <h2>Ezberi görünür kılan üç satır</h2>
+        <p class="what">
+          Görev 2'de her epoch'ta sadece test ölçülüyordu. Burada <strong>train ve validation
+          birlikte</strong> ölçülüp farkları kaydediliyor — modelin ezberlemeye başladığı an
+          böylece bir sayıya dönüşüyor.
+        </p>
+      </div>
+
+      <div class="code"><pre><span class="k">for</span> epoch <span class="k">in</span> range(<span class="nu">1</span>, epochs + <span class="nu">1</span>):
+    loss = bir_epoch_egit(model, train_loader, criterion, optimizer, device)
+
+    <span class="hl">tr = metricler_hesapla(model, train_olcum_loader, criterion, device)</span>
+    <span class="hl">va = metricler_hesapla(model, val_loader, criterion, device)</span>
+    <span class="hl">fark = (tr[<span class="st">"accuracy"</span>] - va[<span class="st">"accuracy"</span>]) * <span class="nu">100</span></span>
+
+    <span class="k">if</span> va[<span class="st">"accuracy"</span>] &gt; en_iyi_val:
+        en_iyi_val, en_iyi_epoch = va[<span class="st">"accuracy"</span>], epoch
+
+    gecmis.append({<span class="st">"epoch"</span>: epoch, <span class="st">"train_loss"</span>: round(loss, <span class="nu">4</span>),
+                   <span class="st">"train_acc"</span>: round(tr[<span class="st">"accuracy"</span>] * <span class="nu">100</span>, <span class="nu">2</span>),
+                   <span class="st">"val_acc"</span>: round(va[<span class="st">"accuracy"</span>] * <span class="nu">100</span>, <span class="nu">2</span>),
+                   <span class="st">"overfit_farki"</span>: round(fark, <span class="nu">2</span>)})</pre></div>
+
+      <figure>
+        <div class="figbox">
+          <svg viewBox="0 0 660 340" role="img" aria-label="Baseline modelinin 15 epoch boyunca train ve validation doğruluğu: train yüzde 99'a çıkarken validation yüzde 82'de kalıyor">
+            <g stroke="var(--line-soft)" stroke-width="1">
+              <line x1="60" y1="238.6" x2="600" y2="238.6"></line>
+              <line x1="60" y1="175.7" x2="600" y2="175.7"></line>
+              <line x1="60" y1="112.9" x2="600" y2="112.9"></line>
+              <line x1="60" y1="50" x2="600" y2="50"></line>
+            </g>
+            <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--faint)" text-anchor="end">
+              <text x="52" y="242">70</text>
+              <text x="52" y="179">80</text>
+              <text x="52" y="116">90</text>
+              <text x="52" y="54">100</text>
+            </g>
+
+            <polygon
+              points="60,233.6 98.57,168.3 137.14,139.6 175.71,154.2 214.29,96.3 252.86,75.0 291.43,72.7 330,62.4 368.57,61.4 407.14,52.8 445.71,52.3 484.29,51.7 522.86,51.2 561.43,53.8 600,55.8 600,161.8 561.43,166.3 522.86,158.0 484.29,161.1 445.71,158.9 407.14,152.0 368.57,158.2 330,164.3 291.43,164.5 252.86,157.1 214.29,158.4 175.71,186.8 137.14,165.1 98.57,185.5 60,243.1"
+              fill="var(--bwd)" opacity=".12"></polygon>
+
+            <polyline points="60,233.6 98.57,168.3 137.14,139.6 175.71,154.2 214.29,96.3 252.86,75.0 291.43,72.7 330,62.4 368.57,61.4 407.14,52.8 445.71,52.3 484.29,51.7 522.86,51.2 561.43,53.8 600,55.8"
+              fill="none" stroke="var(--bwd)" stroke-width="2"></polyline>
+            <polyline points="60,243.1 98.57,185.5 137.14,165.1 175.71,186.8 214.29,158.4 252.86,157.1 291.43,164.5 330,164.3 368.57,158.2 407.14,152.0 445.71,158.9 484.29,161.1 522.86,158.0 561.43,166.3 600,161.8"
+              fill="none" stroke="var(--fwd)" stroke-width="2"></polyline>
+
+            <circle cx="600" cy="55.8" r="4.5" fill="var(--bwd)"></circle>
+            <circle cx="600" cy="161.8" r="4.5" fill="var(--fwd)"></circle>
+
+            <text x="612" y="52" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--bwd)">99.08</text>
+            <text x="612" y="166" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--fwd)">82.22</text>
+
+            <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--faint)" text-anchor="middle">
+              <text x="60" y="272">1</text>
+              <text x="214.29" y="272">5</text>
+              <text x="407.14" y="272">10</text>
+              <text x="600" y="272">15</text>
+              <text x="330" y="292">epoch</text>
+            </g>
+
+            <text x="330" y="120" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="var(--bwd)" text-anchor="middle">↕ overfit farkı: 16.87 puan</text>
+          </svg>
+        </div>
+        <div class="legend">
+          <span><i style="background: var(--bwd)"></i> train accuracy (ezberlenen)</span>
+          <span><i style="background: var(--fwd)"></i> validation accuracy (gerçekten öğrenilen)</span>
+        </div>
+        <figcaption>
+          Baseline'ın 15 epoch'u. Beşinci epoch'tan sonra iki eğri ayrılıyor: train yükselmeye devam
+          ediyor, validation 82–84 bandında duruyor. Aradaki alan modelin <em>öğrendiği değil,
+          ezberlediği</em> kısım. Kaynak: <code>kayitlar/gorev3/epoch_gecmisi_baseline_cnn.csv</code>.
+        </figcaption>
+      </figure>
+
+      <div class="notes">
+        <div class="row alt">
+          <div class="line">train_olcum_loader</div>
+          <div class="why">Train accuracy'nin <strong>ölçüm</strong> transformuyla, yani augmentation'sız hesaplandığı yer. Eğitim sırasında hesaplanan doğruluğu kullansaydınız, augmentation açıkken train accuracy yapay olarak düşük çıkar ve fark küçük görünürdü.</div>
+        </div>
+        <div class="row">
+          <div class="line">fark = train − val</div>
+          <div class="why">Tek sayıya indirgenmiş overfit ölçüsü. 16.87 puan: model eğitim verisini neredeyse ezberlemiş (%99.08) ama görmediği veride %82.22'de kalmış. Sıfıra yakın fark ise modelin kapasitesini tam kullandığını gösterir.</div>
+        </div>
+        <div class="row">
+          <div class="line">en_iyi_val / en_iyi_epoch</div>
+          <div class="why">En yüksek validation skorunun hangi epoch'ta yakalandığını kaydeder. Baseline'da bu 10. epoch (%83.78) — yani son 5 epoch modeli <strong>daha kötü</strong> hâle getirmiş. Erken durdurmanın (early stopping) neden var olduğunu gösteren veri budur.</div>
+        </div>
+        <div class="row">
+          <div class="line">gecmis listesi</div>
+          <div class="why">Her epoch bir sözlük olarak biriktirilir ve sonunda <code>epoch_gecmisi_&lt;deney&gt;.csv</code> dosyasına yazılır. Yukarıdaki grafik doğrudan o dosyadan çizildi — eğitim eğrisini sonradan çizebilmek için epoch bazlı kayıt şart.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 07 ============ -->
+    <section id="b7">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 07 · egitim_mimari.py</div>
+        <h2>Birikimli deneyler: her satır bir öncekine tek şey ekler</h2>
+      </div>
+
+      <div class="code"><pre>KONFIGLER = [
+    {<span class="st">"ad"</span>: <span class="st">"mim_bn"</span>,           <span class="st">"bn"</span>: <span class="k">True</span>, <span class="st">"dropout"</span>: <span class="nu">0.0</span>, <span class="st">"gap"</span>: <span class="k">False</span>,
+     <span class="st">"opt"</span>: <span class="st">"Adam"</span>,  <span class="st">"sched"</span>: <span class="st">"yok"</span>},
+    {<span class="st">"ad"</span>: <span class="st">"mim_bn_dropout"</span>,   <span class="st">"bn"</span>: <span class="k">True</span>, <span class="st">"dropout"</span>: <span class="nu">0.3</span>, <span class="st">"gap"</span>: <span class="k">False</span>,
+     <span class="st">"opt"</span>: <span class="st">"Adam"</span>,  <span class="st">"sched"</span>: <span class="st">"yok"</span>},
+    {<span class="st">"ad"</span>: <span class="st">"mim_gap"</span>,          <span class="st">"bn"</span>: <span class="k">True</span>, <span class="st">"dropout"</span>: <span class="nu">0.3</span>, <span class="st">"gap"</span>: <span class="k">True</span>,
+     <span class="st">"opt"</span>: <span class="st">"Adam"</span>,  <span class="st">"sched"</span>: <span class="st">"yok"</span>},
+    {<span class="st">"ad"</span>: <span class="st">"mim_gap_adamw"</span>,    <span class="st">"bn"</span>: <span class="k">True</span>, <span class="st">"dropout"</span>: <span class="nu">0.3</span>, <span class="st">"gap"</span>: <span class="k">True</span>,
+     <span class="st">"opt"</span>: <span class="st">"AdamW"</span>, <span class="st">"sched"</span>: <span class="st">"yok"</span>},
+    {<span class="st">"ad"</span>: <span class="st">"mim_gap_onecycle"</span>, <span class="st">"bn"</span>: <span class="k">True</span>, <span class="st">"dropout"</span>: <span class="nu">0.3</span>, <span class="st">"gap"</span>: <span class="k">True</span>,
+     <span class="st">"opt"</span>: <span class="st">"AdamW"</span>, <span class="st">"sched"</span>: <span class="st">"OneCycle"</span>},
+]</pre></div>
+
+      <div class="prose">
+        <p>
+          Beş satır, dört anahtarın kademeli açılışı. Bu tasarımın avantajı: iki komşu satır
+          arasındaki fark <strong>tek bir değişikliktir</strong>, dolayısıyla skor farkı doğrudan
+          o değişikliğe atfedilebilir. Dezavantajı: sıra önemlidir, "sadece dropout" gibi bir
+          kombinasyon bu listede test edilmez.
+        </p>
+      </div>
+
+      <div class="code"><pre><span class="k">def</span> <span class="fn">blok</span>(girdi, cikti):
+    katmanlar = [nn.Conv2d(girdi, cikti, kernel_size=<span class="nu">3</span>, padding=<span class="nu">1</span>)]
+    <span class="k">if</span> bn:
+        katmanlar.append(nn.BatchNorm2d(cikti))       <span class="cm"># conv ile ReLU ARASINA</span>
+    katmanlar += [nn.ReLU(), nn.MaxPool2d(<span class="nu">2</span>)]
+    <span class="k">return</span> katmanlar
+
+<span class="k">if</span> gap:
+    self.havuz = nn.AdaptiveAvgPool2d(<span class="nu">1</span>)                <span class="cm"># 128x16x16 -&gt; 128x1x1</span>
+    girdi_boyutu = <span class="nu">128</span>
+<span class="k">else</span>:
+    self.havuz = nn.Identity()
+    girdi_boyutu = <span class="nu">128</span> * (img_size // <span class="nu">8</span>) ** <span class="nu">2</span></pre></div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">nn.BatchNorm2d — konumu</div>
+          <div class="why">Conv ile ReLU <strong>arasına</strong> girer. Her batch'in çıktısını sıfır ortalama–birim varyansa normalize eder; böylece katmanlar arası dağılım kayması azalır, daha yüksek learning rate'ler güvenli hâle gelir. Sonuç: overfit farkı 16.87'den 2.32'ye düştü.</div>
+        </div>
+        <div class="row">
+          <div class="line">nn.Dropout(0.3)</div>
+          <div class="why">Eğitimde nöronların %30'unu rastgele kapatır; model tek bir nörona bağımlı çözüm geliştiremez. <code>model.eval()</code>'da otomatik kapanır — bu yüzden ölçüm fonksiyonundaki <code>eval()/train()</code> çağrıları kritik.</div>
+        </div>
+        <div class="row alt">
+          <div class="line">nn.AdaptiveAvgPool2d(1)</div>
+          <div class="why">Her kanalın 16×16'lık haritasını <strong>tek bir ortalamaya</strong> indirir. 32.768 uzunluğundaki vektör 128'e iner ve model 8.48 milyon parametreden <strong>128.262</strong>'ye düşer — 66 kat küçülme. Test skoru ise 82.47'den 84.30'a çıkar: parametrenin çoğu zaten ezberden başka işe yaramıyormuş.</div>
+        </div>
+        <div class="row">
+          <div class="line">nn.Identity()</div>
+          <div class="why">"Hiçbir şey yapma" katmanı. <code>if</code> bloklarını <code>forward</code> içine taşımamak için kullanılır; <code>self.havuz(x)</code> her iki durumda da geçerli kalır. Küçük ama okunabilirliği artıran bir kalıp.</div>
+        </div>
+        <div class="row">
+          <div class="line">AdamW</div>
+          <div class="why">Adam'ın weight decay'i doğru uygulayan versiyonu. Adam'da ağırlık cezası gradyana karışır ve uyarlanabilir adım tarafından bozulur; AdamW cezayı ayrı uygular. Bu deneyde tek başına fayda getirmedi (84.30 → 82.70) — negatif sonuç da sonuçtur.</div>
+        </div>
+        <div class="row">
+          <div class="line">OneCycleLR + scheduler.step()</div>
+          <div class="why">Learning rate'i epoch boyunca önce yükseltip sonra düşüren program. Dikkat: <code>scheduler.step()</code> <strong>her batch'te</strong> çağrılır (epoch sonunda değil), çünkü <code>steps_per_epoch</code> ile batch sayısına göre kurulmuştur. Bu tek ekleme test skorunu 82.70'ten 86.03'e taşıdı ve overfit farkını tam 0.00'a indirdi.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 08 ============ -->
+    <section id="b8">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 08 · egitim_transfer.py</div>
+        <h2>Başkasının öğrendiğiyle başlamak</h2>
+        <p class="what">
+          Görev 2'de <code>PRETRAINED = False</code> ile kapalı bırakılan anahtar burada açılıyor.
+          Aradaki fark, bu görevin en büyük tek sıçraması: 79.20 → 92.80.
+        </p>
+      </div>
+
+      <div class="code"><pre><span class="k">if</span> mimari == <span class="st">"ResNet18"</span>:
+    agirlik = models.ResNet18_Weights.DEFAULT <span class="k">if</span> pretrained <span class="k">else</span> <span class="k">None</span>
+    model = models.resnet18(weights=agirlik)
+
+    <span class="k">if</span> konfig[<span class="st">"donuk"</span>]:
+        <span class="k">for</span> p <span class="k">in</span> model.parameters():
+            <span class="hl">p.requires_grad = <span class="k">False</span></span>          <span class="cm"># govde donduruldu</span>
+
+    <span class="hl">model.fc = nn.Linear(model.fc.in_features, sinif_sayisi)</span>  <span class="cm"># yeni kafa: 6 sinif</span></pre></div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">sıralama: önce dondur, sonra değiştir</div>
+          <div class="why">Bütün parametreler kapatıldıktan <strong>sonra</strong> yeni <code>fc</code> katmanı takılır. Yeni katman varsayılan olarak <code>requires_grad=True</code> gelir, yani tek eğitilebilir parça odur. Sıra ters olsaydı yeni katman da donar ve model hiçbir şey öğrenemezdi.</div>
+        </div>
+        <div class="row">
+          <div class="line">model.fc.in_features</div>
+          <div class="why">Sayıyı elle yazmak yerine mimariden okur (ResNet18 için 512). Böylece aynı kod ResNet50'ye (2048) geçtiğinizde de çalışır.</div>
+        </div>
+        <div class="row alt">
+          <div class="line">donuk modda 3.078 parametre</div>
+          <div class="why">512 × 6 + 6 = 3.078. Modelin 11 milyon parametresinin yalnızca on binde üçü eğitiliyor — ve sonuç 86.17, sıfırdan eğitilen tam ResNet18'in (79.20) <strong>7 puan üstünde</strong>. ImageNet filtrelerinin ne kadar genel olduğunun kanıtı.</div>
+        </div>
+        <div class="row">
+          <div class="line">lr: 0.001 vs 0.0001</div>
+          <div class="why">Fine-tune'da learning rate <strong>on kat küçük</strong>. Sebebi: hazır ağırlıklar zaten iyi bir noktada; büyük adımlar onları ilk birkaç batch'te bozar ve transfer avantajı yok olur. Sıfırdan eğitim ve donuk gövde ise büyük adım ister.</div>
+        </div>
+        <div class="row">
+          <div class="line">Normalize(0.485…, 0.229…)</div>
+          <div class="why">Baseline dosyasından beri kullanılan ImageNet ortalama/std değerleri. Bu öngörü sayesinde A3'e gelindiğinde girdi istatistikleri, pretrained ağırlıkların eğitildiği dağılımla <strong>zaten uyumlu</strong>. Baseline'daki bir yorum satırı bunu açıkça not eder.</div>
+        </div>
+      </div>
+
+      <div class="callout amac">
+        <span class="tag">Üç kullanım biçimi</span>
+        <p>
+          Aynı ResNet18 üç farklı şekilde kullanılıyor: <strong>scratch</strong> (79.20),
+          <strong>donuk</strong> (86.17), <strong>fine-tune</strong> (92.80). Aradaki fark mimaride
+          değil, ağırlıkların nereden geldiğinde ve hangilerinin güncellendiğinde.
+          Az veriniz varsa donuk gövde, orta miktarda veriniz varsa fine-tune doğru seçimdir.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 09 ============ -->
+    <section id="b9">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 09 · sonuc_ekle</div>
+        <h2>Dört ayrı script, tek karşılaştırma tablosu</h2>
+      </div>
+
+      <div class="code"><pre><span class="k">def</span> <span class="fn">sonuc_ekle</span>(yeni_satirlar, dosya=SONUC_DOSYASI, alanlar=ALAN_ADLARI):
+    <span class="st">"""Ayni ada sahip deneyi gunceller, digerlerini korur."""</span>
+    adlar = {s[<span class="st">"deney"</span>] <span class="k">for</span> s <span class="k">in</span> yeni_satirlar}
+    kalan = [s <span class="k">for</span> s <span class="k">in</span> _mevcut_oku(dosya, alanlar) <span class="k">if</span> s.get(<span class="st">"deney"</span>) <span class="k">not</span> <span class="k">in</span> adlar]
+    <span class="k">with</span> open(dosya, <span class="st">"w"</span>, newline=<span class="st">""</span>, encoding=<span class="st">"utf-8"</span>) <span class="k">as</span> f:
+        writer = csv.DictWriter(f, fieldnames=alanlar, extrasaction=<span class="st">"ignore"</span>)
+        writer.writeheader()
+        writer.writerows(kalan + yeni_satirlar)</pre></div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">adlar kümesi + filtre</div>
+          <div class="why">Aynı isimli deney varsa <strong>üzerine yazılır</strong>, diğerleri korunur. Böylece A2'yi tekrar koştuğunuzda baseline ve A1 satırları silinmez; dosya kümülatif bir karşılaştırma tablosuna dönüşür.</div>
+        </div>
+        <div class="row">
+          <div class="line">extrasaction="ignore"</div>
+          <div class="why">Sözlükte tanımlı olmayan fazladan anahtar varsa hata vermek yerine yok sayar. Dosyalar arasında küçük alan farkları olduğunda birleştirmeyi ayakta tutar.</div>
+        </div>
+        <div class="row">
+          <div class="line">baseline'da farklı davranış</div>
+          <div class="why"><code>egitim_baseline.py</code>'de bu birleştirme yoktur; <code>sonuclari_kaydet([sonuc])</code> dosyayı baştan yazar. Yani <strong>çalıştırma sırası önemli</strong>: baseline'ı en sonda koşarsanız diğer 14 satırı silersiniz.</div>
+        </div>
+        <div class="row">
+          <div class="line">gecmis_kaydet</div>
+          <div class="why">Her deney kendi <code>epoch_gecmisi_&lt;ad&gt;.csv</code> dosyasını yazar. Eğitim eğrisi çizmek, erken durdurma noktasını tartışmak ve raporda grafik göstermek ancak bu kayıtla mümkün.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 10 ============ -->
+    <section id="sonuc">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 10 · sonuçlar</div>
+        <h2>On beş satırın anlattığı hikâye</h2>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Deney</th><th class="num">Parametre</th><th class="num">Train</th><th class="num">Val</th><th class="num">Test</th><th class="num">Overfit</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono-cell">baseline_cnn</td><td class="num">8.483.654</td><td class="num">99.08</td><td class="num">82.22</td><td class="num">81.00</td><td class="num">16.87</td></tr>
+            <tr><td class="mono-cell">aug_orta</td><td class="num">8.483.654</td><td class="num">93.72</td><td class="num">85.67</td><td class="num">84.50</td><td class="num">8.05</td></tr>
+            <tr><td class="mono-cell">mim_gap</td><td class="num">128.262</td><td class="num">84.99</td><td class="num">85.25</td><td class="num">84.30</td><td class="num">−0.25</td></tr>
+            <tr><td class="mono-cell">mim_gap_onecycle</td><td class="num">128.262</td><td class="num">87.42</td><td class="num">87.42</td><td class="num">86.03</td><td class="num">0.00</td></tr>
+            <tr><td class="mono-cell">ResNet18_scratch</td><td class="num">11.179.590</td><td class="num">84.10</td><td class="num">80.72</td><td class="num">79.20</td><td class="num">3.38</td></tr>
+            <tr><td class="mono-cell">ResNet18_donuk</td><td class="num">3.078</td><td class="num">87.82</td><td class="num">87.46</td><td class="num">86.17</td><td class="num">0.36</td></tr>
+            <tr><td class="mono-cell">ResNet18_finetune</td><td class="num">11.179.590</td><td class="num">99.65</td><td class="num">93.09</td><td class="num">92.80</td><td class="num">6.57</td></tr>
+            <tr><td class="mono-cell">EfficientNetB0_ft</td><td class="num">4.015.234</td><td class="num">99.86</td><td class="num">94.12</td><td class="win num">94.33</td><td class="num">5.74</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="footnote">Tablodaki "Parametre" sütunu ResNet18_donuk için eğitilebilir parametre sayısıdır.
+      Tam liste: <code>kayitlar/gorev3/sonuclar_gorev3.csv</code> (15 satır).</p>
+
+      <ul class="plain">
+        <li><strong>Büyük model ≠ iyi model.</strong> 11 milyon parametreli ResNet18 sıfırdan
+        eğitildiğinde (79.20), 128 bin parametreli GAP modelinin (84.30) altında kaldı.</li>
+        <li><strong>Overfit farkı tek başına hedef değil.</strong> <code>mim_gap</code> farkı −0.25'e
+        indirdi ama test skoru <code>aug_orta</code>'nın altında kaldı. Fark küçüklüğü sağlıklı
+        eğitimin göstergesi, başarının ölçüsü değil.</li>
+        <li><strong>Fine-tune yeniden ezber getirdi</strong> — ve bu sorun değil. Train 99.65 iken
+        test 92.80: fark 6.57 puan ama mutlak skor tüm sıfırdan eğitilenlerin çok üstünde.</li>
+        <li><strong>En büyük tek kazanç transfer learning'den geldi:</strong> 86.03'ten 94.33'e,
+        yani sekiz puan. Augmentation, BatchNorm, GAP ve OneCycle'ın toplam katkısı ise beş puandı.</li>
+      </ul>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ EK ============ -->
+    <section id="ek">
+      <div class="sec-head">
+        <div class="eyebrow">Ek</div>
+        <h2>Bu görevin kalıcı dersleri</h2>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <div class="n">Ders 1</div>
+          <div class="t">Dürüst bir baseline kurun</div>
+          <div class="d">İyileştirmeleri ölçebilmenin tek yolu, kasten süssüz bir başlangıç noktasına sahip olmak.</div>
+        </div>
+        <div class="card">
+          <div class="n">Ders 2</div>
+          <div class="t">Tek seferde tek değişken</div>
+          <div class="d">Augmentation taranırken model sabit, mimari taranırken augmentation sabit. Aksi hâlde sonuç yorumlanamaz.</div>
+        </div>
+        <div class="card">
+          <div class="n">Ders 3</div>
+          <div class="t">Kararı validation verir</div>
+          <div class="d">Test setine bakarak seçim yapmak, test setini eğitim verisine çevirir.</div>
+        </div>
+        <div class="card">
+          <div class="n">Ders 4</div>
+          <div class="t">Augmentation ölçüme uygulanmaz</div>
+          <div class="d">İki ayrı ImageFolder açmanın tek sebebi bu. Ölçüm aleti sabit kalmalı.</div>
+        </div>
+        <div class="card">
+          <div class="n">Ders 5</div>
+          <div class="t">Parametrenin çoğu boşa gidebilir</div>
+          <div class="d">GAP ile 66 kat küçülen model daha iyi skor verdi. Kapasiteyi doğru yere koymak, çok koymaktan önemli.</div>
+        </div>
+        <div class="card">
+          <div class="n">Ders 6</div>
+          <div class="t">Negatif sonuç da sonuçtur</div>
+          <div class="d">AdamW ve "guclu" augmentation skoru düşürdü. Bunları raporlamak, denenmiş olduğunu gösterir.</div>
+        </div>
+      </div>
+
+      <p class="footnote" style="margin-top:8px">
+        Kod: <code>deep_learning/gorev3/</code> · Sayılar: <code>kayitlar/gorev3/sonuclar_gorev3.csv</code>
+        ve <code>epoch_gecmisi_*.csv</code> (seed 27, 15 epoch, RTX 4060 Laptop).
+      </p>
+    </section>
+
+  </main>
+</div>

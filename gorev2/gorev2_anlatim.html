@@ -1,0 +1,1096 @@
+<title>Accuracy'nin Kör Noktası</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --bg:        #f5f6f9;
+    --surface:   #ffffff;
+    --surface-2: #eceff4;
+    --line:      #d9dee6;
+    --line-soft: #e6eaf0;
+    --text:      #171c24;
+    --muted:     #5b6472;
+    --faint:     #8b95a3;
+
+    /* gorev2'nin ekseni: cogunluk vs azinlik */
+    --fwd:       #0f6fa8;   /* cogunluk / dogru */
+    --fwd-soft:  #dcecf6;
+    --bwd:       #c2610a;   /* azinlik / kacirilan */
+    --bwd-soft:  #fbeada;
+    --neutral-cat: #8b9099;
+    --warn:      #8a5a08;
+    --warn-soft: #fbeed2;
+
+    --code-bg:   #eef1f6;
+    --code-line: #dee3ec;
+    --syn-kw:    #8a2f8f;
+    --syn-fn:    #1a5fb4;
+    --syn-num:   #a3541b;
+    --syn-str:   #1c6b4a;
+    --syn-com:   #79838f;
+
+    --shadow: 0 1px 2px rgba(20, 28, 40, .05), 0 8px 24px -18px rgba(20, 28, 40, .35);
+
+    --step--1: clamp(.78rem, .76rem + .1vw, .84rem);
+    --step-0:  clamp(1rem, .97rem + .15vw, 1.075rem);
+    --step-1:  clamp(1.2rem, 1.12rem + .35vw, 1.4rem);
+    --step-2:  clamp(1.55rem, 1.4rem + .7vw, 2rem);
+    --step-3:  clamp(2.1rem, 1.7rem + 1.9vw, 3.4rem);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:        #10141a;
+      --surface:   #171d25;
+      --surface-2: #1e262f;
+      --line:      #2c3742;
+      --line-soft: #232c36;
+      --text:      #e6ebf2;
+      --muted:     #9daab9;
+      --faint:     #6f7c8b;
+
+      --fwd:       #3d93c9;
+      --fwd-soft:  #102a3a;
+      --bwd:       #c47f34;
+      --bwd-soft:  #33220f;
+      --neutral-cat: #7e858f;
+      --warn:      #e5b567;
+      --warn-soft: #38290f;
+
+      --code-bg:   #0d1218;
+      --code-line: #202a34;
+      --syn-kw:    #d69dd8;
+      --syn-fn:    #8ab4f8;
+      --syn-num:   #e0a373;
+      --syn-str:   #7fca9f;
+      --syn-com:   #667585;
+
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px -20px rgba(0, 0, 0, .9);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg:        #10141a;
+    --surface:   #171d25;
+    --surface-2: #1e262f;
+    --line:      #2c3742;
+    --line-soft: #232c36;
+    --text:      #e6ebf2;
+    --muted:     #9daab9;
+    --faint:     #6f7c8b;
+
+    --fwd:       #3d93c9;
+    --fwd-soft:  #102a3a;
+    --bwd:       #c47f34;
+    --bwd-soft:  #33220f;
+    --neutral-cat: #7e858f;
+    --warn:      #e5b567;
+    --warn-soft: #38290f;
+
+    --code-bg:   #0d1218;
+    --code-line: #202a34;
+    --syn-kw:    #d69dd8;
+    --syn-fn:    #8ab4f8;
+    --syn-num:   #e0a373;
+    --syn-str:   #7fca9f;
+    --syn-com:   #667585;
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px -20px rgba(0, 0, 0, .9);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: var(--step-0);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 { font-family: Fraunces, "Iowan Old Style", Georgia, serif; text-wrap: balance; margin: 0; font-weight: 600; }
+  p { margin: 0; }
+  a { color: var(--fwd); }
+  :focus-visible { outline: 2px solid var(--fwd); outline-offset: 3px; border-radius: 3px; }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: var(--step--1);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  .shell {
+    max-width: 1240px;
+    margin-inline: auto;
+    padding: 0 20px 96px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0 56px;
+  }
+  @media (min-width: 1080px) {
+    .shell { grid-template-columns: 208px minmax(0, 1fr); padding-inline: 32px; }
+  }
+
+  .hero {
+    grid-column: 1 / -1;
+    padding: 72px 0 40px;
+    border-bottom: 1px solid var(--line);
+    display: grid;
+    gap: 22px;
+  }
+  .hero h1 { font-size: var(--step-3); line-height: 1.02; letter-spacing: -.02em; }
+  .hero h1 em { font-style: italic; color: var(--bwd); }
+  .hero .lede { max-width: 62ch; color: var(--muted); font-size: var(--step-1); line-height: 1.5; }
+  .hero-meta { display: flex; flex-wrap: wrap; gap: 10px 28px; padding-top: 6px; }
+  .hero-meta div { display: grid; gap: 2px; }
+  .hero-meta .k { font-family: "IBM Plex Mono", monospace; font-size: var(--step--1); color: var(--faint); letter-spacing: .08em; text-transform: uppercase; }
+  .hero-meta .v { font-size: .95rem; color: var(--text); }
+
+  .rail { display: none; }
+  @media (min-width: 1080px) {
+    .rail {
+      display: block; position: sticky; top: 0; align-self: start;
+      max-height: 100vh; overflow-y: auto; padding: 48px 0; font-size: .84rem;
+    }
+    .rail ol { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 1px; }
+    .rail a {
+      display: grid; grid-template-columns: 22px 1fr; gap: 8px;
+      padding: 5px 8px 5px 10px; color: var(--muted); text-decoration: none;
+      border-left: 2px solid transparent; line-height: 1.3;
+    }
+    .rail a:hover { color: var(--text); border-left-color: var(--line); }
+    .rail a .num { font-family: "IBM Plex Mono", monospace; color: var(--faint); font-size: .78rem; }
+    .rail .rail-sep { margin-top: 14px; }
+  }
+
+  main { display: grid; gap: 64px; padding-top: 48px; min-width: 0; }
+  section { display: grid; gap: 20px; scroll-margin-top: 24px; min-width: 0; }
+  section > p, section > .prose { max-width: 68ch; }
+  .prose { display: grid; gap: 14px; }
+
+  .sec-head { display: grid; gap: 6px; }
+  .sec-head h2 { font-size: var(--step-2); letter-spacing: -.015em; line-height: 1.15; }
+  .sec-head .what { color: var(--muted); max-width: 62ch; }
+  h3 { font-size: var(--step-1); margin-top: 6px; }
+
+  .code {
+    background: var(--code-bg);
+    border: 1px solid var(--code-line);
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .855rem;
+    line-height: 1.75;
+    padding: 16px 18px;
+    tab-size: 4;
+  }
+  .code pre { margin: 0; }
+  .k  { color: var(--syn-kw); }
+  .fn { color: var(--syn-fn); }
+  .nu { color: var(--syn-num); }
+  .st { color: var(--syn-str); }
+  .cm { color: var(--syn-com); font-style: italic; }
+  .hl { background: var(--fwd-soft); border-radius: 3px; padding: 0 3px; margin: 0 -3px; }
+
+  code:not(.code code) {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .88em;
+    background: var(--surface-2);
+    border-radius: 4px;
+    padding: .1em .34em;
+  }
+
+  .notes { display: grid; gap: 0; margin: 0; border-top: 1px solid var(--line-soft); }
+  .notes .row {
+    display: grid; gap: 4px 24px; padding: 13px 2px;
+    border-bottom: 1px solid var(--line-soft); align-items: baseline;
+  }
+  @media (min-width: 760px) { .notes .row { grid-template-columns: minmax(180px, 34%) 1fr; } }
+  .notes .row > .line { font-family: "IBM Plex Mono", monospace; font-size: .82rem; color: var(--fwd); word-break: break-word; }
+  .notes .row.alt > .line { color: var(--bwd); }
+  .notes .row > .why { color: var(--muted); font-size: .95rem; }
+  .notes .row > .why strong { color: var(--text); font-weight: 600; }
+
+  .callout {
+    border-radius: 8px; padding: 16px 18px; display: grid; gap: 6px;
+    font-size: .95rem; max-width: 72ch; border: 1px solid var(--line); background: var(--surface);
+  }
+  .callout .tag { font-family: "IBM Plex Mono", monospace; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; }
+  .callout.amac { border-left: 3px solid var(--fwd); background: var(--fwd-soft); border-color: transparent; }
+  .callout.amac .tag { color: var(--fwd); }
+  .callout.dikkat { border-left: 3px solid var(--warn); background: var(--warn-soft); border-color: transparent; }
+  .callout.dikkat .tag { color: var(--warn); }
+  .callout.geri { border-left: 3px solid var(--bwd); background: var(--bwd-soft); border-color: transparent; }
+  .callout.geri .tag { color: var(--bwd); }
+  .callout strong { color: var(--text); }
+
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line-soft); }
+  thead th {
+    font-family: "IBM Plex Mono", monospace; font-size: .74rem; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 500;
+    background: var(--surface-2); white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.num, th.num { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  td.mono-cell { font-family: "IBM Plex Mono", monospace; font-size: .82rem; }
+  td .chip {
+    font-family: "IBM Plex Mono", monospace; font-size: .7rem; letter-spacing: .06em;
+    text-transform: uppercase; padding: 2px 7px; border-radius: 20px; white-space: nowrap;
+  }
+  .chip.cog { background: var(--fwd-soft); color: var(--fwd); }
+  .chip.az  { background: var(--bwd-soft); color: var(--bwd); }
+  .chip.orta { background: var(--surface-2); color: var(--muted); }
+
+  figure { margin: 0; display: grid; gap: 10px; }
+  figure svg { width: 100%; height: auto; display: block; }
+  .figbox { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; overflow-x: auto; }
+  figcaption { font-size: .86rem; color: var(--muted); max-width: 64ch; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .82rem; color: var(--muted); padding-top: 2px; }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+
+  .cards { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .card {
+    border: 1px solid var(--line); border-radius: 8px; padding: 16px;
+    background: var(--surface); display: grid; gap: 6px; align-content: start;
+  }
+  .card .t { font-weight: 600; font-size: .95rem; }
+  .card .d { color: var(--muted); font-size: .88rem; }
+  .card .n { font-family: "IBM Plex Mono", monospace; font-size: .75rem; color: var(--faint); letter-spacing: .1em; text-transform: uppercase; }
+
+  .steps {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0;
+    border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface);
+  }
+  .steps .st-cell { padding: 14px 16px; border-right: 1px solid var(--line-soft); display: grid; gap: 3px; }
+  .steps .st-cell:last-child { border-right: none; }
+  .steps .st-cell .lbl { font-family: "IBM Plex Mono", monospace; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+  .steps .st-cell .val { font-family: "IBM Plex Mono", monospace; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+  .steps .st-cell .sub { font-size: .8rem; color: var(--muted); }
+  .steps .st-cell.good .val { color: var(--fwd); }
+  .steps .st-cell.bad .val { color: var(--bwd); }
+
+  ul.plain { margin: 0; padding-left: 1.1em; display: grid; gap: 7px; color: var(--muted); max-width: 66ch; }
+  ul.plain strong { color: var(--text); }
+
+  .divider { border: none; border-top: 1px solid var(--line); margin: 0; }
+  .footnote { color: var(--faint); font-size: .86rem; max-width: 64ch; }
+
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<div class="shell">
+
+  <header class="hero">
+    <div class="eyebrow">deep_learning / gorev2 · satır satır okuma</div>
+    <h1>Accuracy'nin <em>Kör Noktası</em></h1>
+    <p class="lede">
+      Görev 2'nin üç dosyası aynı modeli tekrar tekrar eğitir ama asıl konusu model değil,
+      <strong>ölçme</strong>: veri azaldığında ve sınıflar dengesizleştiğinde accuracy'nin nasıl
+      yüksek kalıp gerçeği örttüğü. Bu sayfa üç dosyanın ortak iskeletini ve birbirinden
+      ayrıldıkları yerleri satır satır açıyor.
+    </p>
+    <div class="hero-meta">
+      <div><span class="k">Dosyalar</span><span class="v">egitim_veri_azalt · egitim_dengesiz_siniflar · egitim_hazir_modeller</span></div>
+      <div><span class="k">Veri</span><span class="v">MNIST · alt kümeler</span></div>
+      <div><span class="k">Ölçüler</span><span class="v">Accuracy, Precision, Recall, F1, Confusion</span></div>
+      <div><span class="k">Sabitler</span><span class="v">seed 27 · 10 epoch · Adam lr 0.001</span></div>
+    </div>
+  </header>
+
+  <nav class="rail" aria-label="Bölümler">
+    <div class="eyebrow">Bölümler</div>
+    <ol>
+      <li><a href="#genel"><span class="num">00</span><span>Üç dosya, tek iskelet</span></a></li>
+      <li><a href="#b1"><span class="num">01</span><span>Yollar ve ayarlar</span></a></li>
+      <li><a href="#b2"><span class="num">02</span><span>Seed ve model kurma</span></a></li>
+      <li><a href="#b3"><span class="num">03</span><span>Dengeli alt küme</span></a></li>
+      <li><a href="#b4"><span class="num">04</span><span>Dengesiz alt küme</span></a></li>
+      <li><a href="#b5"><span class="num">05</span><span>Confusion → P/R/F1</span></a></li>
+      <li><a href="#b6"><span class="num">06</span><span>Test seti neden dengeli</span></a></li>
+      <li><a href="#b7"><span class="num">07</span><span>Raporlama üçlüsü</span></a></li>
+      <li><a href="#b8"><span class="num">08</span><span>Eğitim ve CSV</span></a></li>
+      <li><a href="#b9"><span class="num">09</span><span>Deney listeleri</span></a></li>
+      <li><a href="#b10"><span class="num">10</span><span>ResNet18 / MobileNetV2</span></a></li>
+      <li class="rail-sep"><a href="#ek"><span class="num">Ek</span><span>Sık takılınan yerler</span></a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <!-- ============ 00 ============ -->
+    <section id="genel">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 00</div>
+        <h2>Üç dosya, tek iskelet</h2>
+        <p class="what">
+          Üç dosya da aynı on numaralı bloğa sahiptir ve büyük kısmı birebir aynıdır. Öğrenilmesi
+          gereken şey iskelet; dosyalar arasındaki fark yalnızca <strong>hangi veriyle</strong> ve
+          <strong>hangi modelle</strong> çalıştıklarıdır.
+        </p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Blok</th><th>Ne yapar</th><th>Dosyalar arasında</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono-cell">1 · Yollar</td><td>kayitlar/gorev2 klasörünü kurar</td><td>Aynı</td></tr>
+            <tr><td class="mono-cell">2 · Ayarlar</td><td>seed, epoch, batch, lr, sınıf grupları</td><td>Veri listeleri farklı</td></tr>
+            <tr><td class="mono-cell">3 · Cihaz</td><td>GPU zorunlu, seed sabitleme</td><td>Aynı</td></tr>
+            <tr><td class="mono-cell">4 · Modeller</td><td>MLP / CNN sınıfları</td><td><strong>hazir_modeller</strong>'de yerini torchvision alır</td></tr>
+            <tr><td class="mono-cell">5 · Veri</td><td>Alt küme seçimi</td><td><strong>Asıl fark burada</strong>: dengeli / dengesiz</td></tr>
+            <tr><td class="mono-cell">6 · Metrikler</td><td>Confusion matrix → P/R/F1</td><td>Neredeyse aynı</td></tr>
+            <tr><td class="mono-cell">7 · Eğitim</td><td>epoch döngüsü</td><td>Sadece ekrana basılan alanlar farklı</td></tr>
+            <tr><td class="mono-cell">8 · CSV</td><td>Sonuç ve sınıf bazlı kayıt</td><td>Sütun listeleri farklı</td></tr>
+            <tr><td class="mono-cell">9 · Deneyler</td><td>Kombinasyon üretimi</td><td>20 / 12 / 16 deney</td></tr>
+            <tr><td class="mono-cell">10 · main</td><td>Hepsini koşturur, raporlar</td><td>Özet tabloları farklı</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <div class="n">Adım 1</div>
+          <div class="t">egitim_veri_azalt.py</div>
+          <div class="d">Dengeli ama <strong>küçülen</strong> eğitim setleri: 1.000 → 60.000. Soru: veri azalınca ne kaybediyoruz?</div>
+        </div>
+        <div class="card">
+          <div class="n">Adım 2</div>
+          <div class="t">egitim_dengesiz_siniflar.py</div>
+          <div class="d">Sınıf başına örnek sayısı <strong>kasıtlı olarak eşitsiz</strong>. Soru: accuracy yüksekken hangi sınıf eziliyor?</div>
+        </div>
+        <div class="card">
+          <div class="n">Adım 4 (ek)</div>
+          <div class="t">egitim_hazir_modeller.py</div>
+          <div class="d">Aynı iki senaryo, bu kez <strong>ResNet18 ve MobileNetV2</strong> ile. Soru: hazır mimari kurtarır mı?</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 01 ============ -->
+    <section id="b1">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 01 · yollar ve ayarlar</div>
+        <h2>Deneyi kontrollü yapan şey: neyin sabit tutulduğu</h2>
+      </div>
+
+      <div class="code"><pre>BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJE_DIR = os.path.dirname(BASE_DIR)
+KAYITLAR_DIR = os.path.join(PROJE_DIR, <span class="st">"kayitlar"</span>)
+SONUC_DIR = os.path.join(KAYITLAR_DIR, <span class="st">"gorev2"</span>)
+CONFUSION_DIR = os.path.join(SONUC_DIR, <span class="st">"confusion"</span>)
+os.makedirs(SONUC_DIR, exist_ok=<span class="k">True</span>)
+
+SEED = <span class="nu">27</span>
+EPOCHS = <span class="nu">10</span>
+BATCH_SIZE = <span class="nu">128</span>
+LEARNING_RATE = <span class="nu">0.001</span>
+
+COGUNLUK_SINIFLARI = [<span class="nu">0</span>, <span class="nu">1</span>]
+AZINLIK_SINIFLARI = [<span class="nu">5</span>, <span class="nu">6</span>, <span class="nu">8</span>]
+ORTA_SINIFLAR = [<span class="nu">2</span>, <span class="nu">3</span>, <span class="nu">4</span>, <span class="nu">7</span>, <span class="nu">9</span>]</pre></div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">abspath(__file__) → dirname</div>
+          <div class="why">Yolları dosyanın <strong>kendi konumuna</strong> göre kurar. Böylece scripti hangi klasörden çalıştırırsanız çalıştırın çıktılar hep <code>kayitlar/gorev2</code>'ye gider; "çalışma dizini neredeydi" sorunu ortadan kalkar.</div>
+        </div>
+        <div class="row">
+          <div class="line">os.makedirs(..., exist_ok=True)</div>
+          <div class="why">Klasör yoksa oluşturur, varsa hata vermez. <code>exist_ok</code> olmasaydı ikinci koşuda program çöker, saatlerce süren deney serisi ilk satırda ölürdü.</div>
+        </div>
+        <div class="row">
+          <div class="line">SEED / EPOCHS / BATCH / LR</div>
+          <div class="why">Bunlar deneyin <strong>kontrol değişkenleri</strong>: üç dosyada da aynı. Tek değişen veri miktarı ve dağılımı olsun ki sonuçtaki fark yalnızca ona atfedilebilsin.</div>
+        </div>
+        <div class="row alt">
+          <div class="line">COGUNLUK / AZINLIK / ORTA</div>
+          <div class="why">Rakamlar rastgele seçilmiş değil: <strong>5, 6, 8</strong> MNIST'in zaten en zor sınıfları (birbirlerine ve 3'e benziyorlar). Azınlık rolünü onlara vermek dengesizliğin etkisini net görünür kılar. <code>egitim_veri_azalt.py</code>'de dağılım dengeli olduğu halde bu listeler yine tanımlı — sadece <em>aynı pencereden</em> bakabilmek için.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 02 ============ -->
+    <section id="b2">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 02 · seed_ayarla · model_kur</div>
+        <h2>Dört ayrı rastgelelik kaynağını birden susturmak</h2>
+      </div>
+
+      <div class="code"><pre><span class="k">def</span> <span class="fn">seed_ayarla</span>(seed=SEED):
+    random.seed(seed)                 <span class="cm"># Python'un kendi rastgeleligi</span>
+    np.random.seed(seed)              <span class="cm"># NumPy</span>
+    torch.manual_seed(seed)           <span class="cm"># PyTorch CPU (agirlik baslatma)</span>
+    torch.cuda.manual_seed_all(seed)  <span class="cm"># PyTorch GPU</span>
+
+
+<span class="k">def</span> <span class="fn">model_kur</span>(konfig, device):
+    <span class="hl">seed_ayarla(SEED)</span>  <span class="cm"># her model ayni baslangic agirliklariyla kurulsun</span>
+    <span class="k">if</span> konfig[<span class="st">"tur"</span>] == <span class="st">"MLP"</span>:
+        model = MLP(konfig[<span class="st">"hidden"</span>], dropout=konfig[<span class="st">"dropout"</span>])
+    <span class="k">else</span>:
+        model = CNN(konfig[<span class="st">"conv"</span>], dropout=konfig[<span class="st">"dropout"</span>])
+    <span class="k">return</span> model.to(device)</pre></div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">dört ayrı seed çağrısı</div>
+          <div class="why">Kütüphanelerin rastgelelik havuzları <strong>ayrıdır</strong>. Alt kümeyi NumPy seçer, ağırlıkları PyTorch başlatır, DataLoader'ın karıştırması Python'a bağlıdır. Birini unutursanız koşu tam tekrar edilemez.</div>
+        </div>
+        <div class="row">
+          <div class="line">model_kur içinde tekrar seed</div>
+          <div class="why">Bu sayfanın en kolay gözden kaçan satırı. 20 deney sırayla koştuğu için 12. modelin başlangıç ağırlıkları, önceki 11 koşunun rastgelelik durumundan etkilenirdi. Her modelden hemen önce seed'i geri sarmak, hepsinin <strong>aynı noktadan</strong> başlamasını garantiler — yoksa modeller arası fark, kısmen şansın farkı olurdu.</div>
+        </div>
+        <div class="row">
+          <div class="line">.to(device)</div>
+          <div class="why">Modelin bütün parametrelerini GPU belleğine taşır. Veri de <code>images.to(device)</code> ile taşınmazsa PyTorch "cpu ve cuda tensörü aynı işlemde" hatası verir.</div>
+        </div>
+      </div>
+
+      <div class="callout dikkat">
+        <span class="tag">Tam determinizm değil</span>
+        <p>Bu dört satır rastgeleliği sabitler ama <code>torch.backends.cudnn.benchmark = True</code>
+        satırı GPU'nun en hızlı algoritmayı seçmesine izin verir; bu seçim koşudan koşuya değişebildiği
+        için sonuçlarda binde birlik oynamalar görebilirsiniz. Hızdan feragat etmeden yaşanabilir
+        bir belirsizlik — ama %100 tekrar üretilebilirlik istiyorsanız kapatmanız gereken yer burası.</p>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 03 ============ -->
+    <section id="b3">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 03 · dengeli_alt_kume</div>
+        <h2>60.000 örneği kasıtlı olarak azaltmak</h2>
+        <p class="what">
+          Tam MNIST'te her model %98–99 veriyor; konfigürasyonlar arasındaki fark ölçüm gürültüsüne
+          karışıyor. Veriyi azaltmak, farkları görünür kılmak için kullanılan bir <strong>büyüteç</strong>.
+        </p>
+      </div>
+
+      <div class="code"><pre><span class="k">def</span> <span class="fn">dengeli_alt_kume</span>(train_data, toplam, seed=SEED):
+    <span class="k">if</span> toplam <span class="k">is</span> <span class="k">None</span>:
+        <span class="k">return</span> train_data, len(train_data)        <span class="cm"># None = tam veri</span>
+
+    hedef = toplam // <span class="nu">10</span>                          <span class="cm"># her siniftan esit sayida</span>
+    etiketler = train_data.targets.numpy()
+    rng = np.random.default_rng(seed)
+
+    secilen = []
+    <span class="k">for</span> sinif <span class="k">in</span> range(<span class="nu">10</span>):
+        idx = np.where(etiketler == sinif)[<span class="nu">0</span>]      <span class="cm"># o sinifin tum indeksleri</span>
+        n = min(hedef, len(idx))
+        secilen.extend(rng.choice(idx, size=n, replace=<span class="k">False</span>).tolist())
+
+    rng.shuffle(secilen)
+    <span class="k">return</span> Subset(train_data, secilen), len(secilen)</pre></div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">toplam // 10</div>
+          <div class="why">"Dengeli"nin tanımı: her sınıftan eşit sayıda. 1.000 istendiğinde her rakamdan 100 örnek. Baştan rastgele 1.000 örnek almak dengeyi bozardı ve <em>veri azlığının</em> etkisiyle <em>dengesizliğin</em> etkisi birbirine karışırdı.</div>
+        </div>
+        <div class="row">
+          <div class="line">np.where(etiketler == sinif)[0]</div>
+          <div class="why">O sınıfa ait örneklerin indeks listesi. <code>[0]</code> gerekli çünkü <code>np.where</code> her boyut için bir dizi döndürür; tek boyutlu dizide ilkini alırız.</div>
+        </div>
+        <div class="row">
+          <div class="line">replace=False</div>
+          <div class="why">Aynı görüntünün iki kez seçilmesini engeller. <code>True</code> olsaydı 1.000 örnek isteyip 940 farklı görüntü alabilirdiniz — tekrarlar da ezberi kolaylaştırırdı.</div>
+        </div>
+        <div class="row">
+          <div class="line">rng.shuffle(secilen)</div>
+          <div class="why">Liste şu an sınıf sınıf sıralı (önce tüm 0'lar, sonra 1'ler…). <code>DataLoader(shuffle=True)</code> zaten karıştırıyor ama bu satır alt kümeyi kendi başına da düzgün bırakır.</div>
+        </div>
+        <div class="row">
+          <div class="line">Subset(train_data, secilen)</div>
+          <div class="why">Veriyi <strong>kopyalamaz</strong>, sadece seçilen indekslere bir pencere açar. 60.000 görüntülük tensörden bellek kopyası çıkarmadan alt küme elde etmenin doğru yolu.</div>
+        </div>
+      </div>
+
+      <h3>Kendi koşunuzdaki sonuç</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Eğitim örneği</th><th class="num">CNN_d0 Accuracy</th><th class="num">F1 (macro)</th><th class="num">Azınlık recall</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono-cell">1.000</td><td class="num">87.63</td><td class="num">87.52</td><td class="num">85.69</td></tr>
+            <tr><td class="mono-cell">3.000</td><td class="num">94.87</td><td class="num">94.81</td><td class="num">94.35</td></tr>
+            <tr><td class="mono-cell">5.000</td><td class="num">96.18</td><td class="num">96.16</td><td class="num">95.83</td></tr>
+            <tr><td class="mono-cell">10.000</td><td class="num">97.63</td><td class="num">97.62</td><td class="num">97.37</td></tr>
+            <tr><td class="mono-cell">60.000</td><td class="num">98.98</td><td class="num">98.97</td><td class="num">98.81</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="footnote">
+        Kaynak: <code>kayitlar/gorev2/sonuclar_f1_veri_azalt.csv</code>. Dikkat edilecek nokta:
+        veri <strong>dengeli</strong> olduğu sürece accuracy ile F1 neredeyse hiç ayrışmıyor
+        (87.63 ↔ 87.52). İkisinin ayrıştığı yeri görmek için bir sonraki bölüme geçmek gerekiyor.
+      </p>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 04 ============ -->
+    <section id="b4">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 04 · dengesiz_alt_kume · vitrin</div>
+        <h2>Dengesizliği kasıtlı olarak imal etmek</h2>
+        <p class="what">
+          Gerçek hayatta dengesizlik kendiliğinden gelir: hastaların %1'i hastadır, işlemlerin
+          binde biri sahtedir. MNIST dengeli olduğu için burada dengesizlik <strong>elle üretiliyor</strong>,
+          böylece etkisi kontrollü biçimde ölçülebiliyor.
+        </p>
+      </div>
+
+      <div class="code"><pre>DENGESIZ_PROFILLER = {
+    <span class="st">"P1_pdf"</span>:  {<span class="st">"cogunluk"</span>: <span class="nu">3000</span>, <span class="st">"orta"</span>: <span class="nu">500</span>, <span class="st">"azinlik"</span>: <span class="nu">150</span>},
+    <span class="st">"P2_agir"</span>: {<span class="st">"cogunluk"</span>: <span class="nu">3000</span>, <span class="st">"orta"</span>: <span class="nu">300</span>, <span class="st">"azinlik"</span>: <span class="nu">100</span>},
+    <span class="st">"P3_5k"</span>:   {<span class="st">"cogunluk"</span>: <span class="nu">1500</span>, <span class="st">"orta"</span>: <span class="nu">300</span>, <span class="st">"azinlik"</span>: <span class="nu">120</span>},
+}
+
+
+<span class="k">def</span> <span class="fn">sinif_dagilimi</span>(profil):
+    p = DENGESIZ_PROFILLER[profil]
+    dagilim = {}
+    <span class="k">for</span> sinif <span class="k">in</span> range(<span class="nu">10</span>):
+        <span class="k">if</span> sinif <span class="k">in</span> COGUNLUK_SINIFLARI:
+            dagilim[sinif] = p[<span class="st">"cogunluk"</span>]
+        <span class="k">elif</span> sinif <span class="k">in</span> AZINLIK_SINIFLARI:
+            dagilim[sinif] = p[<span class="st">"azinlik"</span>]
+        <span class="k">else</span>:
+            dagilim[sinif] = p[<span class="st">"orta"</span>]
+    <span class="k">return</span> dagilim</pre></div>
+
+      <figure>
+        <div class="figbox">
+          <svg viewBox="0 0 660 292" role="img" aria-label="P1_pdf profilinde sınıf başına eğitim örneği sayısı: 0 ve 1 için 3000, orta sınıflar için 500, 5, 6 ve 8 için 150">
+            <line x1="30" y1="230" x2="640" y2="230" stroke="var(--line)" stroke-width="1"></line>
+
+            <g>
+              <rect x="40"  y="60"     width="40" height="170"   rx="3" fill="var(--fwd)"></rect>
+              <rect x="100" y="60"     width="40" height="170"   rx="3" fill="var(--fwd)"></rect>
+              <rect x="160" y="201.7"  width="40" height="28.3"  rx="3" fill="var(--neutral-cat)"></rect>
+              <rect x="220" y="201.7"  width="40" height="28.3"  rx="3" fill="var(--neutral-cat)"></rect>
+              <rect x="280" y="201.7"  width="40" height="28.3"  rx="3" fill="var(--neutral-cat)"></rect>
+              <rect x="340" y="221.5"  width="40" height="8.5"   rx="2" fill="var(--bwd)"></rect>
+              <rect x="400" y="221.5"  width="40" height="8.5"   rx="2" fill="var(--bwd)"></rect>
+              <rect x="460" y="201.7"  width="40" height="28.3"  rx="3" fill="var(--neutral-cat)"></rect>
+              <rect x="520" y="221.5"  width="40" height="8.5"   rx="2" fill="var(--bwd)"></rect>
+              <rect x="580" y="201.7"  width="40" height="28.3"  rx="3" fill="var(--neutral-cat)"></rect>
+            </g>
+
+            <g font-family="IBM Plex Mono, monospace" font-size="11.5" fill="var(--text)" text-anchor="middle">
+              <text x="60"  y="50">3000</text>
+              <text x="120" y="50">3000</text>
+              <text x="180" y="192">500</text>
+              <text x="240" y="192">500</text>
+              <text x="300" y="192">500</text>
+              <text x="360" y="212">150</text>
+              <text x="420" y="212">150</text>
+              <text x="480" y="192">500</text>
+              <text x="540" y="212">150</text>
+              <text x="600" y="192">500</text>
+            </g>
+
+            <g font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--muted)" text-anchor="middle">
+              <text x="60"  y="250">0</text>
+              <text x="120" y="250">1</text>
+              <text x="180" y="250">2</text>
+              <text x="240" y="250">3</text>
+              <text x="300" y="250">4</text>
+              <text x="360" y="250">5</text>
+              <text x="420" y="250">6</text>
+              <text x="480" y="250">7</text>
+              <text x="540" y="250">8</text>
+              <text x="600" y="250">9</text>
+            </g>
+            <text x="335" y="275" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="var(--faint)" text-anchor="middle">sınıf (rakam) · eğitim örneği sayısı</text>
+          </svg>
+        </div>
+        <div class="legend">
+          <span><i style="background: var(--fwd)"></i> çoğunluk (0, 1) · 3000</span>
+          <span><i style="background: var(--neutral-cat)"></i> orta (2, 3, 4, 7, 9) · 500</span>
+          <span><i style="background: var(--bwd)"></i> azınlık (5, 6, 8) · 150</span>
+        </div>
+        <figcaption>
+          P1_pdf profili: en kalabalık sınıfla en seyrek sınıf arasında <strong>20:1</strong> oran.
+          Toplam 8.950 örnek. Model bu veriyle eğitilir, ama <strong>dengeli</strong> 10.000'lik test
+          setinde sınanır.
+        </figcaption>
+      </figure>
+
+      <div class="notes">
+        <div class="row alt">
+          <div class="line">üç profil</div>
+          <div class="why">Tek bir dengesizlik yerine üç şiddet: 20:1, 30:1 ve 12.5:1. Böylece "dengesizlik arttıkça azınlık recall'u düşer" ifadesi tek gözlemden değil, bir <strong>eğilimden</strong> okunur.</div>
+        </div>
+        <div class="row alt">
+          <div class="line">P3_5k'nın çoğunluğu daha az</div>
+          <div class="why">P3'te çoğunluk 3000 değil 1500. Yani P3 hem daha küçük hem daha az dengesiz bir set — "toplam veri" ile "dengesizlik oranı" etkilerini ayırt edebilmek için konmuş bir kontrol noktası.</div>
+        </div>
+        <div class="row alt">
+          <div class="line">gercek_dagilim döndürülmesi</div>
+          <div class="why"><code>min(dagilim[sinif], len(idx))</code> yüzünden istenen sayı her zaman elde edilemeyebilir. Fonksiyon gerçekte kaç örnek aldığını geri döndürür ve CSV'ye o yazılır — <strong>istenen değil, olan</strong> raporlanır.</div>
+        </div>
+      </div>
+
+      <h3>Sonuç: accuracy yüksek, azınlık geride</h3>
+      <p>Kendi koşunuzda <code>MLP_d0</code> + P1_pdf profilinin verdiği sayılar:</p>
+
+      <div class="steps">
+        <div class="st-cell good"><span class="lbl">Accuracy</span><span class="val">91.09</span><span class="sub">"model iyi görünüyor"</span></div>
+        <div class="st-cell good"><span class="lbl">Çoğunluk recall</span><span class="val">99.63</span><span class="sub">0 ve 1'i neredeyse hiç kaçırmıyor</span></div>
+        <div class="st-cell bad"><span class="lbl">Azınlık recall</span><span class="val">81.10</span><span class="sub">5, 6, 8'in beşte biri kaçıyor</span></div>
+        <div class="st-cell bad"><span class="lbl">Fark</span><span class="val">9.99</span><span class="sub">accuracy'nin sakladığı puan</span></div>
+      </div>
+
+      <div class="callout geri">
+        <span class="tag">Kodun bunu ölçme biçimi</span>
+        <p><code>"acc_azinlik_farki": round(acc - azinlik_rec, 2)</code> satırı bu boşluğu doğrudan
+        bir sütun hâline getirir. Böylece "accuracy ne kadar yanıltıcı" sorusu yoruma değil,
+        <strong>sıralanabilir bir sayıya</strong> dönüşür. CNN'de bu fark 3.99'a iner: daha iyi model,
+        daha az saklanan hata.</p>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 05 ============ -->
+    <section id="b5">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 05 · metricler_hesapla · vitrin</div>
+        <h2>Tek bir 10×10 matristen bütün metrikleri türetmek</h2>
+        <p class="what">
+          Bu fonksiyon görev 2'nin kalbidir. Test setini <strong>bir kez</strong> gezer, confusion
+          matrisini doldurur ve accuracy dâhil bütün metrikleri o matristen hesaplar.
+        </p>
+      </div>
+
+      <div class="code"><pre>confusion = np.zeros((num_classes, num_classes), dtype=np.int64)
+
+<span class="k">with</span> torch.no_grad():
+    <span class="k">for</span> images, labels <span class="k">in</span> loader:
+        logits = model(images.to(device))
+        preds = logits.argmax(dim=<span class="nu">1</span>)
+        np.add.at(confusion, (labels.cpu().numpy(), preds.cpu().numpy()), <span class="nu">1</span>)
+
+tp = np.diag(confusion)                        <span class="cm"># kosegen: dogru bilinenler</span>
+fp = confusion.sum(axis=<span class="nu">0</span>) - tp                <span class="cm"># sutun toplami - tp</span>
+fn = confusion.sum(axis=<span class="nu">1</span>) - tp                <span class="cm"># satir toplami - tp</span>
+
+precision = tp / (tp + fp + eps)
+recall    = tp / (tp + fn + eps)
+f1        = <span class="nu">2.0</span> * precision * recall / (precision + recall + eps)</pre></div>
+
+      <figure>
+        <div class="figbox">
+          <svg viewBox="0 0 470 300" role="img" aria-label="Confusion matrisi şeması: bir sınıfın satırı recall'un, sütunu precision'ın paydasıdır, kesişim noktası TP'dir">
+            <rect x="110" y="52" width="204" height="204" fill="var(--surface-2)" stroke="var(--line)"></rect>
+            <rect x="110" y="120" width="204" height="34" fill="var(--bwd-soft)"></rect>
+            <rect x="178" y="52" width="34" height="204" fill="var(--fwd-soft)"></rect>
+            <rect x="178" y="120" width="34" height="34" fill="var(--text)"></rect>
+
+            <g stroke="var(--line)" stroke-width="1">
+              <line x1="144" y1="52" x2="144" y2="256"></line>
+              <line x1="178" y1="52" x2="178" y2="256"></line>
+              <line x1="212" y1="52" x2="212" y2="256"></line>
+              <line x1="246" y1="52" x2="246" y2="256"></line>
+              <line x1="280" y1="52" x2="280" y2="256"></line>
+              <line x1="110" y1="86"  x2="314" y2="86"></line>
+              <line x1="110" y1="120" x2="314" y2="120"></line>
+              <line x1="110" y1="154" x2="314" y2="154"></line>
+              <line x1="110" y1="188" x2="314" y2="188"></line>
+              <line x1="110" y1="222" x2="314" y2="222"></line>
+            </g>
+            <rect x="110" y="52" width="204" height="204" fill="none" stroke="var(--line)" stroke-width="1"></rect>
+
+            <text x="195" y="142" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--surface)" text-anchor="middle">TP</text>
+
+            <text x="212" y="40" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="var(--muted)" text-anchor="middle">TAHMİN →</text>
+            <text x="88" y="154" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="var(--muted)" text-anchor="end">GERÇEK ↓</text>
+
+            <text x="330" y="137" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="var(--bwd)">satır = bu sınıfın</text>
+            <text x="330" y="153" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="var(--bwd)">gerçek örnekleri</text>
+            <text x="330" y="169" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="var(--bwd)">→ RECALL paydası</text>
+
+            <text x="196" y="282" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="var(--fwd)" text-anchor="middle">sütun = bu sınıf diye yapılan tahminler</text>
+            <text x="196" y="297" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="var(--fwd)" text-anchor="middle">→ PRECISION paydası</text>
+          </svg>
+        </div>
+        <figcaption>
+          Aynı hücre (TP) iki farklı toplamın içinde yer alır. Recall "gerçekte 5 olanların kaçını
+          yakaladım", precision "5 dediklerimin kaçı gerçekten 5'ti" sorusudur — bu yüzden biri
+          satırı, diğeri sütunu böler.
+        </figcaption>
+      </figure>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">np.add.at(confusion, (gercek, tahmin), 1)</div>
+          <div class="why">Batch'teki bütün örnekleri <strong>tek hamlede</strong> matrise işler. Düz <code>confusion[g, t] += 1</code> yazsaydınız aynı hücre bir batch içinde iki kez geldiğinde yalnızca bir kez artardı; <code>np.add.at</code> tekrarlı indeksleri doğru sayar.</div>
+        </div>
+        <div class="row">
+          <div class="line">np.diag(confusion)</div>
+          <div class="why">Köşegen = gerçek sınıf ile tahmin edilen sınıfın aynı olduğu hücreler, yani <strong>doğru bilinenler (TP)</strong>. Accuracy de buradan çıkıyor: <code>tp.sum() / confusion.sum()</code>.</div>
+        </div>
+        <div class="row">
+          <div class="line">axis=0 → FP, axis=1 → FN</div>
+          <div class="why">Ezberlemek yerine yönü hatırlayın: <code>axis=0</code> sütunu toplar (bu sınıf diye yapılan <em>tüm</em> tahminler), <code>axis=1</code> satırı toplar (bu sınıfın <em>tüm</em> gerçek örnekleri). Doğruları çıkarınca geriye yanlışlar kalır.</div>
+        </div>
+        <div class="row">
+          <div class="line">+ eps</div>
+          <div class="why">Bir sınıf hiç tahmin edilmediyse <code>tp + fp = 0</code> olur ve sıfıra bölme <code>nan</code> üretir. <code>1e-12</code> eklemek sonucu bozmayacak kadar küçük, çökmeyi önleyecek kadar yeterli.</div>
+        </div>
+        <div class="row">
+          <div class="line">F1 formülü</div>
+          <div class="why">Precision ile recall'un <strong>harmonik ortalaması</strong>. Aritmetik ortalama olsaydı, "her şeye 5 de" diyen bir model recall'u 100 yapıp ortalamayı kurtarabilirdi. Harmonik ortalama düşük olanı cezalandırır: ikisi birden iyi olmadan F1 yükselmez.</div>
+        </div>
+        <div class="row alt">
+          <div class="line">recall[AZINLIK_SINIFLARI].mean()</div>
+          <div class="why">NumPy'ın fancy indexing'i: dizi içinden <code>[5, 6, 8]</code> indekslerini seçip ortalamasını alır. Tek satırda "azınlık sınıflarının ortalama recall'u" metriği doğar — bu görevin ana ölçüsü.</div>
+        </div>
+        <div class="row">
+          <div class="line">macro ortalama</div>
+          <div class="why"><code>precision.mean()</code> her sınıfa <strong>eşit ağırlık</strong> verir. Micro ortalama (örnek başına) olsaydı 3.000 örnekli sınıf 150 örnekli sınıfı ezerdi ve dengesizlik yine görünmez olurdu. Macro seçimi, bu görevin amacının doğrudan bir sonucudur.</div>
+        </div>
+      </div>
+
+      <h3>Gerçek bir sınıf tablosu okumak</h3>
+      <p>
+        <code>MLP_d0_dengesiz_P1_pdf</code> deneyinden birkaç satır — precision ile recall'un
+        neden ayrı ayrı bakılması gerektiğini en iyi bu tablo anlatıyor:
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Sınıf</th><th>Tip</th><th class="num">Eğitim</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">F1</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono-cell">0</td><td><span class="chip cog">çoğunluk</span></td><td class="num">3000</td><td class="num">85.33</td><td class="num">99.69</td><td class="num">91.95</td></tr>
+            <tr><td class="mono-cell">1</td><td><span class="chip cog">çoğunluk</span></td><td class="num">3000</td><td class="num">90.62</td><td class="num">99.56</td><td class="num">94.88</td></tr>
+            <tr><td class="mono-cell">3</td><td><span class="chip orta">orta</span></td><td class="num">500</td><td class="num">83.25</td><td class="num">95.94</td><td class="num">89.14</td></tr>
+            <tr><td class="mono-cell">5</td><td><span class="chip az">azınlık</span></td><td class="num">150</td><td class="num">90.26</td><td class="num">77.91</td><td class="num">83.63</td></tr>
+            <tr><td class="mono-cell">6</td><td><span class="chip az">azınlık</span></td><td class="num">150</td><td class="num">98.58</td><td class="num">87.16</td><td class="num">92.52</td></tr>
+            <tr><td class="mono-cell">8</td><td><span class="chip az">azınlık</span></td><td class="num">150</td><td class="num">95.13</td><td class="num">78.23</td><td class="num">85.86</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="plain">
+        <li><strong>Sınıf 0 — yüksek recall, düşük precision.</strong> Model kararsız kaldığı her yerde
+        "0" diyor; gerçek 0'ları kaçırmıyor (99.69) ama "0" dediklerinin %15'i başka rakam (85.33).
+        Çoğunluk sınıfı olmanın imzası budur.</li>
+        <li><strong>Sınıf 6 — yüksek precision, düşük recall.</strong> Tam tersi: "6" demeye çekiniyor,
+        dediğinde neredeyse hep haklı (98.58), ama gerçek 6'ların %13'ünü kaçırıyor (87.16).
+        Azınlık sınıfı olmanın imzası.</li>
+        <li><strong>Sınıf 5 — iki ölçü de düşük.</strong> Hem az örneği var hem zaten zor bir rakam.
+        F1 83.63 ile tablonun en kötüsü. Accuracy 91.09'a bakan biri bu sınıfın varlığından haberdar olmaz.</li>
+      </ul>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 06 ============ -->
+    <section id="b6">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 06 · deney tasarımı</div>
+        <h2>Eğitim seti bozulur, test seti asla</h2>
+      </div>
+
+      <div class="code"><pre><span class="k">def</span> <span class="fn">loader_hazirla</span>(train_subset, test_data):
+    train_loader = DataLoader(train_subset, batch_size=BATCH_SIZE,
+                              shuffle=<span class="k">True</span>, pin_memory=<span class="k">True</span>)
+    <span class="hl">test_loader = DataLoader(test_data, batch_size=<span class="nu">256</span>,</span>
+    <span class="hl">                         shuffle=<span class="k">False</span>, pin_memory=<span class="k">True</span>)</span>
+    <span class="k">return</span> train_loader, test_loader</pre></div>
+
+      <div class="prose">
+        <p>
+          Üç dosyada da <code>test_data</code> hiç dokunulmadan, tam 10.000 örnekle geçer. Sebebi
+          basit: eğer test setini de dengesizleştirseydiniz, azınlık sınıfının recall'u yalnızca
+          birkaç yüz örnek üzerinden hesaplanır, gürültüye boğulur ve deneyler arasında
+          karşılaştırılamaz hâle gelirdi. <strong>Ölçüm aleti, ölçtüğü şeyle birlikte
+          değişmemelidir.</strong>
+        </p>
+        <p>
+          Bu yüzden sınıf tablosundaki "destek" sütunu her deneyde aynıdır (sınıf 5 için 892,
+          sınıf 8 için 974) — değişen tek şey eğitimde kaç örnek görüldüğüdür.
+        </p>
+      </div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">train: shuffle=True</div>
+          <div class="why">Her epoch'ta örnek sırası değişsin ki model sırayı ezberlemesin ve batch'ler her turda farklı kombinasyonlar görsün.</div>
+        </div>
+        <div class="row">
+          <div class="line">test: shuffle=False</div>
+          <div class="why">Ölçüm sırası sonucu değiştirmez; karıştırmamak hem gereksiz işten kaçınır hem çıktıların tekrar üretilebilirliğini artırır.</div>
+        </div>
+        <div class="row">
+          <div class="line">test batch_size=256</div>
+          <div class="why">Testte geri yayılım olmadığı için bellek daha az kullanılır, daha büyük batch sığar ve ölçüm hızlanır.</div>
+        </div>
+        <div class="row">
+          <div class="line">pin_memory=True</div>
+          <div class="why">Veriyi sayfalanamaz (pinned) RAM'e koyar; CPU→GPU aktarımı bu bellekten belirgin şekilde hızlıdır. Yalnızca GPU kullanırken anlamlıdır.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 07 ============ -->
+    <section id="b7">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 07 · raporlama</div>
+        <h2>Sayıyı bulmak yetmez, okunur hâle getirmek gerekir</h2>
+        <p class="what">
+          Dosyaların üçte biri yalnızca ekrana düzgün tablo basmakla ilgilidir. Bu kod modelin
+          doğruluğunu değiştirmez ama <em>sizin</em> doğru sonucu görme ihtimalinizi değiştirir.
+        </p>
+      </div>
+
+      <div class="code"><pre><span class="k">def</span> <span class="fn">azinlik_karisimi_yazdir</span>(confusion):
+    <span class="k">for</span> sinif <span class="k">in</span> AZINLIK_SINIFLARI:
+        satir = confusion[sinif]
+        toplam = satir.sum()
+        yanlis = toplam - satir[sinif]
+        sirali = [(j, int(satir[j])) <span class="k">for</span> j <span class="k">in</span> range(<span class="nu">10</span>) <span class="k">if</span> j != sinif]
+        sirali.sort(key=<span class="k">lambda</span> x: x[<span class="nu">1</span>], reverse=<span class="k">True</span>)
+        hedefler = <span class="st">", "</span>.join(f<span class="st">"'{j}'({adet})"</span> <span class="k">for</span> j, adet <span class="k">in</span> sirali[:<span class="nu">2</span>] <span class="k">if</span> adet &gt; <span class="nu">0</span>)
+        print(f<span class="st">"    Sinif {sinif}: {yanlis}/{toplam} tahmin yanlis sinifa gidiyor"</span>
+              + (f<span class="st">" -&gt; en cok {hedefler} ile karisiyor"</span> <span class="k">if</span> hedefler <span class="k">else</span> <span class="st">""</span>))</pre></div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">matris_yazdir</div>
+          <div class="why">10×10 matrisi hizalı basar; köşegen dışındaki 10+ değerleri <code>*</code> ile, sıfırları <code>.</code> ile işaretler. Nokta kullanmak <strong>görsel gürültüyü</strong> düşürür: gözünüz doğrudan dolu hücrelere gider. Dengesiz dosyasında satır sonlarına <code>&lt;- AZINLIK</code> etiketi de eklenir.</div>
+        </div>
+        <div class="row">
+          <div class="line">sinif_tablosu_yazdir</div>
+          <div class="why">Her sınıf için tip, eğitim örneği, test desteği ve üç metrik. Eğitim sayısını metriklerin <em>yanına</em> koymak, "az örnek → düşük recall" ilişkisini tek bakışta kurdurur.</div>
+        </div>
+        <div class="row alt">
+          <div class="line">azinlik_karisimi_yazdir</div>
+          <div class="why">Sadece "recall düşük" demez, <strong>nereye kaçtığını</strong> söyler: 5'in çoğunlukla 3 veya 8 ile karışması, sorunun veri azlığı mı yoksa şekil benzerliği mi olduğunu ayırt etmenizi sağlar.</div>
+        </div>
+        <div class="row">
+          <div class="line">karisan_ciftler_yazdir</div>
+          <div class="why"><code>egitim_veri_azalt.py</code>'deki karşılığı. Dengeli senaryoda belirli bir azınlık olmadığı için tüm matristeki en büyük 5 hatayı listeler. Aynı soru, senaryoya uygun iki farklı sorulma biçimi.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 08 ============ -->
+    <section id="b8">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 08 · eğitim döngüsü ve kayıt</div>
+        <h2>Her epoch ölç, her deneyden sonra diske yaz</h2>
+      </div>
+
+      <div class="code"><pre><span class="k">def</span> <span class="fn">train_model</span>(model, train_loader, test_loader, device, epochs=EPOCHS):
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
+
+    <span class="k">for</span> epoch <span class="k">in</span> range(<span class="nu">1</span>, epochs + <span class="nu">1</span>):
+        loss = bir_epoch_egit(model, train_loader, criterion, optimizer, device)
+        ara = metricler_hesapla(model, test_loader, criterion, device)
+        print(f<span class="st">"  Epoch {epoch:&gt;2}/{epochs} | Loss: {loss:.4f} | "</span>
+              f<span class="st">"Acc: {ara['accuracy'] * 100:.2f}% | "</span>
+              f<span class="st">"Azinlik Recall: {ara['azinlik_recall'] * 100:.2f}%"</span>)
+
+    metrics = metricler_hesapla(model, test_loader, criterion, device)
+    <span class="k">return</span> metrics, sure</pre></div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">her epoch'ta metricler_hesapla</div>
+          <div class="why">Bedeli var (test seti 10 kez geziliyor) ama karşılığında azınlık recall'unun <strong>epoch epoch nasıl geride kaldığı</strong> görülür. Sadece son değeri yazdırsaydınız, modelin çoğunluğu erken öğrenip azınlığı sona bıraktığını fark edemezdiniz.</div>
+        </div>
+        <div class="row">
+          <div class="line">model.eval() / model.train()</div>
+          <div class="why"><code>metricler_hesapla</code> içinde ölçümden önce <code>eval()</code>, sonra <code>train()</code> çağrılır. Dropout ölçüm sırasında kapanmalı; kapanmazsa aynı model her ölçümde farklı sonuç verir.</div>
+        </div>
+        <div class="row">
+          <div class="line">torch.no_grad()</div>
+          <div class="why">Ölçüm sırasında gradyan grafiği tutulmaz: hem daha hızlı hem çok daha az bellek. Unutulursa uzun test setinde bellek şişer.</div>
+        </div>
+        <div class="row">
+          <div class="line">sonuclari_kaydet(sonuclar) — döngü içinde</div>
+          <div class="why">CSV her deneyden sonra <strong>baştan</strong> yazılır. 20 deneyin 14'ünde program çökerse ilk 13'ün sonucu diskte durur. Uzun süren deney serilerinde bu küçük alışkanlık saatler kurtarır.</div>
+        </div>
+        <div class="row">
+          <div class="line">confusion_kaydet(...)</div>
+          <div class="why">Her deneyin 10×10 matrisi ayrı bir CSV'ye gider (<code>kayitlar/gorev2/confusion/</code>). Rapor yazarken hangi sınıfın nereye kaçtığını sonradan yeniden hesaplamanıza gerek kalmaz.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 09 ============ -->
+    <section id="b9">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 09 · deney listeleri</div>
+        <h2>İç içe iki döngüden doğan deney matrisi</h2>
+      </div>
+
+      <div class="code"><pre><span class="k">def</span> <span class="fn">tum_deneyler</span>():
+    deneyler = []
+    <span class="k">for</span> konfig <span class="k">in</span> KONFIGLER:            <span class="cm"># 4 konfig</span>
+        <span class="k">for</span> profil <span class="k">in</span> DENGESIZ_PROFILLER:  <span class="cm"># 3 profil</span>
+            deneyler.append({
+                <span class="st">"ad"</span>: f<span class="st">"{konfig['ad']}_dengesiz_{profil}"</span>,
+                <span class="st">"konfig"</span>: konfig,
+                <span class="st">"profil"</span>: profil,
+            })
+    <span class="k">return</span> deneyler                        <span class="cm"># 12 deney</span></pre></div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Dosya</th><th>Kombinasyon</th><th class="num">Deney</th><th>Değişken</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono-cell">egitim_veri_azalt</td><td>4 konfig × 5 veri boyutu</td><td class="num">20</td><td>Veri miktarı</td></tr>
+            <tr><td class="mono-cell">egitim_dengesiz_siniflar</td><td>4 konfig × 3 profil</td><td class="num">12</td><td>Dengesizlik şiddeti</td></tr>
+            <tr><td class="mono-cell">egitim_hazir_modeller</td><td>2 model × (5 boyut + 3 profil)</td><td class="num">16</td><td>Mimari</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout amac">
+        <span class="tag">Amaç</span>
+        <p>Deney listesini elle yazmak yerine döngüyle üretmek, kombinasyonlardan birini atlama
+        riskini ortadan kaldırır. Yeni bir profil eklemek istediğinizde tek yapmanız gereken
+        <code>DENGESIZ_PROFILLER</code> sözlüğüne bir satır eklemek: deney sayısı, CSV ve özet
+        tabloları kendiliğinden büyür. <strong>Konfigürasyon veri, kod değil.</strong></p>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 10 ============ -->
+    <section id="b10">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 10 · egitim_hazir_modeller.py</div>
+        <h2>MNIST'i ImageNet mimarilerine kabul ettirmek</h2>
+        <p class="what">
+          ResNet18 ve MobileNetV2, 224×224 renkli fotoğraflar için tasarlandı. 28×28 gri bir rakamı
+          onlara vermek üç küçük uyarlama gerektirir — ve mimarinin kendisine hiç dokunulmaz.
+        </p>
+      </div>
+
+      <div class="code"><pre>IMG_SIZE = <span class="nu">32</span>          <span class="cm"># 28x28 -&gt; 32x32</span>
+PRETRAINED = <span class="k">False</span>    <span class="cm"># True -&gt; ImageNet agirliklari (internet gerekir)</span>
+
+
+<span class="k">def</span> <span class="fn">gri_to_rgb</span>(x):
+    <span class="k">return</span> x.repeat(<span class="nu">3</span>, <span class="nu">1</span>, <span class="nu">1</span>)
+
+
+transform = transforms.Compose([
+    transforms.Resize(IMG_SIZE),
+    transforms.ToTensor(),
+    transforms.Lambda(gri_to_rgb),
+    transforms.Normalize([<span class="nu">0.1307</span>] * <span class="nu">3</span>, [<span class="nu">0.3081</span>] * <span class="nu">3</span>),
+])</pre></div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">Resize(32)</div>
+          <div class="why">ResNet18 girişi art arda 5 kez yarıya indirir. 28'den başlarsanız son katmanda uzamsal boyut 1'in altına düşüp hata verir; 32 bu bölmelere temiz şekilde uyar.</div>
+        </div>
+        <div class="row">
+          <div class="line">x.repeat(3, 1, 1)</div>
+          <div class="why">Tek kanallı gri görüntüyü 3 kanala <strong>kopyalar</strong>. İlk conv katmanı 3 kanal beklediği için gerekli. Bilgi artmaz, sadece şekil uyar.</div>
+        </div>
+        <div class="row">
+          <div class="line">Normalize(0.1307, 0.3081)</div>
+          <div class="why">MNIST'in bilinen ortalaması ve standart sapması. Girdiyi sıfır merkezli yapmak derin ağlarda eğitimi belirgin biçimde stabilize eder — küçük CNN'de atlanabilen, ResNet'te atlanmaması gereken bir adım.</div>
+        </div>
+        <div class="row">
+          <div class="line">transforms.Lambda(gri_to_rgb)</div>
+          <div class="why">Neden isimli bir fonksiyon, neden <code>lambda x: x.repeat(...)</code> değil? Çünkü Windows'ta DataLoader worker'ları veriyi <code>pickle</code> ile kopyalar ve lambda'lar pickle edilemez. Küçük ama koşuyu kurtaran bir tercih.</div>
+        </div>
+        <div class="row alt">
+          <div class="line">num_classes=10</div>
+          <div class="why"><code>PRETRAINED=False</code> iken model doğrudan 10 çıkışla kurulur. <code>True</code> iken ImageNet ağırlıkları yüklenir ve yalnızca son katman değiştirilir: <code>model.fc = nn.Linear(model.fc.in_features, 10)</code>. Transfer öğrenmenin en kısa hâli.</div>
+        </div>
+      </div>
+
+      <div class="callout dikkat">
+        <span class="tag">Beklentiyi ayarlayın</span>
+        <p>Sıfırdan eğitilen ResNet18, 1.000 örnekli MNIST'te küçük CNN'i geçmez — büyük mimariler
+        çok veri ister, az veride avantajları yoktur. Hazır mimarinin gerçekten fark yarattığı yer
+        <code>PRETRAINED=True</code>'dur; bu ayarın kapalı olması dosyanın internet olmadan da
+        çalışabilmesi içindir.</p>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ EK ============ -->
+    <section id="ek">
+      <div class="sec-head">
+        <div class="eyebrow">Ek</div>
+        <h2>Bu görevin kalıcı dersleri</h2>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <div class="n">Ders 1</div>
+          <div class="t">Accuracy ortalamadır</div>
+          <div class="d">Ortalama, en kötü parçayı saklar. 91.09 accuracy'nin altında 77.91 recall'lı bir sınıf duruyordu.</div>
+        </div>
+        <div class="card">
+          <div class="n">Ders 2</div>
+          <div class="t">Macro ≠ micro</div>
+          <div class="d">Macro her sınıfa eşit söz hakkı verir. Dengesiz veride tek anlamlı ortalama budur.</div>
+        </div>
+        <div class="card">
+          <div class="n">Ders 3</div>
+          <div class="t">Precision ve recall birlikte okunur</div>
+          <div class="d">Tek başına yükseltilebilir her ikisi de. F1 ikisini birden zorlar.</div>
+        </div>
+        <div class="card">
+          <div class="n">Ders 4</div>
+          <div class="t">Test seti kutsaldır</div>
+          <div class="d">Eğitim setini istediğiniz gibi bozun; ölçtüğünüz şey sabit kalmalı.</div>
+        </div>
+        <div class="card">
+          <div class="n">Ders 5</div>
+          <div class="t">Confusion matrix hatayı adlandırır</div>
+          <div class="d">"%9 hata" demez, "5'ler 3'e kaçıyor" der. Düzeltme ancak bu cümleden sonra planlanabilir.</div>
+        </div>
+        <div class="card">
+          <div class="n">Ders 6</div>
+          <div class="t">Deney kontrollü olmalı</div>
+          <div class="d">Sabit seed, sabit epoch, sabit test seti. Aynı anda iki şeyi değiştiren deney hiçbir şey ölçmez.</div>
+        </div>
+      </div>
+
+      <p class="footnote" style="margin-top:8px">
+        Kod: <code>deep_learning/gorev2/</code> · Sayılar: <code>kayitlar/gorev2/sonuclar_f1_dengesiz.csv</code>,
+        <code>sonuclar_f1_veri_azalt.csv</code>, <code>sinif_bazli_dengesiz.csv</code> (seed 27, 10 epoch, GPU).
+      </p>
+    </section>
+
+  </main>
+</div>

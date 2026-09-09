@@ -1,0 +1,1007 @@
+<title>Kutular ve Maskeler</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --bg:        #f5f6f9;
+    --surface:   #ffffff;
+    --surface-2: #eceff4;
+    --line:      #d9dee6;
+    --line-soft: #e6eaf0;
+    --text:      #171c24;
+    --muted:     #5b6472;
+    --faint:     #8b95a3;
+
+    /* gorev5'in ekseni: bizim egittigimiz (mavi) vs hazir referans (altin) */
+    --fwd:       #3b5bb8;
+    --fwd-soft:  #e2e7f7;
+    --bwd:       #a37a06;
+    --bwd-soft:  #f8eecf;
+    --warn:      #8a5a08;
+    --warn-soft: #fbeed2;
+
+    --code-bg:   #eef1f6;
+    --code-line: #dee3ec;
+    --syn-kw:    #8a2f8f;
+    --syn-fn:    #1a5fb4;
+    --syn-num:   #a3541b;
+    --syn-str:   #1c6b4a;
+    --syn-com:   #79838f;
+
+    --step--1: clamp(.78rem, .76rem + .1vw, .84rem);
+    --step-0:  clamp(1rem, .97rem + .15vw, 1.075rem);
+    --step-1:  clamp(1.2rem, 1.12rem + .35vw, 1.4rem);
+    --step-2:  clamp(1.55rem, 1.4rem + .7vw, 2rem);
+    --step-3:  clamp(2.1rem, 1.7rem + 1.9vw, 3.4rem);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:        #10141a;
+      --surface:   #171d25;
+      --surface-2: #1e262f;
+      --line:      #2c3742;
+      --line-soft: #232c36;
+      --text:      #e6ebf2;
+      --muted:     #9daab9;
+      --faint:     #6f7c8b;
+
+      --fwd:       #728de0;
+      --fwd-soft:  #1a2140;
+      --bwd:       #ad8529;
+      --bwd-soft:  #2e2410;
+      --warn:      #e5b567;
+      --warn-soft: #38290f;
+
+      --code-bg:   #0d1218;
+      --code-line: #202a34;
+      --syn-kw:    #d69dd8;
+      --syn-fn:    #8ab4f8;
+      --syn-num:   #e0a373;
+      --syn-str:   #7fca9f;
+      --syn-com:   #667585;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg:        #10141a;
+    --surface:   #171d25;
+    --surface-2: #1e262f;
+    --line:      #2c3742;
+    --line-soft: #232c36;
+    --text:      #e6ebf2;
+    --muted:     #9daab9;
+    --faint:     #6f7c8b;
+
+    --fwd:       #728de0;
+    --fwd-soft:  #1a2140;
+    --bwd:       #ad8529;
+    --bwd-soft:  #2e2410;
+    --warn:      #e5b567;
+    --warn-soft: #38290f;
+
+    --code-bg:   #0d1218;
+    --code-line: #202a34;
+    --syn-kw:    #d69dd8;
+    --syn-fn:    #8ab4f8;
+    --syn-num:   #e0a373;
+    --syn-str:   #7fca9f;
+    --syn-com:   #667585;
+  }
+
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: var(--step-0); line-height: 1.65; -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 { font-family: Fraunces, "Iowan Old Style", Georgia, serif; text-wrap: balance; margin: 0; font-weight: 600; }
+  p { margin: 0; }
+  a { color: var(--fwd); }
+  :focus-visible { outline: 2px solid var(--fwd); outline-offset: 3px; border-radius: 3px; }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: var(--step--1);
+    letter-spacing: .14em; text-transform: uppercase; color: var(--faint);
+  }
+
+  .shell {
+    max-width: 1240px; margin-inline: auto; padding: 0 20px 96px;
+    display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 56px;
+  }
+  @media (min-width: 1080px) {
+    .shell { grid-template-columns: 208px minmax(0, 1fr); padding-inline: 32px; }
+  }
+
+  .hero {
+    grid-column: 1 / -1; padding: 72px 0 40px;
+    border-bottom: 1px solid var(--line); display: grid; gap: 22px;
+  }
+  .hero h1 { font-size: var(--step-3); line-height: 1.02; letter-spacing: -.02em; }
+  .hero h1 em { font-style: italic; color: var(--fwd); }
+  .hero .lede { max-width: 62ch; color: var(--muted); font-size: var(--step-1); line-height: 1.5; }
+  .hero-meta { display: flex; flex-wrap: wrap; gap: 10px 28px; padding-top: 6px; }
+  .hero-meta div { display: grid; gap: 2px; }
+  .hero-meta .k { font-family: "IBM Plex Mono", monospace; font-size: var(--step--1); color: var(--faint); letter-spacing: .08em; text-transform: uppercase; }
+  .hero-meta .v { font-size: .95rem; color: var(--text); }
+
+  .rail { display: none; }
+  @media (min-width: 1080px) {
+    .rail {
+      display: block; position: sticky; top: 0; align-self: start;
+      max-height: 100vh; overflow-y: auto; padding: 48px 0; font-size: .84rem;
+    }
+    .rail ol { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 1px; }
+    .rail a {
+      display: grid; grid-template-columns: 22px 1fr; gap: 8px;
+      padding: 5px 8px 5px 10px; color: var(--muted); text-decoration: none;
+      border-left: 2px solid transparent; line-height: 1.3;
+    }
+    .rail a:hover { color: var(--text); border-left-color: var(--line); }
+    .rail a .num { font-family: "IBM Plex Mono", monospace; color: var(--faint); font-size: .78rem; }
+    .rail .rail-sep { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line-soft); }
+  }
+
+  main { display: grid; gap: 64px; padding-top: 48px; min-width: 0; }
+  section { display: grid; gap: 20px; scroll-margin-top: 24px; min-width: 0; }
+  section > p, section > .prose { max-width: 68ch; }
+  .prose { display: grid; gap: 14px; }
+
+  .sec-head { display: grid; gap: 6px; }
+  .sec-head h2 { font-size: var(--step-2); letter-spacing: -.015em; line-height: 1.15; }
+  .sec-head .what { color: var(--muted); max-width: 62ch; }
+  h3 { font-size: var(--step-1); margin-top: 6px; }
+
+  .code {
+    background: var(--code-bg); border: 1px solid var(--code-line); border-radius: 8px;
+    overflow-x: auto; font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .855rem; line-height: 1.75; padding: 16px 18px; tab-size: 4;
+  }
+  .code pre { margin: 0; }
+  .k  { color: var(--syn-kw); }
+  .fn { color: var(--syn-fn); }
+  .nu { color: var(--syn-num); }
+  .st { color: var(--syn-str); }
+  .cm { color: var(--syn-com); font-style: italic; }
+  .hl { background: var(--fwd-soft); border-radius: 3px; padding: 0 3px; margin: 0 -3px; }
+
+  code:not(.code code) {
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .88em;
+    background: var(--surface-2); border-radius: 4px; padding: .1em .34em;
+  }
+
+  .notes { display: grid; gap: 0; margin: 0; border-top: 1px solid var(--line-soft); }
+  .notes .row {
+    display: grid; gap: 4px 24px; padding: 13px 2px;
+    border-bottom: 1px solid var(--line-soft); align-items: baseline;
+  }
+  @media (min-width: 760px) { .notes .row { grid-template-columns: minmax(180px, 34%) 1fr; } }
+  .notes .row > .line { font-family: "IBM Plex Mono", monospace; font-size: .82rem; color: var(--fwd); word-break: break-word; }
+  .notes .row.alt > .line { color: var(--bwd); }
+  .notes .row > .why { color: var(--muted); font-size: .95rem; }
+  .notes .row > .why strong { color: var(--text); font-weight: 600; }
+
+  .callout {
+    border-radius: 8px; padding: 16px 18px; display: grid; gap: 6px;
+    font-size: .95rem; max-width: 72ch; border: 1px solid var(--line); background: var(--surface);
+  }
+  .callout .tag { font-family: "IBM Plex Mono", monospace; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; }
+  .callout.amac { border-left: 3px solid var(--fwd); background: var(--fwd-soft); border-color: transparent; }
+  .callout.amac .tag { color: var(--fwd); }
+  .callout.dikkat { border-left: 3px solid var(--warn); background: var(--warn-soft); border-color: transparent; }
+  .callout.dikkat .tag { color: var(--warn); }
+  .callout.geri { border-left: 3px solid var(--bwd); background: var(--bwd-soft); border-color: transparent; }
+  .callout.geri .tag { color: var(--bwd); }
+  .callout strong { color: var(--text); }
+
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line-soft); }
+  thead th {
+    font-family: "IBM Plex Mono", monospace; font-size: .74rem; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 500;
+    background: var(--surface-2); white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.num, th.num { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  td.mono-cell { font-family: "IBM Plex Mono", monospace; font-size: .82rem; }
+  td.win { color: var(--fwd); font-weight: 600; }
+  td.ref { color: var(--bwd); font-weight: 600; }
+
+  figure { margin: 0; display: grid; gap: 10px; }
+  figure svg { width: 100%; height: auto; display: block; }
+  .figbox { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; overflow-x: auto; }
+  figcaption { font-size: .86rem; color: var(--muted); max-width: 64ch; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .82rem; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .legend i { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .legend i.hollow { background: transparent !important; border: 2px solid var(--faint); }
+
+  .cards { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .card {
+    border: 1px solid var(--line); border-radius: 8px; padding: 16px;
+    background: var(--surface); display: grid; gap: 6px; align-content: start;
+  }
+  .card .t { font-weight: 600; font-size: .95rem; }
+  .card .d { color: var(--muted); font-size: .88rem; }
+  .card .n { font-family: "IBM Plex Mono", monospace; font-size: .75rem; color: var(--faint); letter-spacing: .1em; text-transform: uppercase; }
+
+  .steps {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0;
+    border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface);
+  }
+  .steps .st-cell { padding: 14px 16px; border-right: 1px solid var(--line-soft); display: grid; gap: 3px; }
+  .steps .st-cell:last-child { border-right: none; }
+  .steps .st-cell .lbl { font-family: "IBM Plex Mono", monospace; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+  .steps .st-cell .val { font-family: "IBM Plex Mono", monospace; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+  .steps .st-cell .sub { font-size: .8rem; color: var(--muted); }
+  .steps .st-cell.good .val { color: var(--fwd); }
+  .steps .st-cell.ref .val { color: var(--bwd); }
+
+  ul.plain { margin: 0; padding-left: 1.1em; display: grid; gap: 7px; color: var(--muted); max-width: 66ch; }
+  ul.plain strong { color: var(--text); }
+
+  .divider { border: none; border-top: 1px solid var(--line); margin: 0; }
+  .footnote { color: var(--faint); font-size: .86rem; max-width: 64ch; }
+
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<div class="shell">
+
+  <header class="hero">
+    <div class="eyebrow">deep_learning / gorev5 · satır satır okuma</div>
+    <h1>Kutular ve <em>Maskeler</em></h1>
+    <p class="lede">
+      Görev 5 iki problemi aynı veri setinde birden çalıştırır: nesneleri kutuyla bulmak
+      (Faster R-CNN) ve her pikseli sınıflandırmak (DeepLabV3). En çarpıcı bulgusu ise
+      deneylerden değil, <strong>hiç eğitilmemiş</strong> iki referans modelden geliyor.
+    </p>
+    <div class="hero-meta">
+      <div><span class="k">Veri</span><span class="v">PASCAL VOC 2012 · 20 sınıf</span></div>
+      <div><span class="k">Tespit</span><span class="v">Faster R-CNN + ResNet50-FPN · mAP</span></div>
+      <div><span class="k">Bölütleme</span><span class="v">DeepLabV3 + ResNet50 · mIoU</span></div>
+      <div><span class="k">Yapı</span><span class="v">ortak.py + tespit.py + bolutleme.py + 6 script</span></div>
+    </div>
+  </header>
+
+  <nav class="rail" aria-label="Bölümler">
+    <div class="eyebrow">Bölümler</div>
+    <ol>
+      <li><a href="#genel"><span class="num">00</span><span>İki problem, tek veri</span></a></li>
+      <li><a href="#b1"><span class="num">01</span><span>VOC klasörünü bulmak</span></a></li>
+      <li><a href="#b2"><span class="num">02</span><span>Test seti nereden geliyor</span></a></li>
+      <li><a href="#b3"><span class="num">03</span><span>XML ve difficult bayrağı</span></a></li>
+      <li><a href="#b4"><span class="num">04</span><span>mAP nasıl hesaplanır</span></a></li>
+      <li><a href="#b5"><span class="num">05</span><span>Kutuları elle çevirmek</span></a></li>
+      <li><a href="#b6"><span class="num">06</span><span>Tespit sonuçları</span></a></li>
+      <li class="rail-sep"><a href="#b7"><span class="num">07</span><span>void pikseller</span></a></li>
+      <li><a href="#b8"><span class="num">08</span><span>21×21 matristen mIoU</span></a></li>
+      <li><a href="#b9"><span class="num">09</span><span>Eğitim düzeni</span></a></li>
+      <li><a href="#b10"><span class="num">10</span><span>Bölütleme sonuçları</span></a></li>
+      <li><a href="#ek"><span class="num">Ek</span><span>Dersler</span></a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <!-- ============ 00 ============ -->
+    <section id="genel">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 00</div>
+        <h2>İki problem, tek veri seti, üç modül</h2>
+        <p class="what">
+          Görev 4'te ortak kod tek dosyaydı. Burada iki farklı problem var; hepsini tek dosyaya
+          koymak 1.500 satırlık bir modül demekti. Ortak olan şey <strong>veri setinin
+          kendisi</strong>, bölme çizgisi de oradan geçiyor.
+        </p>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <div class="n">Paylaşılan</div>
+          <div class="t">ortak.py</div>
+          <div class="d">VOC klasörünü bulma, sınıf listesi, küme listeleri, XML okuma, renk paleti, CSV kaydı, lr çizelgeleri. İki problemin de ihtiyaç duyduğu her şey.</div>
+        </div>
+        <div class="card">
+          <div class="n">Problem 1</div>
+          <div class="t">tespit.py</div>
+          <div class="d">Faster R-CNN, kutulu veri seti, kutu augmentation'ı, mAP hesabı, görselleştirme. 720 satır.</div>
+        </div>
+        <div class="card">
+          <div class="n">Problem 2</div>
+          <div class="t">bolutleme.py</div>
+          <div class="d">DeepLabV3, paletli maske okuma, 21×21 karışıklık matrisi, mIoU. 577 satır.</div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th></th><th>Nesne tespiti</th><th>Semantik bölütleme</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Etiket</td><td>Kutu listesi + sınıf</td><td class="mono-cell">H×W sınıf indeksi</td></tr>
+            <tr><td>Model</td><td>Faster R-CNN (RPN + ROI)</td><td>DeepLabV3 (ASPP)</td></tr>
+            <tr><td>Loss</td><td>Model kendi içinde döndürür</td><td class="mono-cell">CrossEntropy(ignore_index=255)</td></tr>
+            <tr><td>Metrik</td><td>mAP@0.5 · mAP@0.5:0.95</td><td>mIoU · Dice · fwIoU</td></tr>
+            <tr><td>Eğitim görüntüsü</td><td class="num">2.000 (alt küme)</td><td class="num">1.464 (tamamı)</td></tr>
+            <tr><td>Batch</td><td class="num">4</td><td class="num">8</td></tr>
+            <tr><td>Epoch</td><td class="num">6</td><td class="num">20</td></tr>
+            <tr><td>Harmanlama</td><td>Liste (farklı boyutlar)</td><td>Tensör yığını (sabit kırpma)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout dikkat">
+        <span class="tag">Alt küme neden var</span>
+        <p>Tam VOC tespit eğitimi (5.717 görüntü × 6 epoch) tek GPU'da deney başına ~1 saat sürer,
+        dört deney bir günü bulurdu. Alt küme <strong>tüm deneylerde aynı</strong> olduğu için
+        karşılaştırma geçerliliğini korur; ama mutlak skorlar literatürün altında kalır.
+        Kodun yorumu bunu açıkça yazıyor — kısıtı gizlemek yerine ilan etmek, sonucun doğru
+        okunmasını sağlar.</p>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 01 ============ -->
+    <section id="b1">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 01 · voc_kok</div>
+        <h2>Sabit yol yazmak yerine klasörü tanımak</h2>
+      </div>
+
+      <div class="code"><pre><span class="k">def</span> <span class="fn">voc_kok</span>():
+    <span class="k">global</span> _voc_kok_onbellek
+    <span class="k">if</span> _voc_kok_onbellek <span class="k">is</span> <span class="k">not</span> <span class="k">None</span>:
+        <span class="k">return</span> _voc_kok_onbellek
+
+    <span class="hl">gerekli = {<span class="st">"Annotations"</span>, <span class="st">"JPEGImages"</span>, <span class="st">"ImageSets"</span>, <span class="st">"SegmentationClass"</span>}</span>
+    <span class="k">for</span> kok, dizinler, _ <span class="k">in</span> os.walk(DATA_KOK):
+        <span class="k">if</span> gerekli.issubset(set(dizinler)):
+            _voc_kok_onbellek = kok
+            <span class="k">return</span> kok
+
+    <span class="k">raise</span> RuntimeError(...)</pre></div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">os.walk ile arama</div>
+          <div class="why">Kaggle arşivi iç içe klasörler hâlinde açılıyor (<code>VOC2012_train_val/VOC2012_train_val/...</code>) ve sürümden sürüme derinlik değişiyor. Sabit yol yazmak yerine <strong>klasör yapısından tanımak</strong> kodu arşiv sürümünden bağımsız kılar.</div>
+        </div>
+        <div class="row alt">
+          <div class="line">SegmentationClass şartı</div>
+          <div class="why">Aramanın püf noktası. Arşivde ayrıca <code>VOC2012_test/</code> var ve onun da <code>Annotations/</code> + <code>JPEGImages/</code> klasörleri mevcut — ama etiketleri boş. Alfabetik sırada "test" önce geldiği için yalnızca iki klasöre bakan bir arama <strong>önce onu bulur</strong> ve bütün küme listeleri sessizce boş döner. Dördüncü klasörü şart koşmak bu tuzağı kapatıyor.</div>
+        </div>
+        <div class="row">
+          <div class="line">_voc_kok_onbellek</div>
+          <div class="why">Ağaç yürüyüşü ucuz değil ve fonksiyon her görüntü yolu için çağrılıyor. Modül seviyesinde bir global ile sonucu bir kez hesaplayıp saklıyor.</div>
+        </div>
+        <div class="row">
+          <div class="line">hata mesajında indirme komutu</div>
+          <div class="why">Klasör bulunamazsa hata metni doğrudan <code>kaggle datasets download -d ...</code> komutunu veriyor. Aylar sonra aynı projeye dönen kişiye (yani size) yazılmış bir not.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 02 ============ -->
+    <section id="b2">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 02 · val_bol</div>
+        <h2>VOC'un test etiketleri yayınlanmaz — o hâlde test seti nereden?</h2>
+      </div>
+
+      <div class="code"><pre><span class="k">def</span> <span class="fn">val_bol</span>(adlar, seed=SEED):
+    idx = np.arange(len(adlar))
+    np.random.default_rng(seed).shuffle(idx)
+    orta = len(adlar) // <span class="nu">2</span>
+    val = sorted(adlar[i] <span class="k">for</span> i <span class="k">in</span> idx[:orta])     <span class="cm"># karar seti</span>
+    test = sorted(adlar[i] <span class="k">for</span> i <span class="k">in</span> idx[orta:])    <span class="cm"># rapor seti</span>
+    <span class="k">return</span> val, test</pre></div>
+
+      <div class="prose">
+        <p>
+          VOC 2012'nin resmi test setinin etiketleri yayınlanmaz; skor ancak değerlendirme
+          sunucusuna gönderilerek alınır. Elimizde etiketli iki küme var: <code>train</code> ve
+          <code>val</code>. Görev 3 ve 4'teki düzeni korumak için resmi <code>val</code> listesi
+          ikiye bölünüyor — biri iyileştirme kararları için, diğeri yalnızca son rapor için.
+        </p>
+        <p>
+          Bölme seed'e bağlı ve deterministik olduğu için altı script de <strong>birebir aynı</strong>
+          val ve test kümesini elde eder. Bu olmadan scriptler arası karşılaştırma anlamsız olurdu.
+        </p>
+      </div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">Main vs Segmentation listeleri</div>
+          <div class="why"><code>ImageSets/Main/</code> tespit listelerini (train 5.717 / val 5.823), <code>ImageSets/Segmentation/</code> bölütleme listelerini (train 1.464 / val 1.449) tutar. Bölütleme etiketleri tespitin <strong>alt kümesi</strong>: her görüntünün kutusu var, ama çok azının maskesi var.</div>
+        </div>
+        <div class="row">
+          <div class="line">alt_kume(adlar, n, seed)</div>
+          <div class="why">Deterministik alt küme seçer. <code>n</code> boyuttan büyükse listeyi aynen döndürür — yani "tam veri" durumu ayrı bir kod yolu gerektirmez.</div>
+        </div>
+        <div class="row">
+          <div class="line">VAL_ADET=500 / TEST_ADET=1000</div>
+          <div class="why">Epoch sonu takip ölçümü hızlı olmalı (her epoch koşuyor), rapor ölçümü ise sağlam. İkisi farklı boyutta — ama <strong>her deneyde aynı</strong>, dolayısıyla karşılaştırılabilir.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 03 ============ -->
+    <section id="b3">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 03 · annot_oku</div>
+        <h2>XML'den kutuya — ve "difficult" bayrağı</h2>
+      </div>
+
+      <div class="code"><pre><span class="k">for</span> nesne <span class="k">in</span> kok.findall(<span class="st">"object"</span>):
+    sinif = nesne.find(<span class="st">"name"</span>).text.strip().lower()
+    zor_dugum = nesne.find(<span class="st">"difficult"</span>)
+    <span class="hl">zor = zor_dugum <span class="k">is</span> <span class="k">not</span> <span class="k">None</span> <span class="k">and</span> zor_dugum.text.strip() == <span class="st">"1"</span></span>
+
+    kutu = nesne.find(<span class="st">"bndbox"</span>)
+    x1, y1 = float(kutu.find(<span class="st">"xmin"</span>).text), float(kutu.find(<span class="st">"ymin"</span>).text)
+    x2, y2 = float(kutu.find(<span class="st">"xmax"</span>).text), float(kutu.find(<span class="st">"ymax"</span>).text)
+
+    <span class="k">if</span> x2 &lt;= x1 <span class="k">or</span> y2 &lt;= y1:      <span class="cm"># bozuk kutu modeli NaN'a dusuruyor</span>
+        <span class="k">continue</span></pre></div>
+
+      <div class="notes">
+        <div class="row alt">
+          <div class="line">difficult bayrağı</div>
+          <div class="why">VOC'ta zor/belirsiz olarak işaretlenmiş nesneler eğitimde kullanılmaz ve değerlendirmede <strong>yok sayılır</strong>: bir tahmin difficult bir nesneyi bulursa ne doğru ne yanlış sayılır. Bu bayrağı görmezden gelmek mAP'i yapay olarak düşüren yaygın bir hatadır — ve skorunuzu literatürle kıyaslanamaz kılar.</div>
+        </div>
+        <div class="row">
+          <div class="line">x2 &lt;= x1 kontrolü</div>
+          <div class="why">VOC'ta genişliği veya yüksekliği sıfır olan birkaç bozuk kutu var. Faster R-CNN bunlarla karşılaşınca loss <code>NaN</code> oluyor ve eğitim sessizce ölüyor. Üç satırlık kontrol saatlerce süren bir hata avını önlüyor.</div>
+        </div>
+        <div class="row">
+          <div class="line">etiket = indeks + 1</div>
+          <div class="why">Faster R-CNN 0'ı <strong>arka plan</strong> için ayırır, bu yüzden sınıflar 1'den başlar. Aynı kaydırma bölütlemede de var: piksel değeri 0 = arka plan, 1–20 = nesne sınıfları, 255 = void.</div>
+        </div>
+        <div class="row">
+          <div class="line">harmanla(parti)</div>
+          <div class="why">Tespitte görüntüler <strong>farklı boyutlarda</strong> kalır (model kendi içinde ölçekler), bu yüzden tensör yığını oluşturulamaz. <code>collate_fn</code> yerine liste döndüren bir fonksiyon konur. Bölütlemede ise sabit kırpma olduğu için standart yığınlama çalışır.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 04 ============ -->
+    <section id="b4">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 04 · _sinif_ap · vitrin</div>
+        <h2>mAP: sınıflandırma metriklerinden en karmaşık olanı</h2>
+        <p class="what">
+          Accuracy tek bir bölme işlemiydi, IoU iki küme işlemi. mAP ise bir <strong>sıralama</strong>
+          metriği: tahminleri güvene göre dizip eğri altındaki alanı hesaplar.
+        </p>
+      </div>
+
+      <div class="code"><pre>kayitlar.sort(key=<span class="k">lambda</span> k: -k[<span class="nu">0</span>])         <span class="cm"># en yuksek skordan basla</span>
+
+<span class="k">for</span> i, (_, ad, kutu) <span class="k">in</span> enumerate(kayitlar):
+    iou = iou_matris(kutu[<span class="k">None</span>, :], g[<span class="st">"boxes"</span>])[<span class="nu">0</span>]
+    en_iyi = int(np.argmax(iou))
+
+    <span class="k">if</span> iou[en_iyi] &lt; iou_esik:
+        fp[i] = <span class="nu">1</span>                       <span class="cm"># yeterince ortusmuyor</span>
+    <span class="k">elif</span> g[<span class="st">"difficult"</span>][en_iyi]:
+        <span class="k">pass</span>                            <span class="cm"># ne dogru ne yanlis - VOC kurali</span>
+    <span class="k">elif</span> <span class="k">not</span> g[<span class="st">"eslesti"</span>][en_iyi]:
+        tp[i] = <span class="nu">1</span>
+        <span class="hl">g[<span class="st">"eslesti"</span>][en_iyi] = <span class="k">True</span></span>
+    <span class="k">else</span>:
+        fp[i] = <span class="nu">1</span>                       <span class="cm"># ayni nesneyi ikinci kez bulmak HATADIR</span>
+
+tp_k, fp_k = np.cumsum(tp), np.cumsum(fp)
+recall = tp_k / npos
+precision = tp_k / np.maximum(tp_k + fp_k, <span class="nu">1e-9</span>)</pre></div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">skora göre sıralama</div>
+          <div class="why">mAP'in kalbi. Tahminler güvenden emine doğru dizilir ve precision–recall eğrisi bu sıra boyunca <strong>kümülatif</strong> olarak çizilir. Yani metrik yalnızca "kaç tanesini buldun"u değil, "emin olduklarında haklı mıydın"ı da ölçer.</div>
+        </div>
+        <div class="row alt">
+          <div class="line">eslesti bayrağı</div>
+          <div class="why">Bir gerçek nesne yalnızca <strong>bir kez</strong> eşleşebilir. Aynı arabaya beş kutu çizen bir model, ilki için TP, kalan dördü için FP alır. Bu bayrak olmasaydı model her nesnenin etrafına onlarca kutu koyarak recall'u şişirebilirdi.</div>
+        </div>
+        <div class="row">
+          <div class="line">difficult → pass</div>
+          <div class="why">Ne <code>tp</code> ne <code>fp</code>. Tahmin sanki hiç yapılmamış gibi sayılır. VOC değerlendirme kuralının kodda tam karşılığı — ve tek satırlık bir <code>pass</code> ile.</div>
+        </div>
+        <div class="row">
+          <div class="line">_ap: tüm nokta interpolasyonu</div>
+          <div class="why">PR eğrisi altındaki alan. Eski VOC2007 11 nokta interpolasyonu kullanırdı ve aynı veri setinde 1–2 puan farklı sonuç verir; bu yüzden hangisinin kullanıldığı <strong>belirtilmelidir</strong>. Kod VOC2010+/COCO yöntemini kullanıyor.</div>
+        </div>
+        <div class="row">
+          <div class="line">mpre'nin geriye doğru maksimumu</div>
+          <div class="why"><code>for i in range(len(mpre)-2, -1, -1): mpre[i] = max(mpre[i], mpre[i+1])</code> — eğriyi monoton azalan hâle getirir. Precision'ın recall arttıkça yerel olarak yükselmesi eğriyi tırtıklı yapar; standart tanım bu tırtıkları düzler.</div>
+        </div>
+        <div class="row">
+          <div class="line">mAP@0.5 vs mAP@0.5:0.95</div>
+          <div class="why">İlki tek bir örtüşme eşiğine bakar ve <strong>gevşektir</strong>: kutu kabaca doğru yerdeyse yeter. İkincisi 0.50'den 0.95'e on eşiğin ortalaması, yani kutunun ne kadar <em>tam oturduğunu</em> ölçer. Sonuçlarda ikisi arasında 27 puan fark var — aynı modelin iki farklı sertlikteki notu.</div>
+        </div>
+        <div class="row">
+          <div class="line">_ort() ve nan</div>
+          <div class="why">Bir sınıf ölçüm kümesinde hiç geçmiyorsa AP tanımsızdır. <code>np.nanmean</code> bu durumda "Mean of empty slice" uyarısı basıp çıktıyı kirletiyordu; <code>_ort</code> aynı işi sessizce yapıyor.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 05 ============ -->
+    <section id="b5">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 05 · tespit.Augment</div>
+        <h2>Görüntü çevrilince kutu da çevrilmeli</h2>
+      </div>
+
+      <div class="code"><pre><span class="k">if</span> self.rng.random() &lt; <span class="nu">0.5</span>:
+    g = goruntu.width
+    goruntu = TF.hflip(goruntu)
+    <span class="k">if</span> len(kutular):
+        x1 = kutular[:, <span class="nu">0</span>].copy()
+        <span class="hl">kutular[:, <span class="nu">0</span>] = g - kutular[:, <span class="nu">2</span>]</span>      <span class="cm"># yeni sol = eski sagin aynasi</span>
+        <span class="hl">kutular[:, <span class="nu">2</span>] = g - x1</span>               <span class="cm"># yeni sag = eski solun aynasi</span></pre></div>
+
+      <div class="notes">
+        <div class="row alt">
+          <div class="line">neden elle yazıldı</div>
+          <div class="why">Görev 4'te albumentations maskeyi otomatik döndürüyordu. Kutu koordinatları için burada dönüşüm <strong>elle</strong> yazıldı. Yapmayı unutmak hata vermez — model tutarsız hedeflerle eğitilir ve skor sessizce düşer.</div>
+        </div>
+        <div class="row">
+          <div class="line">x1'in kopyalanması</div>
+          <div class="why"><code>kutular[:, 0].copy()</code>. Kopyalanmasaydı ilk atama <code>x1</code>'i de değiştirirdi (NumPy dilimleri görünümdür, kopya değil) ve ikinci satır bozuk değer kullanırdı. Klasik bir yerinde-değiştirme tuzağı.</div>
+        </div>
+        <div class="row">
+          <div class="line">ölçeklemede iki ayrı çarpan</div>
+          <div class="why"><code>gercek_x</code> ve <code>gercek_y</code> ayrı hesaplanıyor çünkü <code>int(round(...))</code> yuvarlaması yüzünden en-boy oranı birebir korunmaz. Tek çarpan kullanmak kutuları birkaç piksel kaydırırdı.</div>
+        </div>
+        <div class="row">
+          <div class="line">dikey çevirme bilerek yok</div>
+          <div class="why">VOC doğal fotoğraflardan oluşuyor; baş aşağı otobüs diye bir şey yok. Görev 4'te uydu görüntüsü olduğu için dikey çevirme geçerliydi. <strong>Eğitim dağılımını test dağılımından uzaklaştırmak augmentation değil gürültüdür.</strong></div>
+        </div>
+        <div class="row">
+          <div class="line">isinma_lr</div>
+          <div class="why">Faster R-CNN'de zorunlu: SGD lr=0.005 ile ilk adımlarda RPN kayıpları patlayıp loss <code>NaN</code> olabiliyor. İlk 250 adımda lr kademeli yükseltiliyor. torchvision'ın referans eğitim scripti de aynı ısınmayı kullanır.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 06 ============ -->
+    <section id="b6">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 06 · tespit sonuçları · vitrin</div>
+        <h2>Sıfır saniye eğitilen model, yarım saat eğitileni geçiyor</h2>
+      </div>
+
+      <figure>
+        <div class="figbox">
+          <svg viewBox="0 0 700 292" role="img" aria-label="Altı tespit deneyinin mAP at 0.5 değerleri; hiç eğitilmemiş COCO referansı 81.00 ile en yüksek">
+            <g stroke="var(--line-soft)" stroke-width="1">
+              <line x1="291.3" y1="44" x2="291.3" y2="248"></line>
+              <line x1="393.8" y1="44" x2="393.8" y2="248"></line>
+              <line x1="496.3" y1="44" x2="496.3" y2="248"></line>
+              <line x1="598.8" y1="44" x2="598.8" y2="248"></line>
+            </g>
+            <line x1="609" y1="38" x2="609" y2="254" stroke="var(--bwd)" stroke-width="1.4" stroke-dasharray="5 4"></line>
+
+            <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--faint)" text-anchor="middle">
+              <text x="291.3" y="268">50</text>
+              <text x="393.8" y="268">60</text>
+              <text x="496.3" y="268">70</text>
+              <text x="598.8" y="268">80</text>
+              <text x="445" y="286">mAP@0.5 (%)</text>
+            </g>
+
+            <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--muted)" text-anchor="end">
+              <text x="230" y="64">ref_coco_egitimsiz</text>
+              <text x="230" y="98">tespit_baseline</text>
+              <text x="230" y="132">tespit_coco_ft</text>
+              <text x="230" y="166">tespit_coco_ft_katman5</text>
+              <text x="230" y="200">tespit_aug_hafif</text>
+              <text x="230" y="234">tespit_aug_orta</text>
+            </g>
+
+            <g>
+              <circle cx="609" cy="60" r="6" fill="var(--bwd)"></circle>
+              <circle cx="306.4" cy="94" r="5.5" fill="var(--fwd)"></circle>
+              <circle cx="569.3" cy="128" r="5.5" fill="var(--fwd)"></circle>
+              <circle cx="559.7" cy="162" r="5.5" fill="var(--fwd)"></circle>
+              <circle cx="579.6" cy="196" r="5.5" fill="var(--fwd)"></circle>
+              <circle cx="575.8" cy="230" r="5.5" fill="var(--fwd)"></circle>
+            </g>
+
+            <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--text)">
+              <text x="619" y="64">81.00</text>
+              <text x="316" y="98">51.48</text>
+              <text x="579" y="132">77.10</text>
+              <text x="569" y="166">76.17</text>
+              <text x="589" y="200">78.11</text>
+              <text x="585" y="234">77.74</text>
+            </g>
+
+            <text x="619" y="34" font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--bwd)" text-anchor="end">↓ 0 sn eğitim</text>
+          </svg>
+        </div>
+        <div class="legend">
+          <span><i style="background: var(--bwd)"></i> hazır COCO modeli — hiç eğitilmedi</span>
+          <span><i style="background: var(--fwd)"></i> bu projede eğitilen modeller</span>
+        </div>
+        <figcaption>
+          Kesikli çizgi, VOC'a hiç dokunmamış COCO modelinin skoru. En iyi eğitilmiş model
+          (<code>tespit_aug_hafif</code>, 78.11) bunun <strong>2.89 puan altında</strong> kalıyor —
+          ve 18 dakika sürüyor. Kaynak: <code>kayitlar/gorev5/sonuclar_tespit.csv</code>.
+        </figcaption>
+      </figure>
+
+      <div class="prose">
+        <p>
+          COCO'nun 80 sınıfı VOC'un 20 sınıfının tamamını kapsıyor; <code>coco_modeli_kur</code>
+          çıktı etiketlerini eşleyip modeli hiç eğitmeden VOC'ta ölçüyor. Sonuç, projenin en
+          öğretici karşılaştırması: <strong>2.000 görüntülük bir alt kümede 6 epoch ince ayar
+          yapmak, COCO'nun 118 bin görüntüde öğrendiğini iyileştirmiyor — hafifçe bozuyor.</strong>
+        </p>
+        <p>
+          Bu bir başarısızlık değil, ölçülmüş bir sınır. Eğitim kümesi yeterince büyük olsaydı
+          (tam VOC, daha uzun eğitim) ince ayar öne geçerdi; bu düzenekte geçmiyor ve kod bunu
+          gizlemek yerine referans satırı olarak <strong>tabloya koyuyor</strong>.
+        </p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Deney</th><th class="num">mAP@0.5</th><th class="num">mAP@0.5:0.95</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">Sınıf doğruluğu</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono-cell">ref_coco_egitimsiz</td><td class="ref num">81.00</td><td class="num">54.65</td><td class="num">60.07</td><td class="num">83.72</td><td class="num">94.87</td></tr>
+            <tr><td class="mono-cell">tespit_baseline</td><td class="num">51.48</td><td class="num">22.99</td><td class="num">42.60</td><td class="num">63.48</td><td class="num">93.24</td></tr>
+            <tr><td class="mono-cell">tespit_coco_ft</td><td class="num">77.10</td><td class="num">50.01</td><td class="num">72.82</td><td class="num">78.07</td><td class="num">94.20</td></tr>
+            <tr><td class="mono-cell">tespit_coco_ft_katman5</td><td class="num">76.17</td><td class="num">48.92</td><td class="num">72.56</td><td class="num">77.70</td><td class="num">94.65</td></tr>
+            <tr><td class="mono-cell">tespit_aug_hafif</td><td class="win num">78.11</td><td class="num">50.28</td><td class="num">69.21</td><td class="num">80.05</td><td class="num">94.80</td></tr>
+            <tr><td class="mono-cell">tespit_aug_orta</td><td class="num">77.74</td><td class="num">50.24</td><td class="num">68.91</td><td class="num">80.05</td><td class="num">94.52</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="plain">
+        <li><strong>Transfer learning burada da en büyük kaldıraç:</strong> baseline 51.48 → COCO ince ayar
+        77.10, tam <strong>25.6 puan</strong>. Görev 3'teki 8.3 puanlık kazancın üç katı — çünkü burada
+        yalnızca gövde değil, RPN ve ROI başlığı da hazır geliyor, yani "nesne nerede" bilgisi de aktarılıyor.</li>
+        <li><strong>Daha fazla kapasite işe yaramadı:</strong> gövdenin tamamını açmak (katman5) skoru
+        77.10'dan 76.17'ye düşürdü ve süreyi %35 uzattı. 2.000 görüntüde açılan fazladan kapasite
+        öğrenmeye değil ezberlemeye gidiyor.</li>
+        <li><strong>Sınıf doğruluğu her satırda ~%94:</strong> model nesneyi doğru yerde bulduğunda sınıfını
+        neredeyse hep doğru biliyor. Yani darboğaz <em>sınıflandırma</em> değil <em>yerini bulma</em> —
+        bu ayrımı yapabilmek için kodun ayrı bir "sınıf doğruluğu" metriği tanımlaması gerekti.</li>
+        <li><strong>Referansın precision'ı düşük (60.07):</strong> COCO modeli çok sayıda kutu üretiyor,
+        VOC'ta karşılığı olmayanlar fazladan sayılıyor. İnce ayar precision'ı 72.82'ye çıkarıyor —
+        yani ince ayar mAP'i artırmasa da modeli <em>daha az konuşkan</em> yapıyor.</li>
+      </ul>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 07 ============ -->
+    <section id="b7">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 07 · bolutleme.py · veri</div>
+        <h2>VOC bölütlemesinin üç sessiz tuzağı</h2>
+      </div>
+
+      <div class="code"><pre><span class="k">def</span> <span class="fn">maske_oku</span>(ad):
+    <span class="cm"># paletli PNG -&gt; dogrudan sinif indeksi (0-20 ve 255)</span>
+    <span class="k">return</span> np.array(Image.open(ortak.maske_yolu(ad)), dtype=np.uint8)
+
+
+olcek_kirp = [
+    A.Resize(TABAN_BOYUT, TABAN_BOYUT),
+    A.RandomScale(scale_limit=(-<span class="nu">0.5</span>, <span class="nu">0.5</span>), p=<span class="nu">1.0</span>),
+    A.PadIfNeeded(KIRP, KIRP, border_mode=cv2.BORDER_CONSTANT,
+                  <span class="hl">value=<span class="nu">0</span>, mask_value=VOID</span>),          <span class="cm"># maske dolgusu 255 olmali</span>
+    A.RandomCrop(KIRP, KIRP),
+    A.HorizontalFlip(p=<span class="nu">0.5</span>),
+]</pre></div>
+
+      <div class="notes">
+        <div class="row alt">
+          <div class="line">1 · void (255) pikseller</div>
+          <div class="why">VOC nesne sınırlarındaki belirsiz şeritte 255 etiketi kullanır. Bunlar ne arka plan ne nesne — loss'ta ve metrikte <strong>yok sayılmalı</strong> (<code>ignore_index=255</code>). Sayılsaydı model imkânsız bir hedefi öğrenmeye çalışır, mIoU de yapay olarak düşerdi.</div>
+        </div>
+        <div class="row alt">
+          <div class="line">2 · convert("RGB") yasak</div>
+          <div class="why">Maske PNG'leri <strong>paletli</strong> (mod "P"). <code>np.array(Image.open(...))</code> doğrudan sınıf indekslerini verir. <code>convert("RGB")</code> çağırmak etiketleri renklere dönüştürür ve veriyi sessizce bozar. Görev 4'te maskeler gri JPEG'di ve eşiklenmesi gerekiyordu; burada tam tersi — hiçbir dönüşüm yapmamak gerekiyor.</div>
+        </div>
+        <div class="row alt">
+          <div class="line">3 · mask_value=VOID</div>
+          <div class="why">Kırpma sırasında görüntünün dışında kalan alan maskede <strong>255 ile</strong> doldurulur, 0 ile değil. 0 kullanılsaydı model boş alanı "arka plan" diye öğrenirdi. Hiçbir yerde hata mesajı üretmeyen, yalnızca skoru düşüren türden bir hata.</div>
+        </div>
+        <div class="row">
+          <div class="line">"tam" ölçüm modu</div>
+          <div class="why">Veri setinin üç modu var: <code>egitim</code> (augmentation'lı, 320×320), <code>olcum</code> (hızlı, sabit 384), <code>tam</code> (görüntü ağ için boyutlandırılır ama <strong>maske orijinal çözünürlükte kalır</strong>, tahmin geri büyütülüp orijinalle karşılaştırılır). Raporlanan skorlar <code>tam</code> modundan geliyor — küçültülmüş maskeyle ölçmek skoru olduğundan iyi gösterirdi.</div>
+        </div>
+        <div class="row">
+          <div class="line">arka plan bir sınıf</div>
+          <div class="why">21 sınıfın biri arka plan ve piksellerin ~%74'ü o. mIoU'yu 21 sınıf üzerinden ortalamak literatürün standardı ama skoru iyimser gösterir; kod ayrıca <code>miou_arkaplansiz</code> sütununu da kaydeder. İkisi arasında yaklaşık 2 puan fark var.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 08 ============ -->
+    <section id="b8">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 08 · cm_metrikleri</div>
+        <h2>21×21 karışıklık matrisinden bütün metrikler</h2>
+        <p class="what">
+          Görev 2'de 10×10 matristen precision/recall/F1 türetilmişti. Aynı fikir burada piksel
+          seviyesinde çalışıyor — ve bir metrik ailesinin tamamı tek bir matristen çıkıyor.
+        </p>
+      </div>
+
+      <div class="code"><pre><span class="k">def</span> <span class="fn">confusion_guncelle</span>(cm, gercek, tahmin):
+    <span class="hl">gecerli = gercek != VOID</span>                      <span class="cm"># void pikselleri at</span>
+    g = gercek[gecerli].to(torch.int64)
+    t = tahmin[gecerli].to(torch.int64)
+    cm += torch.bincount(BOLUT_SINIF_SAYISI * g + t,
+                         minlength=BOLUT_SINIF_SAYISI ** <span class="nu">2</span>
+                         ).reshape(<span class="nu">21</span>, <span class="nu">21</span>)
+    <span class="k">return</span> cm
+
+<span class="cm"># ... matristen turetilenler:</span>
+iou       = tp / (tp + fp + fn)
+dice      = <span class="nu">2</span> * tp / (<span class="nu">2</span> * tp + fp + fn)
+frekans   = gercek_top / toplam
+fwiou     = (frekans[var] * iou[var]).sum()      <span class="cm"># frekans agirlikli IoU</span></pre></div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">bincount(21 * g + t)</div>
+          <div class="why">İki boyutlu histogramı tek boyuta düzleştirme numarası: her (gerçek, tahmin) çifti benzersiz bir sayıya eşlenir, sayılır, sonra 21×21'e geri katlanır. Milyonlarca pikseli <strong>tek GPU çağrısında</strong> matrise işler; döngü yazmak yüzlerce kat yavaş olurdu.</div>
+        </div>
+        <div class="row">
+          <div class="line">var = gercek_top &gt; 0</div>
+          <div class="why">Ölçüm kümesinde hiç görünmeyen bir sınıfın IoU'su 0/0'dır. Bu maske olmadan ortalamaya sıfır olarak girer ve mIoU'yu haksız yere düşürürdü.</div>
+        </div>
+        <div class="row alt">
+          <div class="line">Dice = F1 (çok sınıflı bölütlemede)</div>
+          <div class="why">Kodun yorumu bunu açıkça yazıyor: sınıf başına Dice ile F1 <strong>aynı sayıdır</strong> — ikisi de <code>2TP/(2TP+FP+FN)</code>. Belge ikisini de istediği için ikisi de yazılıyor, ama aynı oldukları bilinerek okunmalı. Bağımsız olan çift IoU ile Dice'tır.</div>
+        </div>
+        <div class="row">
+          <div class="line">fwIoU</div>
+          <div class="why">Frekans ağırlıklı IoU: her sınıfın IoU'su, o sınıfın piksel payıyla çarpılıp toplanır. mIoU her sınıfa eşit söz hakkı verir (macro), fwIoU büyük sınıflara ağırlık verir (micro'ya yakın). İkisini birlikte raporlamak, Görev 2'deki macro/micro ayrımının bölütlemedeki karşılığı.</div>
+        </div>
+        <div class="row">
+          <div class="line">clamp(min=1)</div>
+          <div class="why">Sıfıra bölmeyi engellemenin <code>+eps</code>'siz yolu. Paydalar tamsayı sayımı olduğu için 1'e sabitlemek yeterli ve daha okunaklı.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 09 ============ -->
+    <section id="b9">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 09 · egitim_bolutleme_duzen.py</div>
+        <h2>Modeli değil, nasıl eğitildiğini değiştirmek</h2>
+        <p class="what">
+          Bu script üç soru soruyor ve üçünün de cevabı şaşırtıcı çıkıyor.
+        </p>
+      </div>
+
+      <div class="code"><pre><span class="k">def</span> <span class="fn">poly_lr</span>(optimizer, taban_lr, adim, toplam_adim, guc=<span class="nu">0.9</span>):
+    <span class="st">"""lr = taban_lr * (1 - adim/toplam)^0.9 — DeepLab makalesinin cizelgesi."""</span>
+    lr = taban_lr * (<span class="nu">1</span> - adim / max(<span class="nu">1</span>, toplam_adim)) ** guc
+    <span class="k">for</span> grup <span class="k">in</span> optimizer.param_groups:
+        grup[<span class="st">"lr"</span>] = lr * grup.get(<span class="st">"lr_carpani"</span>, <span class="nu">1.0</span>)
+    <span class="k">return</span> lr</pre></div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">bolut_scratch</div>
+          <div class="why"><strong>ImageNet ağırlıkları olmasaydı ne olurdu?</strong> Cevap: mIoU <strong>6.99</strong>. Baseline 56.41'di. 1.464 görüntüde 40 milyon parametreli bir modeli sıfırdan eğitmek imkânsıza yakın. Görev 3'te aynı fark 7 puandı, Görev 4'te 12 puan — burada <strong>49 puan</strong>. Veri azaldıkça hazır ağırlıkların değeri katlanarak artıyor.</div>
+        </div>
+        <div class="row">
+          <div class="line">bolut_aux</div>
+          <div class="why">DeepLabV3'ün ResNet'in 3. bloğundan çıkan ikinci bir sınıflandırıcı başlığı var; kaybı 0.4 ağırlıkla ana kayba eklenir. Amacı gradyanı gövdenin ortasına daha doğrudan ulaştırmak. Sonuç: 62.35 → <strong>64.78</strong>, iki buçuk puan. Tek satırlık bir bayrağın karşılığı.</div>
+        </div>
+        <div class="row alt">
+          <div class="line">bolut_sabit_lr</div>
+          <div class="why">Bu görevin en büyük sürprizi. Poly çizelgesi kapatılıp lr sabit bırakıldığında mIoU 62.35'ten <strong>44.68</strong>'e düşüyor — 17.7 puan. Yani learning rate çizelgesi, augmentation'ın (+6 puan) ve aux loss'un (+2.4 puan) toplamından üç kat fazla katkı veriyor. "Zaten herkes kullanıyor" diye eklenen bir şeyin katkısını ölçmek, işte bunun için gerekli.</div>
+        </div>
+        <div class="row">
+          <div class="line">lr_carpani</div>
+          <div class="why">Parametre gruplarına ayrı çarpan uygulamayı mümkün kılar: gövde düşük, yeni baş yüksek lr alabilir. Çizelge fonksiyonları bu çarpanı okuyacak şekilde yazılmış, yani ileride katman bazlı lr denemek için kodu değiştirmek gerekmez.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ 10 ============ -->
+    <section id="b10">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 10 · bölütleme sonuçları</div>
+        <h2>Ezber 36 puandan 19 puana</h2>
+        <p class="what">
+          Görev 4'te augmentation hiçbir şey değiştirmemişti — çünkü orada ezber yoktu.
+          Burada baseline'ın train mIoU'su 90.71, test mIoU'su 56.41: <strong>36.66 puanlık</strong>
+          bir uçurum. Bu kez augmentation'ın işi var.
+        </p>
+      </div>
+
+      <figure>
+        <div class="figbox">
+          <svg viewBox="0 0 700 254" role="img" aria-label="Dört bölütleme deneyinde eğitim ve test mIoU değerleri arasındaki fark; augmentation ile fark 36.66'dan 19.36'ya iniyor">
+            <g stroke="var(--line-soft)" stroke-width="1">
+              <line x1="276.7" y1="44" x2="276.7" y2="204"></line>
+              <line x1="370" y1="44" x2="370" y2="204"></line>
+              <line x1="463.3" y1="44" x2="463.3" y2="204"></line>
+              <line x1="556.7" y1="44" x2="556.7" y2="204"></line>
+              <line x1="650" y1="44" x2="650" y2="204"></line>
+            </g>
+
+            <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--faint)" text-anchor="middle">
+              <text x="276.7" y="222">55</text>
+              <text x="370" y="222">65</text>
+              <text x="463.3" y="222">75</text>
+              <text x="556.7" y="222">85</text>
+              <text x="650" y="222">95</text>
+              <text x="463" y="242">mIoU (%)</text>
+            </g>
+
+            <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--muted)" text-anchor="end">
+              <text x="220" y="70">bolut_baseline</text>
+              <text x="220" y="108">bolut_aug_hafif</text>
+              <text x="220" y="146">bolut_aug_orta</text>
+              <text x="220" y="184">bolut_aux</text>
+            </g>
+
+            <g stroke="var(--line)" stroke-width="2">
+              <line x1="289.8" y1="66" x2="609.9" y2="66"></line>
+              <line x1="312.3" y1="104" x2="584.4" y2="104"></line>
+              <line x1="345.3" y1="142" x2="523.5" y2="142"></line>
+              <line x1="367.9" y1="180" x2="564.7" y2="180"></line>
+            </g>
+
+            <g fill="var(--surface)" stroke="var(--faint)" stroke-width="2">
+              <circle cx="609.9" cy="66" r="5"></circle>
+              <circle cx="584.4" cy="104" r="5"></circle>
+              <circle cx="523.5" cy="142" r="5"></circle>
+              <circle cx="564.7" cy="180" r="5"></circle>
+            </g>
+            <g fill="var(--fwd)">
+              <circle cx="289.8" cy="66" r="6"></circle>
+              <circle cx="312.3" cy="104" r="6"></circle>
+              <circle cx="345.3" cy="142" r="6"></circle>
+              <circle cx="367.9" cy="180" r="6"></circle>
+            </g>
+
+            <g font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--muted)" text-anchor="middle">
+              <text x="450" y="60">fark 36.66</text>
+              <text x="448" y="98">32.48</text>
+              <text x="434" y="136">20.52</text>
+              <text x="466" y="174">19.36</text>
+            </g>
+
+            <g font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--text)">
+              <text x="256" y="70" text-anchor="end">56.41</text>
+              <text x="278" y="108" text-anchor="end">58.82</text>
+              <text x="311" y="146" text-anchor="end">62.35</text>
+              <text x="334" y="184" text-anchor="end">64.78</text>
+              <text x="621" y="70">90.71</text>
+              <text x="596" y="108">87.98</text>
+              <text x="535" y="146">81.45</text>
+              <text x="576" y="180">85.87</text>
+            </g>
+          </svg>
+        </div>
+        <div class="legend">
+          <span><i class="hollow"></i> train mIoU (ezberlenen)</span>
+          <span><i style="background: var(--fwd)"></i> test mIoU (gerçekten öğrenilen)</span>
+        </div>
+        <figcaption>
+          Her çubuk bir deneyin ezber payı. Augmentation güçlendikçe sağdaki nokta sola gelir
+          (ezber azalır) <em>ve</em> soldaki nokta sağa gider (gerçek performans artar) — ikisi
+          birden iyileşiyor. Kaynak: <code>kayitlar/gorev5/sonuclar_bolutleme.csv</code>.
+        </figcaption>
+      </figure>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Deney</th><th class="num">Test mIoU</th><th class="num">Dice</th><th class="num">Arka plansız</th><th class="num">Piksel acc</th><th class="num">Overfit</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono-cell">ref_hazir_voc</td><td class="ref num">75.46</td><td class="num">85.01</td><td class="num">74.57</td><td class="num">94.09</td><td class="num">4.08</td></tr>
+            <tr><td class="mono-cell">bolut_baseline</td><td class="num">56.41</td><td class="num">70.32</td><td class="num">54.67</td><td class="num">90.16</td><td class="num">36.66</td></tr>
+            <tr><td class="mono-cell">bolut_aug_hafif</td><td class="num">58.82</td><td class="num">72.47</td><td class="num">57.19</td><td class="num">90.67</td><td class="num">32.48</td></tr>
+            <tr><td class="mono-cell">bolut_aug_orta</td><td class="num">62.35</td><td class="num">75.45</td><td class="num">60.92</td><td class="num">90.79</td><td class="num">20.52</td></tr>
+            <tr><td class="mono-cell">bolut_aug_guclu</td><td class="num">62.20</td><td class="num">75.04</td><td class="num">60.74</td><td class="num">90.89</td><td class="num">19.11</td></tr>
+            <tr><td class="mono-cell">bolut_aux</td><td class="win num">64.78</td><td class="num">76.86</td><td class="num">63.40</td><td class="num">92.02</td><td class="num">19.36</td></tr>
+            <tr><td class="mono-cell">bolut_sabit_lr</td><td class="num">44.68</td><td class="num">59.15</td><td class="num">42.54</td><td class="num">86.40</td><td class="num">25.72</td></tr>
+            <tr><td class="mono-cell">bolut_scratch</td><td class="num">6.99</td><td class="num">9.98</td><td class="num">3.53</td><td class="num">73.32</td><td class="num">1.79</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="plain">
+        <li><strong>Piksel accuracy sütununa dikkat:</strong> <code>bolut_scratch</code> mIoU 6.99 ile
+        tamamen başarısızken piksel accuracy'si <strong>%73.32</strong>. Çünkü piksellerin ~%74'ü
+        arka plan ve model neredeyse her şeye "arka plan" diyor. Görev 4'teki dersin en uç örneği.</li>
+        <li><strong>Aynı model, iki veri setinde ters sonuç:</strong> DeepLabV3+ Görev 4'te dört
+        mimari arasında <em>sonuncu</em> olmuştu; su kütlelerinin sınırları için skip bağlantı
+        kritikti. VOC'ta ise ASPP'nin çok ölçekli bakışı tam da gereken şey. Mimari seçimi
+        evrensel değil, probleme özgüdür.</li>
+        <li><strong>Hazır referans yine önde ama fark kapanıyor:</strong> 75.46'ya karşı 64.78.
+        Tespitte fark 2.89 puandı, burada 10.68 — çünkü bölütleme eğitim setinde yalnızca
+        1.464 görüntü var.</li>
+      </ul>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ============ EK ============ -->
+    <section id="ek">
+      <div class="sec-head">
+        <div class="eyebrow">Ek</div>
+        <h2>Bu görevin kalıcı dersleri</h2>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <div class="n">Ders 1</div>
+          <div class="t">Eğitimsiz referans koyun</div>
+          <div class="d">Hazır modelin skoru sıfır saniyeye mal olur ve bütün çabanızın anlamını belirler. Tespitte onu geçemedik — bilmek, bilmemekten iyidir.</div>
+        </div>
+        <div class="card">
+          <div class="n">Ders 2</div>
+          <div class="t">Veri azaldıkça pretrained belirleyici olur</div>
+          <div class="d">Sıfırdan eğitimin bedeli: Görev 3'te 7 puan, Görev 4'te 12, burada 49 puan.</div>
+        </div>
+        <div class="card">
+          <div class="n">Ders 3</div>
+          <div class="t">Çizelgeyi de ölçün</div>
+          <div class="d">Poly lr tek başına 17.7 puan getirdi — augmentation ve aux loss'un toplamından fazla. Varsayılan sanılan şeyler ölçülmeden bilinmez.</div>
+        </div>
+        <div class="card">
+          <div class="n">Ders 4</div>
+          <div class="t">Mimari seçimi probleme özgüdür</div>
+          <div class="d">Aynı DeepLabV3 ailesi Görev 4'te sonuncu, Görev 5'te doğru tercih. "En iyi model" diye bir şey yok.</div>
+        </div>
+        <div class="card">
+          <div class="n">Ders 5</div>
+          <div class="t">Etiket dönüşümü etikettir</div>
+          <div class="d">Kutu çevirmeyi, void dolgusunu, palet okumasını yanlış yapmak hata vermez — sadece skoru düşürür.</div>
+        </div>
+        <div class="card">
+          <div class="n">Ders 6</div>
+          <div class="t">Kısıtı ilan edin</div>
+          <div class="d">2.000 görüntülük alt küme mutlak skorları düşürüyor. Kodun yorumu bunu yazıyor; rapor da yazmalı.</div>
+        </div>
+      </div>
+
+      <p class="footnote" style="margin-top:8px">
+        Kod: <code>deep_learning/gorev5/</code> (ortak.py, tespit.py, bolutleme.py, 6 eğitim scripti) ·
+        Sayılar: <code>kayitlar/gorev5/sonuclar_tespit.csv</code> ve <code>sonuclar_bolutleme.csv</code>
+        (seed 27, RTX 4060 Laptop).
+      </p>
+    </section>
+
+  </main>
+</div>

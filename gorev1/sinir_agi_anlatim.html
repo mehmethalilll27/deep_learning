@@ -1,0 +1,1305 @@
+<title>XOR Ağının Anatomisi</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  /* ---------- TOKENLAR: açık tema tam olarak burada tanımlı ---------- */
+  :root {
+    --bg:        #f5f6f9;
+    --surface:   #ffffff;
+    --surface-2: #eceff4;
+    --line:      #d9dee6;
+    --line-soft: #e6eaf0;
+    --text:      #171c24;
+    --muted:     #5b6472;
+    --faint:     #8b95a3;
+
+    --fwd:       #0e6e63;   /* ileri besleme */
+    --fwd-soft:  #ddefec;
+    --bwd:       #a32c57;   /* geri yayilim */
+    --bwd-soft:  #fae3ec;
+    --warn:      #8a5a08;
+    --warn-soft: #fbeed2;
+
+    --code-bg:   #eef1f6;
+    --code-line: #dee3ec;
+    --syn-kw:    #8a2f8f;
+    --syn-fn:    #1a5fb4;
+    --syn-num:   #a3541b;
+    --syn-str:   #1c6b4a;
+    --syn-com:   #79838f;
+
+    --shadow: 0 1px 2px rgba(20, 28, 40, .05), 0 8px 24px -18px rgba(20, 28, 40, .35);
+
+    --step--1: clamp(.78rem, .76rem + .1vw, .84rem);
+    --step-0:  clamp(1rem, .97rem + .15vw, 1.075rem);
+    --step-1:  clamp(1.2rem, 1.12rem + .35vw, 1.4rem);
+    --step-2:  clamp(1.55rem, 1.4rem + .7vw, 2rem);
+    --step-3:  clamp(2.1rem, 1.7rem + 1.9vw, 3.4rem);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:        #10141a;
+      --surface:   #171d25;
+      --surface-2: #1e262f;
+      --line:      #2c3742;
+      --line-soft: #232c36;
+      --text:      #e6ebf2;
+      --muted:     #9daab9;
+      --faint:     #6f7c8b;
+
+      --fwd:       #55d6c2;
+      --fwd-soft:  #10322e;
+      --bwd:       #f593b6;
+      --bwd-soft:  #3a1526;
+      --warn:      #e5b567;
+      --warn-soft: #38290f;
+
+      --code-bg:   #0d1218;
+      --code-line: #202a34;
+      --syn-kw:    #d69dd8;
+      --syn-fn:    #8ab4f8;
+      --syn-num:   #e0a373;
+      --syn-str:   #7fca9f;
+      --syn-com:   #667585;
+
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px -20px rgba(0, 0, 0, .9);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg:        #10141a;
+    --surface:   #171d25;
+    --surface-2: #1e262f;
+    --line:      #2c3742;
+    --line-soft: #232c36;
+    --text:      #e6ebf2;
+    --muted:     #9daab9;
+    --faint:     #6f7c8b;
+
+    --fwd:       #55d6c2;
+    --fwd-soft:  #10322e;
+    --bwd:       #f593b6;
+    --bwd-soft:  #3a1526;
+    --warn:      #e5b567;
+    --warn-soft: #38290f;
+
+    --code-bg:   #0d1218;
+    --code-line: #202a34;
+    --syn-kw:    #d69dd8;
+    --syn-fn:    #8ab4f8;
+    --syn-num:   #e0a373;
+    --syn-str:   #7fca9f;
+    --syn-com:   #667585;
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px -20px rgba(0, 0, 0, .9);
+  }
+
+  /* ---------- TEMEL ---------- */
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: var(--step-0);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 { font-family: Fraunces, "Iowan Old Style", Georgia, serif; text-wrap: balance; margin: 0; font-weight: 600; }
+  p { margin: 0; }
+  a { color: var(--fwd); }
+  :focus-visible { outline: 2px solid var(--fwd); outline-offset: 3px; border-radius: 3px; }
+
+  .mono { font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace; }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: var(--step--1);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  /* ---------- KABUK ---------- */
+  .shell {
+    max-width: 1240px;
+    margin-inline: auto;
+    padding: 0 20px 96px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0 56px;
+  }
+  @media (min-width: 1080px) {
+    .shell { grid-template-columns: 208px minmax(0, 1fr); padding-inline: 32px; }
+  }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    grid-column: 1 / -1;
+    padding: 72px 0 40px;
+    border-bottom: 1px solid var(--line);
+    display: grid;
+    gap: 22px;
+  }
+  .hero h1 {
+    font-size: var(--step-3);
+    line-height: 1.02;
+    letter-spacing: -.02em;
+  }
+  .hero h1 em { font-style: italic; color: var(--fwd); }
+  .hero .lede { max-width: 62ch; color: var(--muted); font-size: var(--step-1); line-height: 1.5; }
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 28px;
+    padding-top: 6px;
+  }
+  .hero-meta div { display: grid; gap: 2px; }
+  .hero-meta dt, .hero-meta .k { font-family: "IBM Plex Mono", monospace; font-size: var(--step--1); color: var(--faint); letter-spacing: .08em; text-transform: uppercase; }
+  .hero-meta .v { font-size: .95rem; color: var(--text); }
+
+  /* ---------- YAN RAY ---------- */
+  .rail { display: none; }
+  @media (min-width: 1080px) {
+    .rail {
+      display: block;
+      position: sticky;
+      top: 0;
+      align-self: start;
+      max-height: 100vh;
+      overflow-y: auto;
+      padding: 48px 0;
+      font-size: .84rem;
+    }
+    .rail ol { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 1px; }
+    .rail a {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 8px;
+      padding: 5px 8px 5px 0;
+      color: var(--muted);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      padding-left: 10px;
+      line-height: 1.3;
+    }
+    .rail a:hover { color: var(--text); border-left-color: var(--line); }
+    .rail a .num { font-family: "IBM Plex Mono", monospace; color: var(--faint); font-size: .78rem; }
+    .rail .rail-sep { margin-top: 14px; padding-left: 10px; }
+  }
+
+  /* ---------- ANA AKIŞ ---------- */
+  main { display: grid; gap: 64px; padding-top: 48px; min-width: 0; }
+  section { display: grid; gap: 20px; scroll-margin-top: 24px; min-width: 0; }
+  section > p, section > .prose { max-width: 68ch; }
+  .prose { display: grid; gap: 14px; }
+
+  .sec-head { display: grid; gap: 6px; }
+  .sec-head h2 { font-size: var(--step-2); letter-spacing: -.015em; line-height: 1.15; }
+  .sec-head .what { color: var(--muted); max-width: 62ch; }
+  h3 { font-size: var(--step-1); margin-top: 6px; }
+
+  /* ---------- KOD ---------- */
+  .code {
+    background: var(--code-bg);
+    border: 1px solid var(--code-line);
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .855rem;
+    line-height: 1.75;
+    padding: 16px 18px;
+    tab-size: 4;
+  }
+  .code pre { margin: 0; }
+  .k  { color: var(--syn-kw); }
+  .fn { color: var(--syn-fn); }
+  .nu { color: var(--syn-num); }
+  .st { color: var(--syn-str); }
+  .cm { color: var(--syn-com); font-style: italic; }
+  .hl { background: var(--fwd-soft); border-radius: 3px; padding: 0 3px; margin: 0 -3px; }
+
+  code:not(.code code) {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .88em;
+    background: var(--surface-2);
+    border-radius: 4px;
+    padding: .1em .34em;
+  }
+
+  /* ---------- SATIR SATIR NOTLAR ---------- */
+  .notes { display: grid; gap: 0; margin: 0; border-top: 1px solid var(--line-soft); }
+  .notes .row {
+    display: grid;
+    gap: 4px 24px;
+    padding: 13px 2px;
+    border-bottom: 1px solid var(--line-soft);
+    align-items: baseline;
+  }
+  @media (min-width: 760px) { .notes .row { grid-template-columns: minmax(180px, 34%) 1fr; } }
+  .notes .row > .line {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .82rem;
+    color: var(--fwd);
+    word-break: break-word;
+  }
+  .notes .row.bwd > .line { color: var(--bwd); }
+  .notes .row > .why { color: var(--muted); font-size: .95rem; }
+  .notes .row > .why strong { color: var(--text); font-weight: 600; }
+
+  /* ---------- ÇAĞRI KUTULARI ---------- */
+  .callout {
+    border-radius: 8px;
+    padding: 16px 18px;
+    display: grid;
+    gap: 6px;
+    font-size: .95rem;
+    max-width: 72ch;
+    border: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .callout .tag {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .72rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+  .callout.amac { border-left: 3px solid var(--fwd); background: var(--fwd-soft); border-color: transparent; }
+  .callout.amac .tag { color: var(--fwd); }
+  .callout.amac, .callout.amac strong { color: var(--text); }
+  .callout.dikkat { border-left: 3px solid var(--warn); background: var(--warn-soft); border-color: transparent; }
+  .callout.dikkat .tag { color: var(--warn); }
+  .callout.geri { border-left: 3px solid var(--bwd); background: var(--bwd-soft); border-color: transparent; }
+  .callout.geri .tag { color: var(--bwd); }
+
+  /* ---------- TABLOLAR ---------- */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line-soft); }
+  thead th {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .74rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--faint);
+    font-weight: 500;
+    background: var(--surface-2);
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.num, th.num { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  td.mono-cell { font-family: "IBM Plex Mono", monospace; font-size: .82rem; }
+
+  /* ---------- ŞEKİLLER ---------- */
+  figure { margin: 0; display: grid; gap: 10px; }
+  figure svg { width: 100%; height: auto; display: block; }
+  .figbox { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; overflow-x: auto; }
+  figcaption { font-size: .86rem; color: var(--muted); max-width: 64ch; }
+
+  /* ---------- KARTLAR ---------- */
+  .cards { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .card {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px;
+    background: var(--surface);
+    display: grid;
+    gap: 6px;
+    align-content: start;
+  }
+  .card .t { font-weight: 600; font-size: .95rem; }
+  .card .d { color: var(--muted); font-size: .88rem; }
+  .card .n { font-family: "IBM Plex Mono", monospace; font-size: .75rem; color: var(--faint); letter-spacing: .1em; text-transform: uppercase; }
+
+  /* ---------- SAYI ŞERİDİ (update_parameters vitrin) ---------- */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .steps .st-cell { padding: 14px 16px; border-right: 1px solid var(--line-soft); display: grid; gap: 3px; }
+  .steps .st-cell:last-child { border-right: none; }
+  .steps .st-cell .lbl { font-family: "IBM Plex Mono", monospace; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+  .steps .st-cell .val { font-family: "IBM Plex Mono", monospace; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+  .steps .st-cell .sub { font-size: .8rem; color: var(--muted); }
+  .steps .st-cell.out .val { color: var(--fwd); }
+
+  ul.plain { margin: 0; padding-left: 1.1em; display: grid; gap: 7px; color: var(--muted); max-width: 66ch; }
+  ul.plain strong { color: var(--text); }
+
+  .divider { border: none; border-top: 1px solid var(--line); margin: 0; }
+
+  .footnote { color: var(--faint); font-size: .86rem; max-width: 62ch; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+  }
+</style>
+
+<div class="shell">
+
+  <header class="hero">
+    <div class="eyebrow">deep_learning / gorev1 · satır satır okuma</div>
+    <h1>XOR Ağının <em>Anatomisi</em></h1>
+    <p class="lede">
+      <code>sinir_agi.py</code>, hazır bir kütüphane kullanmadan, sadece NumPy ile 2&nbsp;→&nbsp;4&nbsp;→&nbsp;1
+      boyutunda bir sinir ağı kurar ve ona XOR'u öğretir. Bu sayfa dosyanın on bölümünü sırayla açar:
+      her satırın <strong>ne yaptığını</strong>, <strong>neden orada olduğunu</strong> ve
+      <strong>silinirse ne bozulacağını</strong> anlatır.
+    </p>
+    <div class="hero-meta">
+      <div><span class="k">Mimari</span><span class="v">2 giriş · 4 gizli (ReLU) · 1 çıkış (sigmoid)</span></div>
+      <div><span class="k">Kayıp</span><span class="v">Binary cross-entropy</span></div>
+      <div><span class="k">Optimizasyon</span><span class="v">Düz SGD, lr = 0.5</span></div>
+      <div><span class="k">Bağımlılık</span><span class="v">Yalnızca NumPy</span></div>
+    </div>
+  </header>
+
+  <nav class="rail" aria-label="Bölümler">
+    <div class="eyebrow">Bölümler</div>
+    <ol>
+      <li><a href="#genel"><span class="num">00</span><span>Genel bakış</span></a></li>
+      <li><a href="#b1"><span class="num">01</span><span>Aktivasyonlar</span></a></li>
+      <li><a href="#b2"><span class="num">02</span><span>Parametre başlatma</span></a></li>
+      <li><a href="#b3"><span class="num">03</span><span>İleri besleme</span></a></li>
+      <li><a href="#b4"><span class="num">04</span><span>Kayıp</span></a></li>
+      <li><a href="#b5"><span class="num">05</span><span>Geri yayılım</span></a></li>
+      <li><a href="#b6"><span class="num">06</span><span>Parametre güncelleme</span></a></li>
+      <li><a href="#b7"><span class="num">07</span><span>Doğruluk</span></a></li>
+      <li><a href="#b8"><span class="num">08</span><span>Eğitim döngüsü</span></a></li>
+      <li><a href="#b9"><span class="num">09</span><span>XOR verisi</span></a></li>
+      <li><a href="#b10"><span class="num">10</span><span>Çalıştırma</span></a></li>
+      <li class="rail-sep"><a href="#ek-a"><span class="num">A</span><span>tek_noron.py</span></a></li>
+      <li><a href="#ek-b"><span class="num">B</span><span>NumPy → PyTorch</span></a></li>
+      <li><a href="#ek-c"><span class="num">C</span><span>Sık takılınan yerler</span></a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <!-- ================= GENEL BAKIŞ ================= -->
+    <section id="genel">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 00</div>
+        <h2>Önce kuşbakışı: veri hangi yoldan gidip geliyor?</h2>
+        <p class="what">
+          Dosyadaki her fonksiyon, aşağıdaki iki oktan birine aittir. Teal olan her şey
+          <strong>ileri</strong> gider (tahmin üretir), gül rengi olan her şey <strong>geri</strong> gelir
+          (hatayı ağırlıklara dağıtır). Sayfanın geri kalanında bu renk kodu korunuyor.
+        </p>
+      </div>
+
+      <figure>
+        <div class="figbox">
+          <svg viewBox="0 0 660 360" role="img" aria-label="2-4-1 sinir ağı şeması: girişten çıkışa ileri besleme, çıkıştan girişe geri yayılım">
+            <g stroke="var(--fwd)" stroke-width="1.1" opacity=".45">
+              <line x1="112" y1="118" x2="298" y2="62"></line>
+              <line x1="112" y1="118" x2="298" y2="122"></line>
+              <line x1="112" y1="118" x2="298" y2="182"></line>
+              <line x1="112" y1="118" x2="298" y2="242"></line>
+              <line x1="112" y1="198" x2="298" y2="62"></line>
+              <line x1="112" y1="198" x2="298" y2="122"></line>
+              <line x1="112" y1="198" x2="298" y2="182"></line>
+              <line x1="112" y1="198" x2="298" y2="242"></line>
+              <line x1="342" y1="62" x2="528" y2="152"></line>
+              <line x1="342" y1="122" x2="528" y2="152"></line>
+              <line x1="342" y1="182" x2="528" y2="152"></line>
+              <line x1="342" y1="242" x2="528" y2="152"></line>
+            </g>
+
+            <g fill="var(--surface)" stroke="var(--fwd)" stroke-width="1.6">
+              <circle cx="90" cy="118" r="22"></circle>
+              <circle cx="90" cy="198" r="22"></circle>
+              <circle cx="320" cy="62" r="22"></circle>
+              <circle cx="320" cy="122" r="22"></circle>
+              <circle cx="320" cy="182" r="22"></circle>
+              <circle cx="320" cy="242" r="22"></circle>
+              <circle cx="550" cy="152" r="24"></circle>
+            </g>
+
+            <g fill="var(--text)" font-family="IBM Plex Mono, monospace" font-size="12" text-anchor="middle">
+              <text x="90" y="122">x₁</text>
+              <text x="90" y="202">x₂</text>
+              <text x="320" y="66">a₁</text>
+              <text x="320" y="126">a₂</text>
+              <text x="320" y="186">a₃</text>
+              <text x="320" y="246">a₄</text>
+              <text x="550" y="157">ŷ</text>
+            </g>
+
+            <g fill="var(--muted)" font-family="IBM Plex Mono, monospace" font-size="11" text-anchor="middle" letter-spacing="1">
+              <text x="90" y="290">GİRİŞ (2)</text>
+              <text x="320" y="290">GİZLİ (4) · ReLU</text>
+              <text x="550" y="290">ÇIKIŞ (1) · sigmoid</text>
+            </g>
+
+            <g fill="var(--fwd)" font-family="IBM Plex Mono, monospace" font-size="11.5" text-anchor="middle">
+              <text x="205" y="36">z1 = x @ w1 + b1</text>
+              <text x="435" y="96">z2 = a1 @ w2 + b2</text>
+            </g>
+
+            <path d="M 546 322 L 96 322" fill="none" stroke="var(--bwd)" stroke-width="1.6" stroke-dasharray="5 4"></path>
+            <path d="M 96 322 l 9 -5 l 0 10 z" fill="var(--bwd)"></path>
+            <text x="321" y="345" fill="var(--bwd)" font-family="IBM Plex Mono, monospace" font-size="11.5" text-anchor="middle">gradyanlar geri akar: dw2, db2 → dw1, db1</text>
+          </svg>
+        </div>
+        <figcaption>
+          Bir epoch = bu şeklin bir kez soldan sağa (tahmin), bir kez sağdan sola (gradyan) taranması,
+          ardından ağırlıkların bir adım kaydırılması. Dosya 5000 epoch koşuyor.
+        </figcaption>
+      </figure>
+
+      <div class="cards">
+        <div class="card">
+          <div class="n">1 · İleri</div>
+          <div class="t">forward_pass</div>
+          <div class="d">Girişi katmanlardan geçirip 0–1 arası bir tahmin üretir, ara değerleri <code>cache</code>'e saklar.</div>
+        </div>
+        <div class="card">
+          <div class="n">2 · Ölç</div>
+          <div class="t">loss_function</div>
+          <div class="d">Tahmin ile gerçek arasındaki hatayı tek bir sayıya indirger. Küçüldükçe iyi.</div>
+        </div>
+        <div class="card">
+          <div class="n">3 · Geri</div>
+          <div class="t">backward_pass</div>
+          <div class="d">Bu hatanın her ağırlığa ne kadar yazılacağını (gradyan) zincir kuralıyla hesaplar.</div>
+        </div>
+        <div class="card">
+          <div class="n">4 · Güncelle</div>
+          <div class="t">update_parameters</div>
+          <div class="d">Her ağırlığı kendi gradyanının tersi yönde küçük bir adım kaydırır. Öğrenme tam olarak burada olur.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ================= 1 ================= -->
+    <section id="b1">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 01 · aktivasyon fonksiyonları</div>
+        <h2>Ağa doğrusal olmama yeteneği veren iki fonksiyon</h2>
+        <p class="what">
+          Aktivasyon olmadan üst üste kaç katman koyarsanız koyun, ağın tamamı tek bir düz çizgiye
+          (tek bir matris çarpımına) eşdeğer kalır. XOR ise düz bir çizgiyle ayrılamayan bir problemdir —
+          bu yüzden bu iki fonksiyon dosyanın en tepesinde durur.
+        </p>
+      </div>
+
+      <div class="code"><pre><span class="cm"># sigmoid: 0 ile 1 arasi</span>
+<span class="k">def</span> <span class="fn">sigmoid</span>(x):
+    <span class="k">return</span> <span class="nu">1</span> / (<span class="nu">1</span> + np.exp(-x))
+
+
+<span class="cm"># ReLU: negatifleri 0 yapar</span>
+<span class="k">def</span> <span class="fn">relu</span>(x):
+    <span class="k">return</span> np.maximum(<span class="nu">0</span>, x)</pre></div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">1 / (1 + np.exp(-x))</div>
+          <div class="why">Girdiyi <strong>0 ile 1 arasına</strong> ezer. Çıkış katmanında bunu kullanmamızın sebebi, sonucun "1 olma olasılığı" gibi okunabilmesi. Çok büyük <code>x</code>'te 1'e, çok küçükte 0'a yaklaşır.</div>
+        </div>
+        <div class="row">
+          <div class="line">np.maximum(0, x)</div>
+          <div class="why">Negatifleri sıfırlar, pozitifleri aynen geçirir. <strong>Türevi 0 veya 1</strong> olduğu için gradyan geri giderken zayıflamaz — sigmoid'in aksine derin ağlarda sönmez.</div>
+        </div>
+        <div class="row">
+          <div class="line">np.maximum ≠ np.max</div>
+          <div class="why"><code>np.max</code> dizideki <em>tek</em> en büyük sayıyı verirdi. <code>np.maximum</code> ise eleman eleman karşılaştırır, yani matrisin şeklini korur. Buradaki doğru seçim budur.</div>
+        </div>
+      </div>
+
+      <div class="callout amac">
+        <span class="tag">Amaç</span>
+        <p>Bu iki fonksiyon, NumPy'ın yayınlama (broadcasting) davranışı sayesinde tek bir sayı için de,
+        <code>(4, 4)</code> boyutlu bir matris için de aynı şekilde çalışır. Bu yüzden ağın her yerinde
+        parametresiz çağrılabiliyorlar.</p>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ================= 2 ================= -->
+    <section id="b2">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 02 · init_parameters</div>
+        <h2>Ağın öğrenilecek tek şeyi: dört tane sayı yığını</h2>
+        <p class="what">
+          Bir sinir ağının "bildiği" her şey <code>w1, b1, w2, b2</code> içindedir. Eğitim dediğimiz şey de
+          bu dört diziyi yavaşça daha iyi sayılarla doldurmaktan ibaret.
+        </p>
+      </div>
+
+      <div class="code"><pre><span class="k">def</span> <span class="fn">init_parameters</span>(input_size, hidden_size, output_size, seed=<span class="nu">27</span>):
+    rng = np.random.default_rng(seed)  <span class="cm"># ayni seed = ayni rastgele baslangic</span>
+
+    w1 = rng.normal(<span class="nu">0</span>, <span class="nu">1</span>, (input_size, hidden_size))
+    b1 = np.zeros((<span class="nu">1</span>, hidden_size))
+
+    w2 = rng.normal(<span class="nu">0</span>, <span class="nu">1</span>, (hidden_size, output_size))
+    b2 = np.zeros((<span class="nu">1</span>, output_size))
+
+    <span class="k">return</span> w1, b1, w2, b2</pre></div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">default_rng(seed)</div>
+          <div class="why">Rastgeleliği <strong>tekrarlanabilir</strong> yapar. Aynı seed ile her çalıştırmada aynı başlangıç noktasından başlarsınız; böylece "learning rate'i değiştirdim, sonuç değişti" derken gerçekten learning rate'in etkisini ölçmüş olursunuz.</div>
+        </div>
+        <div class="row">
+          <div class="line">rng.normal(0, 1, (in, hid))</div>
+          <div class="why">Ortalaması 0, standart sapması 1 olan normal dağılımdan rastgele ağırlıklar. Şekil <code>(giriş, gizli)</code> çünkü <code>x @ w1</code> çarpımının tutması için w1'in satır sayısı x'in sütun sayısına eşit olmalı.</div>
+        </div>
+        <div class="row">
+          <div class="line">np.zeros((1, hidden_size))</div>
+          <div class="why">Bias'lar <strong>sıfırdan</strong> başlayabilir. Simetriyi zaten ağırlıklar kırıyor; bias'ın da rastgele olmasına gerek yok. <code>(1, n)</code> şekli, batch'teki her satıra broadcasting ile eklenmesini sağlar.</div>
+        </div>
+        <div class="row">
+          <div class="line">seed=27</div>
+          <div class="why">Varsayılan değer olduğu için <code>train</code> içinden hiç verilmiyor — yani bu dosya her koşuda birebir aynı sonucu üretir. Farklı başlangıçları denemek isterseniz değiştirmeniz gereken yer burası.</div>
+        </div>
+      </div>
+
+      <div class="callout dikkat">
+        <span class="tag">Neden ağırlıklar sıfır olamaz?</span>
+        <p>Bütün ağırlıkları 0 (ya da hepsini aynı sayı) yapsaydınız, gizli katmandaki 4 nöron da
+        birebir aynı değeri üretir, aynı gradyanı alır ve sonsuza kadar birbirinin kopyası kalırdı.
+        4 nöron yerine tek nöronunuz olurdu ve XOR asla öğrenilemezdi. Rastgelelik burada
+        <em>simetriyi kırmak</em> için var.</p>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ================= 3 ================= -->
+    <section id="b3">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 03 · forward_pass</div>
+        <h2>Tahmin üretimi: iki matris çarpımı ve iki aktivasyon</h2>
+        <p class="what">
+          Bütün ileri besleme, <code>x @ w + b → aktivasyon</code> kalıbının iki kez tekrarlanmasıdır.
+          Modern kütüphanelerdeki en derin ağlar bile aynı kalıbı sadece daha çok kez tekrarlar.
+        </p>
+      </div>
+
+      <div class="code"><pre><span class="k">def</span> <span class="fn">forward_pass</span>(x, w1, b1, w2, b2, activation=<span class="st">"sigmoid"</span>):
+    <span class="cm"># 1. gizli katman</span>
+    z1 = x @ w1 + b1
+    <span class="k">if</span> activation == <span class="st">"relu"</span>:
+        a1 = relu(z1)
+    <span class="k">else</span>:
+        a1 = sigmoid(z1)
+
+    <span class="cm"># 2. cikis katmani</span>
+    z2 = a1 @ w2 + b2
+    output = sigmoid(z2)  <span class="cm"># 0-1 arasi tahmin</span>
+
+    <span class="cm"># geri yayilim icin ara degerler</span>
+    cache = {<span class="st">"x"</span>: x, <span class="st">"z1"</span>: z1, <span class="st">"a1"</span>: a1, <span class="st">"w2"</span>: w2}
+    <span class="k">return</span> output, cache</pre></div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">z1 = x @ w1 + b1</div>
+          <div class="why">Ham skor ("pre-activation"). <code>@</code> matris çarpımıdır: <code>(4,2) @ (2,4) → (4,4)</code>. Yani 4 örneğin her biri için 4 gizli nöronun skoru tek hamlede hesaplanır. <code>b1</code> <code>(1,4)</code> olduğu için 4 satırın hepsine broadcasting ile eklenir.</div>
+        </div>
+        <div class="row">
+          <div class="line">a1 = relu(z1)</div>
+          <div class="why">Aktivasyondan geçmiş gizli katman çıktısı. <code>z</code> ham skor, <code>a</code> aktivasyonlu değer — bu isimlendirme literatürün ortak dili, kendi kodunuzda da korumakta fayda var.</div>
+        </div>
+        <div class="row">
+          <div class="line">z2 = a1 @ w2 + b2</div>
+          <div class="why"><code>(4,4) @ (4,1) → (4,1)</code>. Gizli katmanın 4 çıktısı tek bir çıkış nöronunda toplanır.</div>
+        </div>
+        <div class="row">
+          <div class="line">output = sigmoid(z2)</div>
+          <div class="why">Çıkışta <strong>her zaman sigmoid</strong> — <code>activation</code> parametresi sadece gizli katmanı etkiler. Sebebi: XOR'un hedefi 0/1, dolayısıyla çıktının olasılık gibi 0–1 arasında olması gerekiyor.</div>
+        </div>
+        <div class="row bwd">
+          <div class="line">cache = {...}</div>
+          <div class="why">Geri yayılım <code>x</code>, <code>z1</code> ve <code>a1</code> değerlerine ihtiyaç duyar. Bunları burada saklamak, birazdan <strong>yeniden hesaplamamak</strong> demek. PyTorch'un autograd'ı da arka planda tam olarak bu defteri tutar.</div>
+        </div>
+      </div>
+
+      <div class="callout amac">
+        <span class="tag">Amaç</span>
+        <p>Fonksiyonun iki şey döndürmesi tesadüf değil: <code>output</code> tahmin için,
+        <code>cache</code> öğrenme için. Sadece tahmin almak isterseniz ikinciyi
+        <code>y_pred, _ = forward_pass(...)</code> diyerek atarsınız — dosyanın en sonunda tam olarak bu yapılıyor.</p>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ================= 4 ================= -->
+    <section id="b4">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 04 · loss_function</div>
+        <h2>"Ne kadar yanlışım?" sorusunun tek sayılık cevabı</h2>
+        <p class="what">
+          Optimizasyon ancak küçültülecek tek bir sayı varsa mümkündür. Kayıp fonksiyonu 4 örneklik
+          tahmin matrisini o tek sayıya indirger.
+        </p>
+      </div>
+
+      <div class="code"><pre><span class="k">def</span> <span class="fn">loss_function</span>(y_pred, y_true, loss_type=<span class="st">"bce"</span>):
+    eps = <span class="nu">1e-8</span>  <span class="cm"># log(0)'i onlemek icin</span>
+
+    <span class="k">if</span> loss_type == <span class="st">"mse"</span>:
+        <span class="k">return</span> np.mean(np.square(y_pred - y_true))
+    <span class="k">else</span>:
+        y_pred = np.clip(y_pred, eps, <span class="nu">1</span> - eps)
+        <span class="k">return</span> -np.mean(y_true * np.log(y_pred) + (<span class="nu">1</span> - y_true) * np.log(<span class="nu">1</span> - y_pred))</pre></div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">np.mean(np.square(y_pred - y_true))</div>
+          <div class="why"><strong>MSE</strong>: farkların karesinin ortalaması. Kare almak hem işareti yok eder hem büyük hataları daha çok cezalandırır. Regresyon için doğru seçim, 0/1 sınıflandırmada ise yavaş öğrenir.</div>
+        </div>
+        <div class="row">
+          <div class="line">np.clip(y_pred, eps, 1 - eps)</div>
+          <div class="why">Sigmoid teorik olarak tam 0 veya 1 vermez ama <strong>float aritmetiği</strong> yuvarlayabilir. <code>log(0) = -inf</code> olduğu için tek bir örnek bütün kaybı <code>nan</code> yapardı. Bu satır o kazayı önleyen emniyet kemeridir.</div>
+        </div>
+        <div class="row">
+          <div class="line">y_true * log(y_pred) + (1 - y_true) * log(1 - y_pred)</div>
+          <div class="why"><strong>BCE</strong>'nin püf noktası: <code>y_true</code> 1 ise ikinci terim sıfırlanır, 0 ise birinci terim sıfırlanır. Yani tek formül, "doğru cevabın olasılığının logaritması" anlamına gelir — <code>if</code> yazmaya gerek kalmaz.</div>
+        </div>
+        <div class="row">
+          <div class="line">baştaki eksi işareti</div>
+          <div class="why">Logaritma 0–1 arasında negatiftir. Eksi ile çeviririz ki kayıp <strong>pozitif</strong> olsun ve "küçülmesi iyi" kuralı bozulmasın. Emin tahmin doğruysa ≈0, emin tahmin yanlışsa çok büyük bir sayı verir.</div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Gerçek</th><th>Tahmin</th><th class="num">BCE kaybı</th><th>Yorum</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono-cell">1</td><td class="mono-cell">0.99</td><td class="num">0.010</td><td>Emin ve haklı — neredeyse ceza yok</td></tr>
+            <tr><td class="mono-cell">1</td><td class="mono-cell">0.60</td><td class="num">0.511</td><td>Doğru tarafta ama kararsız</td></tr>
+            <tr><td class="mono-cell">1</td><td class="mono-cell">0.50</td><td class="num">0.693</td><td>Yazı-tura; öğrenilmemiş hâlin kaybı</td></tr>
+            <tr><td class="mono-cell">1</td><td class="mono-cell">0.01</td><td class="num">4.605</td><td>Emin ve yanılıyor — ağır ceza</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="footnote">BCE'nin MSE'ye üstünlüğü son satırda görünür: aynı durumda MSE yalnızca 0.98 ceza verirdi.
+      Emin ve yanlış tahminleri sertçe cezalandırmak, sınıflandırmada eğitimi hızlandırır.</p>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ================= 5 ================= -->
+    <section id="b5">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 05 · backward_pass</div>
+        <h2>Hatanın suçlusunu bulmak: zincir kuralı</h2>
+        <p class="what">
+          Kayıp tek bir sayı; ama biz onu <em>hangi ağırlığı ne kadar oynatırsam ne kadar düşer</em>
+          sorusuna çevirmek istiyoruz. Bu bölüm çıkıştan girişe doğru ilerleyerek her parametrenin
+          gradyanını üretir — birazdan Bölüm 06'da kullanılacak olan <code>dw1, db1, dw2, db2</code>.
+        </p>
+      </div>
+
+      <div class="code"><pre><span class="k">def</span> <span class="fn">backward_pass</span>(y_true, y_pred, cache, w1, b1, w2, b2, loss_type=<span class="st">"bce"</span>, activation=<span class="st">"sigmoid"</span>):
+    m = y_true.shape[<span class="nu">0</span>]  <span class="cm"># ornek sayisi</span>
+    x  = cache[<span class="st">"x"</span>]
+    z1 = cache[<span class="st">"z1"</span>]
+    a1 = cache[<span class="st">"a1"</span>]
+
+    <span class="cm"># --- cikis katmani gradyanlari ---</span>
+    <span class="k">if</span> loss_type == <span class="st">"mse"</span>:
+        dz2 = (<span class="nu">2</span> * (y_pred - y_true) / m) * (y_pred * (<span class="nu">1</span> - y_pred))
+    <span class="k">else</span>:
+        dz2 = (y_pred - y_true) / m
+
+    dw2 = a1.T @ dz2
+    db2 = np.sum(dz2, axis=<span class="nu">0</span>, keepdims=<span class="k">True</span>)
+
+    <span class="cm"># --- gizli katman gradyanlari ---</span>
+    da1 = dz2 @ w2.T
+    <span class="k">if</span> activation == <span class="st">"relu"</span>:
+        dz1 = da1 * (z1 &gt; <span class="nu">0</span>)
+    <span class="k">else</span>:
+        dz1 = da1 * (a1 * (<span class="nu">1</span> - a1))
+
+    dw1 = x.T @ dz1
+    db1 = np.sum(dz1, axis=<span class="nu">0</span>, keepdims=<span class="k">True</span>)
+
+    <span class="k">return</span> dw1, db1, dw2, db2</pre></div>
+
+      <div class="notes">
+        <div class="row bwd">
+          <div class="line">m = y_true.shape[0]</div>
+          <div class="why">Batch'teki örnek sayısı (burada 4). Gradyanı <code>m</code>'e bölmek, kaybın <em>ortalama</em> olmasıyla tutarlılık sağlar: batch büyüdüğünde adım boyu kendiliğinden büyümez, learning rate aynı kalabilir.</div>
+        </div>
+        <div class="row bwd">
+          <div class="line">dz2 = (y_pred - y_true) / m</div>
+          <div class="why">Kodun en zarif satırı. <strong>Sigmoid + BCE</strong> birleştiğinde türevler sadeleşir ve geriye çıplak "tahmin eksi gerçek" farkı kalır. Sigmoid'in türevi burada görünmez çünkü BCE'nin türeviyle birebir sadeleşmiştir.</div>
+        </div>
+        <div class="row bwd">
+          <div class="line">MSE dalındaki fazladan çarpan</div>
+          <div class="why"><code>y_pred * (1 - y_pred)</code> sigmoid'in türevidir; MSE'de sadeleşecek bir eş bulamadığı için elde kalır. Tahmin 0 veya 1'e yaklaştığında bu çarpan sıfıra gider — <strong>MSE'nin sınıflandırmada yavaş öğrenmesinin</strong> matematiksel sebebi tam olarak budur.</div>
+        </div>
+        <div class="row bwd">
+          <div class="line">dw2 = a1.T @ dz2</div>
+          <div class="why">"Bu ağırlığın girdisi ne kadar büyüktü" × "çıktıda ne kadar hata vardı". <code>.T</code> devriktir; boyutların <code>(4,4).T @ (4,1) → (4,1)</code> şeklinde <strong>w2 ile aynı şekle</strong> oturmasını sağlar. Gradyanın şekli daima parametrenin şekliyle aynıdır.</div>
+        </div>
+        <div class="row bwd">
+          <div class="line">np.sum(dz2, axis=0, keepdims=True)</div>
+          <div class="why">Bias her örneğe ayrı ayrı eklendiği için gradyanı örnekler boyunca <strong>toplanır</strong>. <code>keepdims=True</code> olmasaydı sonuç <code>(1,)</code> olur, <code>(1,1)</code> olan <code>b2</code> ile toplarken sessizce yanlış şekilde yayılırdı.</div>
+        </div>
+        <div class="row bwd">
+          <div class="line">da1 = dz2 @ w2.T</div>
+          <div class="why">Hatanın gizli katmana geri dağıtıldığı satır. İleri giderken <code>w2</code> ile çarpmıştık; geri gelirken <code>w2.T</code> ile çarpıyoruz. Büyük ağırlığa sahip nöron, hatanın da büyük payını alır.</div>
+        </div>
+        <div class="row bwd">
+          <div class="line">dz1 = da1 * (z1 &gt; 0)</div>
+          <div class="why">ReLU'nun türevi: <code>z1 &gt; 0</code> bir <code>True/False</code> maskesidir, çarpımda 1/0 gibi davranır. Anlamı: <strong>ileri geçişte kapalı kalan nöron gradyan almaz.</strong> Maskenin <code>a1</code>'dan değil <code>z1</code>'den üretilmesi bu yüzden önemli — <code>a1</code>'da o bilgi zaten sıfıra ezilmiş olurdu.</div>
+        </div>
+        <div class="row bwd">
+          <div class="line">dz1 = da1 * (a1 * (1 - a1))</div>
+          <div class="why">Sigmoid'in türevi <code>σ(z)·(1−σ(z))</code>, yani <code>a1</code> cinsinden yazılabiliyor — <code>z1</code>'i tekrar sigmoid'den geçirmeye gerek yok. Değeri en fazla 0.25'tir; her katmanda gradyanı çeyreğe indirir. <strong>Gradyanın sönmesi</strong> denen olay budur.</div>
+        </div>
+        <div class="row bwd">
+          <div class="line">dw1 = x.T @ dz1</div>
+          <div class="why">İlk katman için aynı kalıp: giriş devriği çarpı yerel hata. Zincir kuralı burada başladığı yere döner ve dört gradyan tamamlanır.</div>
+        </div>
+      </div>
+
+      <div class="callout geri">
+        <span class="tag">Fark ettiniz mi</span>
+        <p><code>w1</code> ve <code>b1</code> parametre olarak alınıyor ama fonksiyonun içinde hiç kullanılmıyor —
+        gradyanlar için gerekli olan <code>x</code>, <code>z1</code>, <code>a1</code> ve <code>w2</code>.
+        Zararsız bir fazlalık; imzayı <code>backward_pass(y_true, y_pred, cache, w2, ...)</code> diye
+        sadeleştirebilirdiniz.</p>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ================= 6 — VİTRİN ================= -->
+    <section id="b6">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 06 · update_parameters · öğrenmenin gerçekleştiği yer</div>
+        <h2>Tek satırlık kural: gradyanın tersine küçük bir adım at</h2>
+        <p class="what">
+          Buraya kadar olan her şey hazırlıktı. Ağın hafızası bu fonksiyonda, bu dört satırda değişir.
+          Bu yüzden dosyada değeri en yüksek ama görünüşü en sade blok burasıdır.
+        </p>
+      </div>
+
+      <div class="code"><pre><span class="cm"># 6) PARAMETRE GUNCELLEME (SGD)</span>
+<span class="cm"># w = w - learning_rate * dw</span>
+
+<span class="k">def</span> <span class="fn">update_parameters</span>(w1, b1, w2, b2, dw1, db1, dw2, db2, learning_rate):
+    <span class="hl">w1 = w1 - learning_rate * dw1</span>
+    <span class="hl">b1 = b1 - learning_rate * db1</span>
+    <span class="hl">w2 = w2 - learning_rate * dw2</span>
+    <span class="hl">b2 = b2 - learning_rate * db2</span>
+    <span class="k">return</span> w1, b1, w2, b2</pre></div>
+
+      <div class="prose">
+        <p>
+          Fonksiyonun aldığı dokuz argüman aslında üç gruptur: <strong>mevcut parametreler</strong>
+          (<code>w1, b1, w2, b2</code>), <strong>onların gradyanları</strong> (<code>dw1, db1, dw2, db2</code>)
+          ve <strong>adım boyu</strong> (<code>learning_rate</code>). Her parametre kendi gradyanıyla eşleşir;
+          <code>w1</code> yalnızca <code>dw1</code>'i, <code>b2</code> yalnızca <code>db2</code>'yi umursar.
+          Dört satır aynı kuralı dört kez uygular.
+        </p>
+      </div>
+
+      <h3>Neden eksi? Çünkü gradyan yokuş <em>yukarıyı</em> gösterir</h3>
+      <div class="prose">
+        <p>
+          <code>dw1</code>, "w1'i bir birim <em>artırırsam</em> kayıp ne kadar artar" sorusunun cevabıdır.
+          Bizim istediğimiz ise kaybı <strong>azaltmak</strong>. Dolayısıyla gradyanın gösterdiği yönün
+          tam tersine gideriz. Sisli bir dağda gözünüz kapalı aşağı inmeye çalıştığınızı düşünün:
+          ayağınızın altındaki en dik yokuş yönünü hissedersiniz (gradyan), sonra o yönün tersine
+          küçük bir adım atarsınız (eksi işareti), sonra tekrar yoklarsınız. 5000 epoch = 5000 adım.
+        </p>
+        <p>
+          Bu işaret bir detay değil: eksiyi artıya çevirirseniz ağ kaybı en hızlı <em>artıran</em> yöne
+          koşar, loss birkaç epoch içinde patlar ve doğruluk %50'ye çakılır.
+        </p>
+      </div>
+
+      <div class="callout amac">
+        <span class="tag">Amaç</span>
+        <p>
+          Bu fonksiyon "SGD" (stochastic gradient descent) optimizasyonunun en yalın hâlidir.
+          PyTorch'ta yazacağınız <code>optimizer.step()</code> çağrısının kaputun altında yaptığı şey de
+          — Adam gibi gelişmiş optimizasyonlardaki momentum ve uyarlanabilir adım eklentileri hariç —
+          tam olarak bu dört satırdır.
+        </p>
+      </div>
+
+      <h3>Somut bir adım: sayılarla</h3>
+      <p>Diyelim ki <code>w2</code> içindeki tek bir ağırlık şu anda <strong>0.80</strong> ve geri yayılım
+      bu ağırlık için <strong>+0.40</strong> gradyan üretti. <code>learning_rate = 0.5</code> ile:</p>
+
+      <div class="steps">
+        <div class="st-cell"><span class="lbl">Mevcut w</span><span class="val">0.80</span><span class="sub">forward'da kullanılan değer</span></div>
+        <div class="st-cell"><span class="lbl">Gradyan dw</span><span class="val">+0.40</span><span class="sub">artarsa kayıp artar</span></div>
+        <div class="st-cell"><span class="lbl">lr × dw</span><span class="val">0.20</span><span class="sub">atılacak adım</span></div>
+        <div class="st-cell out"><span class="lbl">Yeni w</span><span class="val">0.60</span><span class="sub">0.80 − 0.20</span></div>
+      </div>
+
+      <p class="footnote">
+        Gradyan negatif olsaydı (<code>dw = −0.40</code>), eksi eksiyi götürür ve ağırlık
+        0.80'den 1.00'e <em>çıkardı</em>. Yani formül "her zaman küçült" demiyor;
+        "kaybı düşüren yöne git" diyor.
+      </p>
+
+      <h3>learning_rate: aynı formülün üç farklı kaderi</h3>
+      <div class="prose">
+        <p>
+          Adımın büyüklüğünü tek başına <code>learning_rate</code> belirler. Aşağıdaki eğri basit bir
+          kayıp yüzeyi (<code>L = w²</code>, minimumu <code>w = 0</code>) ve üzerinde iki farklı
+          learning rate ile atılan adımlar var — ikisi de aynı <code>w = 1.0</code> noktasından başlıyor.
+        </p>
+      </div>
+
+      <figure>
+        <div class="figbox">
+          <svg viewBox="0 0 440 300" role="img" aria-label="Kayıp eğrisi üzerinde küçük ve büyük learning rate ile atılan adımların karşılaştırması">
+            <g stroke="var(--line)" stroke-width="1">
+              <line x1="30" y1="240" x2="410" y2="240"></line>
+              <line x1="210" y1="20" x2="210" y2="248"></line>
+            </g>
+            <polyline points="42,24 70,90 98,144 126,186 154,216 182,234 210,240 238,234 266,216 294,186 322,144 350,90 378,24"
+              fill="none" stroke="var(--muted)" stroke-width="1.6" opacity=".55"></polyline>
+
+            <polyline points="350,90 322,144 299,179 282,200" fill="none" stroke="var(--fwd)" stroke-width="2"></polyline>
+            <g fill="var(--fwd)">
+              <circle cx="350" cy="90" r="4.5"></circle>
+              <circle cx="322" cy="144" r="4.5"></circle>
+              <circle cx="299" cy="179" r="4.5"></circle>
+              <circle cx="282" cy="200" r="4.5"></circle>
+            </g>
+
+            <polyline points="350,90 56,58 379,20" fill="none" stroke="var(--bwd)" stroke-width="2" stroke-dasharray="6 4"></polyline>
+            <g fill="var(--bwd)">
+              <circle cx="350" cy="90" r="4.5"></circle>
+              <circle cx="56" cy="58" r="4.5"></circle>
+              <circle cx="379" cy="20" r="4.5"></circle>
+            </g>
+
+            <g font-family="IBM Plex Mono, monospace" font-size="11">
+              <text x="252" y="222" fill="var(--fwd)">lr = 0.1</text>
+              <text x="70" y="80" fill="var(--bwd)">lr = 1.05</text>
+              <text x="216" y="262" fill="var(--faint)">w = 0 (minimum)</text>
+              <text x="30" y="264" fill="var(--faint)">−1.2</text>
+              <text x="360" y="264" fill="var(--faint)">+1.2</text>
+              <text x="30" y="30" fill="var(--faint)">kayıp</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption>
+          Teal yol küçük adımlarla minimuma doğru düzenli iniyor. Gül rengi yol her adımda dibi
+          aşıp karşı yamaca fırlıyor ve uzaklaşıyor — kodda bu, ekrana <code>nan</code> basılması olarak görünür.
+        </figcaption>
+      </figure>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>learning_rate</th><th>Davranış</th><th>Loss çıktısında görünümü</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono-cell">0.001</td><td>Çok küçük adım</td><td>Loss düşüyor ama 5000 epoch yetmiyor; accuracy %50–75'te takılı kalır</td></tr>
+            <tr><td class="mono-cell">0.5</td><td>Bu dosyanın seçimi</td><td>Loss düzenli düşer, XOR birkaç bin epoch'ta %100 öğrenilir</td></tr>
+            <tr><td class="mono-cell">5.0</td><td>Çok büyük adım</td><td>Loss zıplar, artar, <code>nan</code> olur; ağ hiçbir şey öğrenemez</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Neden atama yapıp geri döndürüyoruz?</h3>
+      <div class="prose">
+        <p>
+          <code>w1 = w1 - learning_rate * dw1</code> satırı mevcut diziyi yerinde değiştirmez;
+          <strong>yeni bir dizi</strong> üretip yerel <code>w1</code> ismine bağlar. Python'da bu tür atamalar
+          yereldir, dolayısıyla <code>return</code> olmasaydı çağıran taraftaki <code>w1</code> hiç
+          değişmez, ağ 5000 epoch boyunca aynı ağırlıklarla dönüp durur ve loss sabit kalırdı.
+        </p>
+        <p>
+          Çağıran taraftaki <code>w1, b1, w2, b2 = update_parameters(...)</code> satırı bu yüzden zorunlu.
+          Alternatifi <code>w1 -= learning_rate * dw1</code> yazmaktır: bu, diziyi <em>yerinde</em>
+          değiştirir ve return'e ihtiyaç bırakmaz. Açık atama biçimi ise öğrenirken daha okunaklıdır,
+          çünkü "eski değerden yeni değer üretiliyor" fikri gözle görülür.
+        </p>
+      </div>
+
+      <div class="callout dikkat">
+        <span class="tag">Sıra önemli</span>
+        <p>
+          Bütün gradyanlar <strong>güncellemeden önceki</strong> ağırlıklarla hesaplanmış olmalı.
+          Bu yüzden <code>train</code> içinde önce <code>backward_pass</code> dördünü birden üretir,
+          sonra <code>update_parameters</code> dördünü birden uygular. Örneğin <code>w2</code>'yi
+          erkenden güncelleyip sonra onunla <code>dw1</code> hesaplasaydınız, gradyanlar artık
+          ölçtüğünüz kayıp yüzeyine ait olmazdı.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ================= 7 ================= -->
+    <section id="b7">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 07 · accuracy</div>
+        <h2>İnsan için okunabilir ölçü</h2>
+        <p class="what">
+          Loss ağın optimize ettiği şeydir; accuracy ise bizim anladığımız şey. Eğitimi loss yönlendirir,
+          başarıyı accuracy raporlar.
+        </p>
+      </div>
+
+      <div class="code"><pre><span class="k">def</span> <span class="fn">accuracy</span>(y_pred, y_true):
+    predictions = (y_pred &gt;= <span class="nu">0.5</span>).astype(int)
+    <span class="k">return</span> np.mean(predictions == y_true)</pre></div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">(y_pred &gt;= 0.5)</div>
+          <div class="why">Sigmoid çıktısı sürekli bir sayı (0.87 gibi); karar vermek için bir eşiğe ihtiyaç var. 0.5, sigmoid'in tam ortası olduğu için doğal eşiktir.</div>
+        </div>
+        <div class="row">
+          <div class="line">.astype(int)</div>
+          <div class="why"><code>True/False</code> maskesini 1/0'a çevirir. Karşılaştırma <code>y_true</code> zaten int olduğu için bu dönüşüm olmadan da çalışırdı; okunabilirlik için var.</div>
+        </div>
+        <div class="row">
+          <div class="line">np.mean(predictions == y_true)</div>
+          <div class="why">Doğruların oranı. <code>True</code>'ların ortalaması = doğru sayısı / toplam. 4 örnekte 3 doğru → 0.75.</div>
+        </div>
+      </div>
+
+      <div class="callout dikkat">
+        <span class="tag">Neden loss yerine accuracy'yi optimize etmiyoruz?</span>
+        <p>Çünkü accuracy basamaklı bir fonksiyondur: tahmin 0.51'den 0.99'a çıksa bile accuracy
+        hiç değişmez, gradyanı her yerde sıfırdır. Sıfır gradyanla öğrenilecek yön bulunamaz.
+        Loss ise sürekli ve türevlenebilirdir — bu yüzden ağ loss'u küçültür, biz accuracy'yi izleriz.</p>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ================= 8 ================= -->
+    <section id="b8">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 08 · train</div>
+        <h2>Dört parçayı birleştiren döngü</h2>
+        <p class="what">
+          Bütün dosya bu döngüye hizmet eder. Sırası da tesadüf değil: tahmin et → hatayı ölç →
+          suçu dağıt → ağırlıkları kaydır.
+        </p>
+      </div>
+
+      <div class="code"><pre><span class="k">def</span> <span class="fn">train</span>(x, y, epochs=<span class="nu">5000</span>, learning_rate=<span class="nu">0.5</span>, hidden_size=<span class="nu">4</span>, activation=<span class="st">"relu"</span>, loss_type=<span class="st">"bce"</span>):
+    w1, b1, w2, b2 = init_parameters(x.shape[<span class="nu">1</span>], hidden_size, y.shape[<span class="nu">1</span>])
+
+    <span class="k">for</span> epoch <span class="k">in</span> range(<span class="nu">1</span>, epochs + <span class="nu">1</span>):
+        y_pred, cache = forward_pass(x, w1, b1, w2, b2, activation=activation)      <span class="cm"># 1</span>
+        loss = loss_function(y_pred, y, loss_type=loss_type)                        <span class="cm"># 2</span>
+
+        dw1, db1, dw2, db2 = backward_pass(                                         <span class="cm"># 3</span>
+            y, y_pred, cache, w1, b1, w2, b2,
+            loss_type=loss_type, activation=activation
+        )
+
+        w1, b1, w2, b2 = update_parameters(                                         <span class="cm"># 4</span>
+            w1, b1, w2, b2, dw1, db1, dw2, db2, learning_rate
+        )
+
+        <span class="k">if</span> epoch % <span class="nu">500</span> == <span class="nu">0</span> <span class="k">or</span> epoch == <span class="nu">1</span>:
+            acc = accuracy(y_pred, y)
+            print(f<span class="st">"Epoch {epoch:4d} | Loss: {loss:.4f} | Accuracy: {acc * 100:.1f}%"</span>)
+
+    <span class="k">return</span> w1, b1, w2, b2</pre></div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">x.shape[1] · y.shape[1]</div>
+          <div class="why">Giriş ve çıkış boyutları veriden <strong>otomatik</strong> okunur. XOR için 2 ve 1; başka bir veri seti verseniz fonksiyonu değiştirmeden çalışır. Sadece <code>hidden_size</code> sizin seçiminizdir.</div>
+        </div>
+        <div class="row">
+          <div class="line">range(1, epochs + 1)</div>
+          <div class="why">0 yerine 1'den başlar; ekrana "Epoch 1" yazdırmak için. <code>+ 1</code> olmasaydı son epoch 4999'da kalırdı.</div>
+        </div>
+        <div class="row">
+          <div class="line">4 adımın sırası</div>
+          <div class="why">Her epoch aynı dört adımı tekrarlar. XOR verisi 4 satır olduğu için batch = tüm veri; yani burada <strong>full-batch gradient descent</strong> yapılıyor. Gerçek veri setlerinde bu döngünün içine bir de batch döngüsü girer.</div>
+        </div>
+        <div class="row">
+          <div class="line">epoch % 500 == 0 or epoch == 1</div>
+          <div class="why">5000 satır yerine 11 satır çıktı. <code>epoch == 1</code> şartı, öğrenmenin <strong>başlangıç noktasını</strong> da görebilmek için — sondaki değerin ne kadar iyileştiğini ancak başlangıcı bilirseniz anlarsınız.</div>
+        </div>
+        <div class="row">
+          <div class="line">acc = accuracy(y_pred, y)</div>
+          <div class="why">Dikkat: bu <code>y_pred</code>, güncellemeden <em>önceki</em> ağırlıklarla üretilmişti. Yani yazdırılan skor bir adım geridedir. Zararsız bir gecikme, ama sayıyı yorumlarken bilmekte fayda var.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ================= 9 ================= -->
+    <section id="b9">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 09 · veri</div>
+        <h2>Neden XOR? Çünkü tek bir çizgi onu ayıramaz</h2>
+      </div>
+
+      <div class="code"><pre>X = np.array([   <span class="cm"># giris verileri</span>
+    [<span class="nu">0</span>, <span class="nu">0</span>],
+    [<span class="nu">0</span>, <span class="nu">1</span>],
+    [<span class="nu">1</span>, <span class="nu">0</span>],
+    [<span class="nu">1</span>, <span class="nu">1</span>],
+])
+
+y = np.array([   <span class="cm"># hedef verileri</span>
+    [<span class="nu">0</span>],
+    [<span class="nu">1</span>],
+    [<span class="nu">1</span>],
+    [<span class="nu">0</span>],
+])</pre></div>
+
+      <figure>
+        <div class="figbox">
+          <svg viewBox="0 0 420 250" role="img" aria-label="XOR'un dört noktası: köşegenler aynı sınıfta, tek bir doğru ile ayrılamaz">
+            <g stroke="var(--line)" stroke-width="1">
+              <line x1="70" y1="200" x2="330" y2="200"></line>
+              <line x1="70" y1="200" x2="70" y2="40"></line>
+            </g>
+            <g stroke="var(--line-soft)" stroke-width="1" stroke-dasharray="3 4">
+              <line x1="70" y1="60" x2="290" y2="60"></line>
+              <line x1="290" y1="200" x2="290" y2="60"></line>
+            </g>
+
+            <circle cx="70"  cy="200" r="9" fill="var(--surface)" stroke="var(--muted)" stroke-width="2"></circle>
+            <circle cx="290" cy="60"  r="9" fill="var(--surface)" stroke="var(--muted)" stroke-width="2"></circle>
+            <circle cx="70"  cy="60"  r="9" fill="var(--fwd)"></circle>
+            <circle cx="290" cy="200" r="9" fill="var(--fwd)"></circle>
+
+            <g font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--muted)">
+              <text x="46" y="222">(0,0)</text>
+              <text x="46" y="46">(0,1)</text>
+              <text x="266" y="222">(1,0)</text>
+              <text x="266" y="46">(1,1)</text>
+            </g>
+            <g font-family="IBM Plex Sans, sans-serif" font-size="12">
+              <circle cx="350" cy="96" r="7" fill="var(--fwd)"></circle>
+              <text x="364" y="100" fill="var(--text)">hedef 1</text>
+              <circle cx="350" cy="126" r="7" fill="var(--surface)" stroke="var(--muted)" stroke-width="2"></circle>
+              <text x="364" y="130" fill="var(--text)">hedef 0</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption>
+          Aynı sınıftaki noktalar çaprazda. Bu düzlemi tek bir doğruyla ikiye bölüp iki dolu daireyi
+          bir tarafta toplayamazsınız — bu yüzden gizli katman ve ReLU şart. XOR, "gizli katman gerçekten
+          gerekli mi?" sorusunun en küçük ispatıdır.
+        </figcaption>
+      </figure>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ================= 10 ================= -->
+    <section id="b10">
+      <div class="sec-head">
+        <div class="eyebrow">Bölüm 10 · çalıştırma</div>
+        <h2>Eğit, sonra öğrendiklerini sınav yap</h2>
+      </div>
+
+      <div class="code"><pre>w1, b1, w2, b2 = train(
+    X, y,
+    epochs=<span class="nu">5000</span>,
+    learning_rate=<span class="nu">0.5</span>,
+    hidden_size=<span class="nu">4</span>,
+    activation=<span class="st">"relu"</span>,
+    loss_type=<span class="st">"bce"</span>,
+)
+
+print(<span class="st">"\nFinal tahminler:"</span>)
+y_pred, _ = forward_pass(X, w1, b1, w2, b2, activation=<span class="st">"relu"</span>)
+
+<span class="k">for</span> i <span class="k">in</span> range(len(X)):
+    print(f<span class="st">"Input: {X[i]} -&gt; Tahmin: {y_pred[i][0]:.4f} | Hedef: {y[i][0]}"</span>)</pre></div>
+
+      <div class="notes">
+        <div class="row">
+          <div class="line">w1, b1, w2, b2 = train(...)</div>
+          <div class="why">Eğitilmiş ağırlıkları dışarı alır. Model dediğimiz şey bu dört diziden ibarettir — kaydetmek isteseniz <code>np.savez</code> ile bu dördünü kaydetmeniz yeterdi.</div>
+        </div>
+        <div class="row">
+          <div class="line">y_pred, _ = forward_pass(...)</div>
+          <div class="why">Son bir kez ileri besleme. <code>_</code> ile <code>cache</code> atılıyor çünkü artık öğrenmiyoruz, sadece tahmin alıyoruz. <code>activation="relu"</code>'yu burada da vermek <strong>zorunlu</strong>: eğitim sigmoid'le, tahmin ReLU'yla yapılırsa ağırlıklar başka bir ağa aitmiş gibi davranır.</div>
+        </div>
+        <div class="row">
+          <div class="line">y_pred[i][0]</div>
+          <div class="why"><code>y_pred</code> <code>(4,1)</code> boyutunda; ilk indeks örneği, ikincisi tek çıkış nöronunu seçer. Ekranda <code>[0.0021]</code> yerine <code>0.0021</code> görmenizin sebebi bu.</div>
+        </div>
+        <div class="row">
+          <div class="line">modül seviyesinde çalışması</div>
+          <div class="why">Bu satırlar <code>if __name__ == "__main__":</code> altında değil; yani dosyayı başka bir yerden <code>import</code> ederseniz 5000 epoch'luk eğitim kendiliğinden başlar. Fonksiyonları yeniden kullanacaksanız bu bloğu bir <code>main()</code> içine almak iyi olur — <code>egitim_cnn.py</code>'de tam olarak öyle yapılmış.</div>
+        </div>
+      </div>
+
+      <div class="callout amac">
+        <span class="tag">Beklenen çıktı</span>
+        <p>Eğitim başarılıysa dört tahmin hedeflere yapışır: <code>(0,0) → ~0.00</code>,
+        <code>(0,1) → ~1.00</code>, <code>(1,0) → ~1.00</code>, <code>(1,1) → ~0.00</code>.
+        Ortalarda (0.5 civarı) takılan bir tahmin görürseniz, ağ o köşeyi öğrenememiş demektir;
+        ilk bakılacak yerler seed, learning rate ve <code>hidden_size</code>.</p>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ================= EK A ================= -->
+    <section id="ek-a">
+      <div class="sec-head">
+        <div class="eyebrow">Ek A · tek_noron.py</div>
+        <h2>Aynı fikrin tek katmanlık, elle hesaplanabilir hâli</h2>
+        <p class="what">
+          Bu dosyada eğitim yok — sadece <code>z = x @ w + b</code>'nin bir kez hesaplanışı ve dört
+          farklı aktivasyonun aynı <code>z</code> üzerindeki etkisi. <code>sinir_agi.py</code>'nin
+          tek bir satırının mikroskop altındaki hâli.
+        </p>
+      </div>
+
+      <div class="code"><pre>w = np.array([[<span class="nu">0.7</span>, <span class="nu">0.3</span>, <span class="nu">0.5</span>],
+              [<span class="nu">0.2</span>, <span class="nu">0.9</span>, <span class="nu">0.4</span>]])   <span class="cm"># 2 girdi, 3 noron</span>
+x = np.array([[<span class="nu">2.0</span>, <span class="nu">6.0</span>]])           <span class="cm"># 1 ornek, 2 ozellik</span>
+b = np.array([[-<span class="nu">0.2</span>, <span class="nu">0.1</span>, -<span class="nu">0.5</span>]])    <span class="cm"># her noron icin bias</span>
+
+z = x @ w + b                        <span class="cm"># -&gt; (1, 3)</span></pre></div>
+
+      <p>İlk nöronun hesabı elle: <code class="mono">2.0 × 0.7 + 6.0 × 0.2 − 0.2 = 2.4</code>. Üçü birden:</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Nöron</th><th class="num">z</th><th class="num">sigmoid</th><th class="num">ReLU</th><th class="num">tanh</th><th class="num">softmax</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono-cell">1</td><td class="num">2.40</td><td class="num">0.9168</td><td class="num">2.40</td><td class="num">0.9837</td><td class="num">0.0232</td></tr>
+            <tr><td class="mono-cell">2</td><td class="num">6.10</td><td class="num">0.9978</td><td class="num">6.10</td><td class="num">1.0000</td><td class="num">0.9385</td></tr>
+            <tr><td class="mono-cell">3</td><td class="num">2.90</td><td class="num">0.9478</td><td class="num">2.90</td><td class="num">0.9940</td><td class="num">0.0383</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="plain">
+        <li><strong>sigmoid</strong> — her nöronu bağımsız olarak 0–1 arasına sıkıştırır. Üçü de yüksek çıkabilir; toplamları 1 olmak zorunda değil. Çok sınıflı olmayan, "evet/hayır" tipi çıkışlar için.</li>
+        <li><strong>ReLU</strong> — burada üç <code>z</code> de pozitif olduğu için hiçbir şey değişmedi. Farkı ancak negatif bir <code>z</code>'de görürsünüz; orada çıktı sert biçimde 0 olur.</li>
+        <li><strong>tanh</strong> — sigmoid'in −1…+1 arası, sıfır merkezli akrabası. Sıfır merkezli olması gradyanların dengeli akmasına yardım eder.</li>
+        <li><strong>softmax</strong> — tek fark yaratan aktivasyon: nöronları <em>birbirine karşı</em> yarıştırır, toplamları 1 olur. 6.10'luk skor payın %94'ünü alır. Bu yüzden 10 rakamlı MNIST'te softmax kullanılır, XOR'da kullanılmaz.</li>
+      </ul>
+
+      <div class="callout dikkat">
+        <span class="tag">Pratikte dikkat</span>
+        <p><code>np.exp(z) / np.sum(np.exp(z))</code> ders için doğru ama sayısal olarak kırılgandır:
+        <code>z</code> büyüdüğünde <code>np.exp</code> taşar. Kütüphanelerin yaptığı gibi önce
+        <code>z - z.max()</code> çıkarmak sonucu değiştirmez, taşmayı önler.</p>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ================= EK B ================= -->
+    <section id="ek-b">
+      <div class="sec-head">
+        <div class="eyebrow">Ek B · egitim_no_cnn.py &amp; egitim_cnn.py</div>
+        <h2>Elle yazdığınız her parçanın PyTorch'taki karşılığı</h2>
+        <p class="what">
+          Aynı klasördeki MNIST dosyaları yeni bir fikir getirmiyor — <code>sinir_agi.py</code>'de elle
+          yazdığınız adımları hazır bileşenlerle çağırıyorlar. Tablo, iki dosya arasındaki köprüdür.
+        </p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>sinir_agi.py (elle)</th><th>PyTorch karşılığı</th><th>Ne değişti</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono-cell">init_parameters</td><td class="mono-cell">nn.Linear(in, out)</td><td>w ve b'yi kendisi oluşturur, daha iyi bir başlatma şemasıyla</td></tr>
+            <tr><td class="mono-cell">x @ w + b</td><td class="mono-cell">nn.Linear.forward</td><td>Birebir aynı işlem</td></tr>
+            <tr><td class="mono-cell">relu(z)</td><td class="mono-cell">nn.ReLU()</td><td>Aynı fonksiyon, katman nesnesi olarak</td></tr>
+            <tr><td class="mono-cell">forward_pass</td><td class="mono-cell">model(images)</td><td><code>cache</code>'i autograd otomatik tutar</td></tr>
+            <tr><td class="mono-cell">loss_function (bce)</td><td class="mono-cell">nn.CrossEntropyLoss()</td><td>2 sınıf yerine 10 sınıf; softmax içine gömülü</td></tr>
+            <tr><td class="mono-cell">backward_pass</td><td class="mono-cell">loss.backward()</td><td>Zincir kuralını sizin yerinize türetir</td></tr>
+            <tr><td class="mono-cell">update_parameters</td><td class="mono-cell">optimizer.step()</td><td>Adam: aynı çıkarma, üstüne momentum ve uyarlanabilir adım</td></tr>
+            <tr><td class="mono-cell">—</td><td class="mono-cell">optimizer.zero_grad()</td><td>PyTorch gradyanları biriktirir; elle yazımda böyle bir birikme yok</td></tr>
+            <tr><td class="mono-cell">accuracy (0.5 eşiği)</td><td class="mono-cell">logits.argmax(dim=1)</td><td>10 sınıfta eşik yerine "en yüksek skor"</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout geri">
+        <span class="tag">Tek gerçek yenilik</span>
+        <p><code>optimizer.zero_grad()</code> satırının XOR dosyasında karşılığı yok, çünkü orada
+        gradyanlar her epoch sıfırdan hesaplanıp değişkene <em>atanıyor</em>. PyTorch ise gradyanları
+        parametrenin üstüne <em>ekler</em>; temizlemezseniz eski epoch'ların gradyanları yenisine karışır.
+        Bu, PyTorch'a geçenlerin en sık yaptığı hatadır.</p>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ================= EK C ================= -->
+    <section id="ek-c">
+      <div class="sec-head">
+        <div class="eyebrow">Ek C</div>
+        <h2>Bir şey ters giderse önce buraya bakın</h2>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <div class="n">Belirti</div>
+          <div class="t">Loss hiç düşmüyor</div>
+          <div class="d">Güncelleme sonucu geri döndürülmemiş ya da learning rate çok küçük olabilir. <code>update_parameters</code>'ın çıktısının atandığından emin olun.</div>
+        </div>
+        <div class="card">
+          <div class="n">Belirti</div>
+          <div class="t">Loss <code>nan</code> oldu</div>
+          <div class="d">Learning rate çok büyük, ya da <code>np.clip</code> satırı devre dışı ve <code>log(0)</code> hesaplanmış.</div>
+        </div>
+        <div class="card">
+          <div class="n">Belirti</div>
+          <div class="t">Accuracy %75'te takıldı</div>
+          <div class="d">XOR'un dört köşesinden üçü öğrenilmiş. Kötü bir başlangıç noktası: seed'i veya <code>hidden_size</code>'ı değiştirin.</div>
+        </div>
+        <div class="card">
+          <div class="n">Belirti</div>
+          <div class="t">Şekil (shape) hatası</div>
+          <div class="d">Neredeyse her zaman eksik bir <code>.T</code> veya unutulmuş <code>keepdims=True</code>. Kural: <strong>gradyanın şekli, parametresinin şekliyle aynı olmalı.</strong></div>
+        </div>
+        <div class="card">
+          <div class="n">Deney</div>
+          <div class="t">MSE'yi deneyin</div>
+          <div class="d"><code>loss_type="mse"</code> ile aynı ağ çok daha yavaş öğrenir. Sebebi Bölüm 05'te: sigmoid türevi gradyanı boğar.</div>
+        </div>
+        <div class="card">
+          <div class="n">Deney</div>
+          <div class="t">Gizli katmanı kaldırın</div>
+          <div class="d">Aktivasyonu kaldırıp ağı doğrusal bırakın: accuracy %75'i geçemez. Ek'teki XOR şekli bunun sebebini gösteriyor.</div>
+        </div>
+      </div>
+
+      <p class="footnote" style="margin-top:8px">
+        Kaynak: <code>deep_learning/gorev1/sinir_agi.py</code> · <code>tek_noron.py</code> ·
+        <code>egitim_no_cnn.py</code> · <code>egitim_cnn.py</code>
+      </p>
+    </section>
+
+  </main>
+</div>
