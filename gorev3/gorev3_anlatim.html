@@ -211,6 +211,28 @@
   td.mono-cell { font-family: "IBM Plex Mono", monospace; font-size: .82rem; }
   td.win { color: var(--fwd); font-weight: 600; }
 
+  /* ---------- CONFUSION MATRISI ---------- */
+  .cm-tablo { font-size: .84rem; }
+  .cm-tablo th, .cm-tablo td { padding: 7px 9px; text-align: right; }
+  .cm-tablo thead th { font-family: "IBM Plex Mono", monospace; font-weight: 500; }
+  .cm-tablo th.cm-kose { text-align: left; white-space: nowrap; font-size: .76rem; color: var(--faint); }
+  .cm-tablo th.cm-satir {
+    text-align: left; font-family: "IBM Plex Mono", monospace; font-weight: 600;
+    color: var(--muted); white-space: nowrap;
+  }
+  .cm-tablo td { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+  .cm-tablo td.cm-dogru { background: color-mix(in srgb, var(--fwd) var(--v), transparent); color: var(--text); font-weight: 600; }
+  .cm-tablo td.cm-hata  { background: color-mix(in srgb, var(--bwd) var(--v), transparent); color: var(--text); }
+  .cm-tablo td.cm-sifir { color: var(--faint); }
+  .cm-ikili { display: grid; gap: 18px; }
+  @media (min-width: 900px) { .cm-ikili { grid-template-columns: 1fr 1fr; } }
+  .cm-ikili .cm-baslik { font-size: .8rem; color: var(--muted); margin-bottom: 8px; font-family: "IBM Plex Mono", monospace; }
+  .cm-aciklama { font-size: .82rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+  .cm-aciklama .kutu { display: inline-grid; grid-auto-flow: column; gap: 6px; align-items: center; }
+  .cm-aciklama .ornek { width: 13px; height: 13px; border-radius: 3px; display: block; }
+  .cm-aciklama .ornek.dogru { background: color-mix(in srgb, var(--fwd) 65%, transparent); }
+  .cm-aciklama .ornek.hata  { background: color-mix(in srgb, var(--bwd) 55%, transparent); }
+
   figure { margin: 0; display: grid; gap: 10px; }
   figure svg { width: 100%; height: auto; display: block; }
   .figbox { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; overflow-x: auto; }
@@ -996,6 +1018,93 @@ VAL_ORAN  = <span class="nu">0.20</span></pre></div>
         <li><strong>En büyük tek kazanç transfer learning'den geldi:</strong> 86.03'ten 94.33'e,
         yani sekiz puan. Augmentation, BatchNorm, GAP ve OneCycle'ın toplam katkısı ise beş puandı.</li>
       </ul>
+
+      <h3>Sekiz puan nereden geldi — ve nereden gelmedi</h3>
+      <p>
+        Tablo 81.00'den 92.80'e çıkıldığını söylüyor; hangi hataların düzeldiğini söylemiyor.
+        Aynı iki deneyin confusion matrisleri yan yana konduğunda transfer learning'in neyi
+        çözdüğü, neyi <em>çözemediği</em> tek bakışta görünür:
+      </p>
+
+      <figure>
+        <div class="cm-ikili">
+          <div>
+            <div class="cm-baslik">baseline_cnn — test %81.00</div>
+          <div class="table-wrap">
+            <table class="cm-tablo">
+              <thead>
+                <tr><th class="cm-kose">gerçek \ tahmin</th><th class="num">buildings</th><th class="num">forest</th><th class="num">glacier</th><th class="num">mountain</th><th class="num">sea</th><th class="num">street</th></tr>
+              </thead>
+              <tbody>
+                <tr><th class="cm-satir">buildings</th><td class="cm-dogru" style="--v:92%">373</td><td class="cm-hata" style="--v:10%">4</td><td class="cm-hata" style="--v:11%">5</td><td class="cm-hata" style="--v:14%">9</td><td class="cm-hata" style="--v:14%">8</td><td class="cm-hata" style="--v:29%">38</td></tr>
+                <tr><th class="cm-satir">forest</th><td class="cm-hata" style="--v:19%">17</td><td class="cm-dogru" style="--v:93%">411</td><td class="cm-hata" style="--v:8%">3</td><td class="cm-hata" style="--v:10%">5</td><td class="cm-hata" style="--v:5%">1</td><td class="cm-hata" style="--v:28%">37</td></tr>
+                <tr><th class="cm-satir">glacier</th><td class="cm-hata" style="--v:17%">16</td><td class="cm-hata" style="--v:6%">2</td><td class="cm-dogru" style="--v:87%">415</td><td class="cm-hata" style="--v:37%">74</td><td class="cm-hata" style="--v:27%">39</td><td class="cm-hata" style="--v:11%">7</td></tr>
+                <tr><th class="cm-satir">mountain</th><td class="cm-hata" style="--v:15%">12</td><td class="cm-hata" style="--v:8%">3</td><td class="cm-hata" style="--v:35%">63</td><td class="cm-dogru" style="--v:90%">423</td><td class="cm-hata" style="--v:20%">22</td><td class="cm-hata" style="--v:6%">2</td></tr>
+                <tr><th class="cm-satir">sea</th><td class="cm-hata" style="--v:17%">15</td><td class="cm-hata" style="--v:6%">2</td><td class="cm-hata" style="--v:24%">30</td><td class="cm-hata" style="--v:27%">37</td><td class="cm-dogru" style="--v:91%">419</td><td class="cm-hata" style="--v:12%">7</td></tr>
+                <tr><th class="cm-satir">street</th><td class="cm-hata" style="--v:44%">95</td><td class="cm-hata" style="--v:10%">5</td><td class="cm-hata" style="--v:4%">1</td><td class="cm-hata" style="--v:8%">3</td><td class="cm-hata" style="--v:13%">8</td><td class="cm-dogru" style="--v:88%">389</td></tr>
+              </tbody>
+            </table>
+          </div>
+          </div>
+          <div>
+            <div class="cm-baslik">ResNet18_finetune — test %92.80</div>
+          <div class="table-wrap">
+            <table class="cm-tablo">
+              <thead>
+                <tr><th class="cm-kose">gerçek \ tahmin</th><th class="num">buildings</th><th class="num">forest</th><th class="num">glacier</th><th class="num">mountain</th><th class="num">sea</th><th class="num">street</th></tr>
+              </thead>
+              <tbody>
+                <tr><th class="cm-satir">buildings</th><td class="cm-dogru" style="--v:96%">406</td><td class="cm-hata" style="--v:5%">1</td><td class="cm-hata" style="--v:5%">1</td><td class="cm-hata" style="--v:5%">1</td><td class="cm-sifir">·</td><td class="cm-hata" style="--v:25%">28</td></tr>
+                <tr><th class="cm-satir">forest</th><td class="cm-sifir">·</td><td class="cm-dogru" style="--v:99%">469</td><td class="cm-hata" style="--v:9%">4</td><td class="cm-hata" style="--v:5%">1</td><td class="cm-sifir">·</td><td class="cm-sifir">·</td></tr>
+                <tr><th class="cm-satir">glacier</th><td class="cm-hata" style="--v:6%">2</td><td class="cm-sifir">·</td><td class="cm-dogru" style="--v:93%">482</td><td class="cm-hata" style="--v:31%">53</td><td class="cm-hata" style="--v:16%">14</td><td class="cm-hata" style="--v:6%">2</td></tr>
+                <tr><th class="cm-satir">mountain</th><td class="cm-hata" style="--v:6%">2</td><td class="cm-hata" style="--v:4%">1</td><td class="cm-hata" style="--v:29%">45</td><td class="cm-dogru" style="--v:94%">468</td><td class="cm-hata" style="--v:13%">9</td><td class="cm-sifir">·</td></tr>
+                <tr><th class="cm-satir">sea</th><td class="cm-hata" style="--v:9%">4</td><td class="cm-hata" style="--v:4%">1</td><td class="cm-hata" style="--v:11%">6</td><td class="cm-hata" style="--v:13%">9</td><td class="cm-dogru" style="--v:98%">490</td><td class="cm-sifir">·</td></tr>
+                <tr><th class="cm-satir">street</th><td class="cm-hata" style="--v:24%">29</td><td class="cm-sifir">·</td><td class="cm-hata" style="--v:4%">1</td><td class="cm-sifir">·</td><td class="cm-hata" style="--v:6%">2</td><td class="cm-dogru" style="--v:97%">469</td></tr>
+              </tbody>
+            </table>
+          </div>
+          </div>
+        </div>
+        <figcaption>
+          <span class="cm-aciklama">
+            <span class="kutu"><span class="ornek dogru"></span> köşegen — doğru bilinen</span>
+            <span class="kutu"><span class="ornek hata"></span> köşegen dışı — hatanın gittiği sınıf</span>
+          </span>
+          Renk yoğunluğu satır toplamına göre ölçeklidir. Kaynak:
+          <code>kayitlar/gorev3/confusion/baseline_cnn.csv</code> ve
+          <code>ResNet18_finetune.csv</code>.
+        </figcaption>
+      </figure>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Karışan çift</th><th class="num">baseline</th><th class="num">finetune</th><th>Ne oldu</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono-cell">forest → street</td><td class="num">37</td><td class="num win">0</td><td>Tamamen kayboldu</td></tr>
+            <tr><td class="mono-cell">street → buildings</td><td class="num">95</td><td class="num win">29</td><td>%69 azaldı</td></tr>
+            <tr><td class="mono-cell">sea → mountain</td><td class="num">37</td><td class="num win">9</td><td>%76 azaldı</td></tr>
+            <tr><td class="mono-cell">glacier → mountain</td><td class="num">74</td><td class="num">53</td><td>Sadece %28 azaldı</td></tr>
+            <tr><td class="mono-cell">mountain → glacier</td><td class="num">63</td><td class="num">45</td><td>Sadece %29 azaldı</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout dikkat">
+        <span class="tag">Matrisin söylediği, tablonun söylemediği</span>
+        <p>Transfer learning <strong>anlamsal</strong> karışıklıkları süpürdü:
+        <code>forest → street</code> sıfıra indi, <code>street → buildings</code> 95'ten 29'a düştü.
+        Bunlar zaten ImageNet'in ayırmayı bildiği kavramlardı. Ama
+        <code>glacier ↔ mountain</code> çifti direndi: 137 karşılıklı hatadan geriye hâlâ 98 tanesi
+        duruyor. Üstelik <em>oransal olarak büyüdü</em> — baseline'da 570 hatanın %24'üydü,
+        fine-tune'da 216 hatanın <strong>%45'i</strong>. Diğer her şey düzeldikçe geriye kalan
+        tek baskın hata türü bu oldu.</p>
+        <p>Sebep model değil, veri: karlı bir dağın fotoğrafı ile buzulun fotoğrafı gerçekten
+        birbirine benziyor, sınıf sınırı etiketlemede bile belirsiz. Buradan sonraki kazanç daha
+        büyük modelden değil, <strong>bu iki sınıfa özel veri veya daha yüksek çözünürlükten</strong>
+        gelir. Bu teşhisi test accuracy'sine bakarak koymanın hiçbir yolu yoktu.</p>
+      </div>
     </section>
 
     <hr class="divider">

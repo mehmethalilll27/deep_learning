@@ -212,6 +212,24 @@
   figure svg { width: 100%; height: auto; display: block; }
   .figbox { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; overflow-x: auto; }
   figcaption { font-size: .86rem; color: var(--muted); max-width: 64ch; }
+  figure img { width: 100%; height: auto; display: block; border-radius: 4px; }
+
+  /* ---------- TAHMIN GORSELLERI ---------- */
+  .gorsel-dizi { display: grid; gap: 16px; }
+  .gorsel-dizi.ikili { grid-template-columns: 1fr; }
+  @media (min-width: 900px) { .gorsel-dizi.ikili { grid-template-columns: 1fr 1fr; } }
+  .gorsel-kutu { display: grid; gap: 8px; }
+  .gorsel-kutu .etiket {
+    font-family: "IBM Plex Mono", monospace; font-size: .78rem; color: var(--muted);
+    display: flex; justify-content: space-between; gap: 12px; align-items: baseline;
+  }
+  .gorsel-kutu .etiket .skor { color: var(--text); font-weight: 600; }
+  .gorsel-kutu .etiket .skor.ref { color: var(--bwd); }
+  .gorsel-kutu .etiket .skor.win { color: var(--fwd); }
+  .gorsel-kutu img {
+    width: 100%; height: auto; display: block;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--surface);
+  }
   .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .82rem; color: var(--muted); }
   .legend span { display: inline-flex; align-items: center; gap: 7px; }
   .legend i { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
@@ -691,6 +709,39 @@ precision = tp_k / np.maximum(tp_k + fp_k, <span class="nu">1e-9</span>)</pre></
         VOC'ta karşılığı olmayanlar fazladan sayılıyor. İnce ayar precision'ı 72.82'ye çıkarıyor —
         yani ince ayar mAP'i artırmasa da modeli <em>daha az konuşkan</em> yapıyor.</li>
       </ul>
+
+      <h3>25.6 puanın aynı görüntülerdeki karşılığı</h3>
+      <p>
+        <code>tespit.py</code>'deki <code>gorsel_kaydet</code>, her deneyden sonra aynı test
+        görüntüleri için tahmin kutularını diske yazıyor. Tablodaki üç satırı yan yana koyduğunuzda
+        mAP farkının ne anlama geldiği somutlaşıyor:
+      </p>
+
+      <figure>
+        <div class="gorsel-dizi">
+          <div class="gorsel-kutu">
+            <div class="etiket"><span>tespit_baseline — sıfırdan eğitim</span><span class="skor">mAP 51.48</span></div>
+            <img src="../kayitlar/gorev5/gorseller/tespit/baseline/tespit_tespit_baseline.png"
+                 alt="Baseline tespit modelinin test görüntülerindeki tahmin kutuları" loading="lazy">
+          </div>
+          <div class="gorsel-kutu">
+            <div class="etiket"><span>tespit_coco_ft — COCO'dan ince ayar</span><span class="skor win">mAP 77.10</span></div>
+            <img src="../kayitlar/gorev5/gorseller/tespit/a1_transfer/tespit_tespit_coco_ft.png"
+                 alt="COCO ağırlıklarından ince ayarlanan tespit modelinin tahmin kutuları" loading="lazy">
+          </div>
+          <div class="gorsel-kutu">
+            <div class="etiket"><span>ref_coco_egitimsiz — hiç eğitilmedi</span><span class="skor ref">mAP 81.00</span></div>
+            <img src="../kayitlar/gorev5/gorseller/tespit/referans/tespit_ref_coco_egitimsiz.png"
+                 alt="Hiç eğitilmemiş hazır COCO modelinin VOC görüntülerindeki tahmin kutuları" loading="lazy">
+          </div>
+        </div>
+        <figcaption>
+          Baseline'da kaçırılan ve yanlış yerleştirilen kutular, ince ayardan sonra büyük ölçüde
+          toparlanıyor. Üçüncü görselde referans modelin <em>fazladan</em> kutuları da görünür —
+          tablodaki 60.07'lik düşük precision'ın görsel karşılığı budur. Kaynak:
+          <code>kayitlar/gorev5/gorseller/tespit/</code>.
+        </figcaption>
+      </figure>
     </section>
 
     <hr class="divider">
@@ -952,6 +1003,44 @@ fwiou     = (frekans[var] * iou[var]).sum()      <span class="cm"># frekans agir
         Tespitte fark 2.89 puandı, burada 10.68 — çünkü bölütleme eğitim setinde yalnızca
         1.464 görüntü var.</li>
       </ul>
+
+      <h3>Dört satırın maskeleri</h3>
+      <p>
+        Bölütlemede sayı ile görüntü arasındaki mesafe tespitten de büyüktür: mIoU 6.99'un ne demek
+        olduğunu ancak maskeye bakınca anlarsınız. <code>bolutleme.py</code>'nin
+        <code>gorsel_kaydet</code>'i her deney için aynı test görüntülerini basıyor:
+      </p>
+
+      <figure>
+        <div class="gorsel-dizi ikili">
+          <div class="gorsel-kutu">
+            <div class="etiket"><span>bolut_scratch — sıfırdan</span><span class="skor">mIoU 6.99</span></div>
+            <img src="../kayitlar/gorev5/gorseller/bolutleme/a2_egitim_duzeni/bolut_bolut_scratch.png"
+                 alt="Sıfırdan eğitilen bölütleme modelinin neredeyse tamamen arka plan diyen maskeleri" loading="lazy">
+          </div>
+          <div class="gorsel-kutu">
+            <div class="etiket"><span>bolut_baseline — ImageNet gövde</span><span class="skor">mIoU 56.41</span></div>
+            <img src="../kayitlar/gorev5/gorseller/bolutleme/baseline/bolut_bolut_baseline.png"
+                 alt="Baseline bölütleme modelinin tahmin maskeleri" loading="lazy">
+          </div>
+          <div class="gorsel-kutu">
+            <div class="etiket"><span>bolut_aux — en iyi eğitilen</span><span class="skor win">mIoU 64.78</span></div>
+            <img src="../kayitlar/gorev5/gorseller/bolutleme/a2_egitim_duzeni/bolut_bolut_aux.png"
+                 alt="Yardımcı kayıpla eğitilen bölütleme modelinin tahmin maskeleri" loading="lazy">
+          </div>
+          <div class="gorsel-kutu">
+            <div class="etiket"><span>ref_hazir_voc — hazır model</span><span class="skor ref">mIoU 75.46</span></div>
+            <img src="../kayitlar/gorev5/gorseller/bolutleme/referans/bolut_ref_hazir_voc.png"
+                 alt="Hazır VOC bölütleme modelinin tahmin maskeleri" loading="lazy">
+          </div>
+        </div>
+        <figcaption>
+          İlk görsel, tablodaki en önemli tuzağın resmidir: <code>bolut_scratch</code>'in piksel
+          accuracy'si %73.32 — çünkü maske neredeyse tamamen arka plan, ve arka plan zaten
+          piksellerin %74'ü. Sayı "fena değil" diyor, görüntü "hiçbir şey öğrenmemiş" diyor.
+          Kaynak: <code>kayitlar/gorev5/gorseller/bolutleme/</code>.
+        </figcaption>
+      </figure>
     </section>
 
     <hr class="divider">

@@ -236,6 +236,28 @@
   tbody tr:last-child td { border-bottom: none; }
   td.num, th.num { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
   td.mono-cell { font-family: "IBM Plex Mono", monospace; font-size: .82rem; }
+
+  /* ---------- CONFUSION MATRISI ---------- */
+  .cm-tablo { font-size: .84rem; }
+  .cm-tablo th, .cm-tablo td { padding: 7px 9px; text-align: right; }
+  .cm-tablo thead th { font-family: "IBM Plex Mono", monospace; font-weight: 500; }
+  .cm-tablo th.cm-kose { text-align: left; white-space: nowrap; font-size: .76rem; color: var(--faint); }
+  .cm-tablo th.cm-satir {
+    text-align: left; font-family: "IBM Plex Mono", monospace; font-weight: 600;
+    color: var(--muted); white-space: nowrap;
+  }
+  .cm-tablo th.cm-vurgu { color: var(--bwd); }
+  .cm-tablo th.cm-vurgu::after { content: " ◂"; color: var(--bwd); }
+  .cm-tablo td { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+  .cm-tablo td.cm-dogru { background: color-mix(in srgb, var(--fwd) var(--v), transparent); color: var(--text); font-weight: 600; }
+  .cm-tablo td.cm-hata  { background: color-mix(in srgb, var(--bwd) var(--v), transparent); color: var(--text); }
+  .cm-tablo td.cm-sifir { color: var(--faint); }
+  .cm-aciklama { font-size: .82rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+  .cm-aciklama .kutu { display: inline-grid; grid-auto-flow: column; gap: 6px; align-items: center; }
+  .cm-aciklama .ornek { width: 13px; height: 13px; border-radius: 3px; display: block; }
+  .cm-aciklama .ornek.dogru { background: color-mix(in srgb, var(--fwd) 65%, transparent); }
+  .cm-aciklama .ornek.hata  { background: color-mix(in srgb, var(--bwd) 55%, transparent); }
+
   td .chip {
     font-family: "IBM Plex Mono", monospace; font-size: .7rem; letter-spacing: .06em;
     text-transform: uppercase; padding: 2px 7px; border-radius: 20px; white-space: nowrap;
@@ -799,6 +821,52 @@ f1        = <span class="nu">2.0</span> * precision * recall / (precision + reca
         <li><strong>Sınıf 5 — iki ölçü de düşük.</strong> Hem az örneği var hem zaten zor bir rakam.
         F1 83.63 ile tablonun en kötüsü. Accuracy 91.09'a bakan biri bu sınıfın varlığından haberdar olmaz.</li>
       </ul>
+
+      <h3>Ve o tablonun geldiği matris</h3>
+      <p>
+        Yukarıdaki altı satırın tamamı aşağıdaki tek tablodan türetildi. Precision sütunu,
+        recall satırı böler — şema soyut kalmasın diye aynı deneyin
+        (<code>MLP_d0_dengesiz_P1_pdf</code>) gerçek matrisi:
+      </p>
+
+      <figure>
+        <div class="table-wrap">
+          <table class="cm-tablo">
+            <thead>
+              <tr><th class="cm-kose">gerçek \ tahmin</th><th class="num">0</th><th class="num">1</th><th class="num">2</th><th class="num">3</th><th class="num">4</th><th class="num">5</th><th class="num">6</th><th class="num">7</th><th class="num">8</th><th class="num">9</th></tr>
+            </thead>
+            <tbody>
+              <tr><th class="cm-satir">0</th><td class="cm-dogru" style="--v:100%">977</td><td class="cm-sifir">·</td><td class="cm-sifir">·</td><td class="cm-hata" style="--v:3%">1</td><td class="cm-sifir">·</td><td class="cm-hata" style="--v:3%">1</td><td class="cm-sifir">·</td><td class="cm-hata" style="--v:3%">1</td><td class="cm-sifir">·</td><td class="cm-sifir">·</td></tr>
+              <tr><th class="cm-satir">1</th><td class="cm-sifir">·</td><td class="cm-dogru" style="--v:100%">1130</td><td class="cm-hata" style="--v:4%">2</td><td class="cm-hata" style="--v:3%">1</td><td class="cm-sifir">·</td><td class="cm-hata" style="--v:3%">1</td><td class="cm-hata" style="--v:3%">1</td><td class="cm-sifir">·</td><td class="cm-sifir">·</td><td class="cm-sifir">·</td></tr>
+              <tr><th class="cm-satir">2</th><td class="cm-hata" style="--v:13%">18</td><td class="cm-hata" style="--v:10%">11</td><td class="cm-dogru" style="--v:96%">951</td><td class="cm-hata" style="--v:12%">16</td><td class="cm-hata" style="--v:12%">14</td><td class="cm-sifir">·</td><td class="cm-hata" style="--v:4%">2</td><td class="cm-hata" style="--v:10%">11</td><td class="cm-hata" style="--v:9%">8</td><td class="cm-hata" style="--v:3%">1</td></tr>
+              <tr><th class="cm-satir">3</th><td class="cm-hata" style="--v:7%">5</td><td class="cm-hata" style="--v:5%">3</td><td class="cm-hata" style="--v:11%">13</td><td class="cm-dogru" style="--v:98%">969</td><td class="cm-sifir">·</td><td class="cm-hata" style="--v:8%">7</td><td class="cm-sifir">·</td><td class="cm-hata" style="--v:8%">7</td><td class="cm-hata" style="--v:7%">5</td><td class="cm-hata" style="--v:3%">1</td></tr>
+              <tr><th class="cm-satir">4</th><td class="cm-hata" style="--v:7%">5</td><td class="cm-hata" style="--v:7%">5</td><td class="cm-hata" style="--v:7%">5</td><td class="cm-sifir">·</td><td class="cm-dogru" style="--v:98%">939</td><td class="cm-sifir">·</td><td class="cm-hata" style="--v:6%">3</td><td class="cm-hata" style="--v:6%">3</td><td class="cm-hata" style="--v:5%">2</td><td class="cm-hata" style="--v:14%">20</td></tr>
+              <tr><th class="cm-satir cm-vurgu">5</th><td class="cm-hata" style="--v:23%">47</td><td class="cm-hata" style="--v:13%">15</td><td class="cm-hata" style="--v:6%">3</td><td class="cm-hata" style="--v:29%">77</td><td class="cm-hata" style="--v:15%">19</td><td class="cm-dogru" style="--v:88%">695</td><td class="cm-hata" style="--v:3%">1</td><td class="cm-hata" style="--v:7%">5</td><td class="cm-hata" style="--v:15%">20</td><td class="cm-hata" style="--v:11%">10</td></tr>
+              <tr><th class="cm-satir cm-vurgu">6</th><td class="cm-hata" style="--v:22%">48</td><td class="cm-hata" style="--v:12%">13</td><td class="cm-hata" style="--v:12%">13</td><td class="cm-hata" style="--v:5%">2</td><td class="cm-hata" style="--v:15%">22</td><td class="cm-hata" style="--v:15%">21</td><td class="cm-dogru" style="--v:93%">835</td><td class="cm-hata" style="--v:3%">1</td><td class="cm-hata" style="--v:6%">3</td><td class="cm-sifir">·</td></tr>
+              <tr><th class="cm-satir">7</th><td class="cm-hata" style="--v:5%">3</td><td class="cm-hata" style="--v:15%">24</td><td class="cm-hata" style="--v:16%">25</td><td class="cm-hata" style="--v:12%">14</td><td class="cm-hata" style="--v:7%">5</td><td class="cm-hata" style="--v:3%">1</td><td class="cm-sifir">·</td><td class="cm-dogru" style="--v:96%">947</td><td class="cm-sifir">·</td><td class="cm-hata" style="--v:9%">9</td></tr>
+              <tr><th class="cm-satir cm-vurgu">8</th><td class="cm-hata" style="--v:17%">27</td><td class="cm-hata" style="--v:18%">33</td><td class="cm-hata" style="--v:13%">16</td><td class="cm-hata" style="--v:26%">66</td><td class="cm-hata" style="--v:12%">14</td><td class="cm-hata" style="--v:19%">36</td><td class="cm-hata" style="--v:7%">5</td><td class="cm-hata" style="--v:10%">9</td><td class="cm-dogru" style="--v:88%">762</td><td class="cm-hata" style="--v:8%">6</td></tr>
+              <tr><th class="cm-satir">9</th><td class="cm-hata" style="--v:12%">15</td><td class="cm-hata" style="--v:11%">13</td><td class="cm-sifir">·</td><td class="cm-hata" style="--v:13%">18</td><td class="cm-hata" style="--v:18%">32</td><td class="cm-hata" style="--v:9%">8</td><td class="cm-sifir">·</td><td class="cm-hata" style="--v:13%">18</td><td class="cm-hata" style="--v:3%">1</td><td class="cm-dogru" style="--v:95%">904</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <figcaption>
+          <span class="cm-aciklama">
+            <span class="kutu"><span class="ornek dogru"></span> köşegen — doğru bilinen (TP)</span>
+            <span class="kutu"><span class="ornek hata"></span> köşegen dışı — hatanın gittiği yer</span>
+            <span class="kutu">◂ azınlık sınıfı (150 eğitim örneği)</span>
+          </span>
+          Renk yoğunluğu satır toplamına göre ölçeklidir, mutlak sayıya göre değil — yoksa
+          1.130 örnekli sınıf 1 bütün tabloyu ezerdi. Kaynak:
+          <code>kayitlar/gorev2/confusion/MLP_d0_dengesiz_P1_pdf.csv</code>.
+        </figcaption>
+      </figure>
+
+      <p>
+        Tabloyla matrisi yan yana koyun: sınıf 6'nın recall'u 87.16'ydı. Matris <em>neden</em>
+        düştüğünü söylüyor — 958 gerçek 6'nın 48'i <strong>"0"</strong> olarak okunmuş. Precision
+        sütununu da aynı şekilde okuyabilirsiniz: sınıf 0'ın 85.33'lük precision'ı, 0 sütununda
+        biriken 47 + 48 + 27 + 18 + 15'lik yabancı örneklerin doğrudan sonucudur.
+      </p>
     </section>
 
     <hr class="divider">
@@ -892,6 +960,47 @@ f1        = <span class="nu">2.0</span> * precision * recall / (precision + reca
           <div class="line">karisan_ciftler_yazdir</div>
           <div class="why"><code>egitim_veri_azalt.py</code>'deki karşılığı. Dengeli senaryoda belirli bir azınlık olmadığı için tüm matristeki en büyük 5 hatayı listeler. Aynı soru, senaryoya uygun iki farklı sorulma biçimi.</div>
         </div>
+      </div>
+
+      <h3>Bu fonksiyonun gerçek çıktısı — ve neden bütün görevin özeti olduğu</h3>
+      <p>
+        <code>CNN_d0_dengesiz_P2_agir</code> deneyi (30:1 dengesizlik, accuracy %92.80).
+        Yukarıdaki on satırlık fonksiyonun ekrana bastığı üç satır:
+      </p>
+
+      <div class="code"><pre><span class="cm">    Sinif 5: 115/892 tahmin yanlis sinifa gidiyor -&gt; en cok '3'(48), '0'(26) ile karisiyor</span>
+<span class="cm">    Sinif 6:  71/958 tahmin yanlis sinifa gidiyor -&gt; en cok '0'(49), '5'(9)  ile karisiyor</span>
+<span class="cm">    Sinif 8: 258/974 tahmin yanlis sinifa gidiyor -&gt; en cok '3'(76), '0'(45) ile karisiyor</span></pre></div>
+
+      <p>
+        Bu üç satırda <strong>iç içe geçmiş iki ayrı sorun</strong> var ve ikisinin çözümü
+        birbirinden tamamen farklı:
+      </p>
+
+      <div class="cards">
+        <div class="card">
+          <div class="n">Mekanizma 1</div>
+          <div class="t">Görsel benzerlik</div>
+          <div class="d"><code>8 → '3'</code> (76), <code>5 → '3'</code> (48). Bu rakamlar zaten
+          birbirine benziyor; az veriyle aradaki ayrım kayboluyor.
+          <strong>Çözüm:</strong> daha iyi özellik çıkarımı, augmentation, daha derin model.</div>
+        </div>
+        <div class="card">
+          <div class="n">Mekanizma 2</div>
+          <div class="t">Çoğunluk çekimi</div>
+          <div class="d"><code>6 → '0'</code> (49), <code>5 → '0'</code> (26). 6 ile 0 görsel olarak
+          <em>benzemez</em>. Model görüntüye bakmayı bırakıp sınıf önceliğini kullanıyor:
+          "şüphedeysem çoğunluğu söyle, istatistiksel olarak kârlıyım."
+          <strong>Çözüm:</strong> class weights, oversampling, focal loss.</div>
+        </div>
+      </div>
+
+      <div class="callout dikkat">
+        <span class="tag">Görev 2'nin asıl tezi</span>
+        <p>Bu ayrım <strong>yalnızca confusion matrisinde</strong> görünür. Her iki durumda da
+        recall aynı değeri verir — sınıf 6'nın recall'u, hataların 0'a mı yoksa 5'e mi gittiğini
+        bilmez. Accuracy zaten hiçbir şey söylemez. Yani "hangi çözümü uygulayacağım?" sorusunun
+        cevabı tek bir metrikte değil, matrisin kendisinde saklıdır.</p>
       </div>
     </section>
 

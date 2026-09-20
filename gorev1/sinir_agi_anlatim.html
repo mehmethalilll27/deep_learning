@@ -1251,6 +1251,164 @@ z = x @ w + b                        <span class="cm"># -&gt; (1, 3)</span></pre
         parametrenin üstüne <em>ekler</em>; temizlemezseniz eski epoch'ların gradyanları yenisine karışır.
         Bu, PyTorch'a geçenlerin en sık yaptığı hatadır.</p>
       </div>
+
+      <h3>Peki bu iki dosya ne ölçtü?</h3>
+      <p>
+        Bu dosyalar çalıştırıldığında <code>kayitlar/gorev1/</code> altına sonuç tabloları yazıyor.
+        Toplam 39 MNIST koşusu var ve hepsi tek bir soruya cevap veriyor:
+        <strong>kazancı nereden almalı?</strong>
+      </p>
+
+      <figure>
+        <div class="figbox">
+          <svg viewBox="0 0 700 250" role="img" aria-label="MNIST deneylerinin accuracy dagilimi: MLP kumesi 95.63-97.92, CNN kumesi 98.38-99.10, uzun egitilen CNN kumesi 99.66-99.67 araliginda; kumeler hic ortusmuyor">
+            <g stroke="var(--line-soft)" stroke-width="1">
+              <line x1="302.8" y1="52" x2="302.8" y2="212"></line>
+              <line x1="390.9" y1="52" x2="390.9" y2="212"></line>
+              <line x1="478.9" y1="52" x2="478.9" y2="212"></line>
+              <line x1="567.0" y1="52" x2="567.0" y2="212"></line>
+              <line x1="655.0" y1="52" x2="655.0" y2="212"></line>
+            </g>
+            <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--faint)" text-anchor="middle">
+              <text x="302.8" y="230">96</text>
+              <text x="390.9" y="230">97</text>
+              <text x="478.9" y="230">98</text>
+              <text x="567.0" y="230">99</text>
+              <text x="655.0" y="230">100</text>
+              <text x="452.5" y="246">test accuracy (%)</text>
+            </g>
+            <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--muted)" text-anchor="end">
+              <text x="232" y="82">MLP · 21 deney</text>
+              <text x="232" y="138">CNN · 15 deney</text>
+              <text x="232" y="194">CNN + BN + aug · 50 epoch</text>
+            </g>
+            <g fill="var(--fwd)" stroke="var(--surface)" stroke-width="2">
+              <circle cx="270.2" cy="78" r="5"></circle>
+              <circle cx="354.8" cy="78" r="5"></circle>
+              <circle cx="392.6" cy="78" r="5"></circle>
+              <circle cx="399.7" cy="78" r="5"></circle>
+              <circle cx="410.2" cy="78" r="5"></circle>
+              <circle cx="410.2" cy="78" r="5"></circle>
+              <circle cx="427.8" cy="78" r="5"></circle>
+              <circle cx="430.5" cy="78" r="5"></circle>
+              <circle cx="433.1" cy="78" r="5"></circle>
+              <circle cx="441.1" cy="78" r="5"></circle>
+              <circle cx="441.1" cy="78" r="5"></circle>
+              <circle cx="449.0" cy="78" r="5"></circle>
+              <circle cx="453.4" cy="78" r="5"></circle>
+              <circle cx="454.3" cy="78" r="5"></circle>
+              <circle cx="456.9" cy="78" r="5"></circle>
+              <circle cx="465.7" cy="78" r="5"></circle>
+              <circle cx="465.7" cy="78" r="5"></circle>
+              <circle cx="466.6" cy="78" r="5"></circle>
+              <circle cx="467.5" cy="78" r="5"></circle>
+              <circle cx="467.5" cy="78" r="5"></circle>
+              <circle cx="471.9" cy="78" r="5"></circle>
+              <circle cx="512.4" cy="134" r="5"></circle>
+              <circle cx="538.8" cy="134" r="5"></circle>
+              <circle cx="541.4" cy="134" r="5"></circle>
+              <circle cx="547.6" cy="134" r="5"></circle>
+              <circle cx="548.5" cy="134" r="5"></circle>
+              <circle cx="549.3" cy="134" r="5"></circle>
+              <circle cx="549.3" cy="134" r="5"></circle>
+              <circle cx="552.0" cy="134" r="5"></circle>
+              <circle cx="553.7" cy="134" r="5"></circle>
+              <circle cx="556.4" cy="134" r="5"></circle>
+              <circle cx="563.4" cy="134" r="5"></circle>
+              <circle cx="563.4" cy="134" r="5"></circle>
+              <circle cx="564.3" cy="134" r="5"></circle>
+              <circle cx="564.3" cy="134" r="5"></circle>
+              <circle cx="575.8" cy="134" r="5"></circle>
+              <circle cx="625.1" cy="190" r="5"></circle>
+              <circle cx="625.9" cy="190" r="5"></circle>
+              <circle cx="625.9" cy="190" r="5"></circle>
+            </g>
+            <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--text)">
+              <text x="482.9" y="82">97.92</text>
+              <text x="586.8" y="138">99.10</text>
+              <text x="636.9" y="194">99.67</text>
+            </g>
+            <g>
+              <path d="M 471.9 108 L 575.8 108" stroke="var(--bwd)" stroke-width="1.4" stroke-dasharray="4 3" fill="none"></path>
+              <text x="523.8" y="102" font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--bwd)" text-anchor="middle">+1.18 · mimari</text>
+              <path d="M 575.8 164 L 625.9 164" stroke="var(--bwd)" stroke-width="1.4" stroke-dasharray="4 3" fill="none"></path>
+              <text x="600.9" y="158" font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--bwd)" text-anchor="middle">+0.57 · 10x epoch</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption>
+          Her nokta bir eğitim koşusu; yalnızca her kümenin en iyisi etiketlendi. Üç küme
+          <strong>hiç örtüşmüyor</strong> — en kötü CNN (98.38) bile en iyi MLP'den (97.92) iyi.
+          Kaynak: <code>kayitlar/gorev1/</code> içindeki üç CSV ve
+          <code>deney_sonuclari_guncel.xlsx</code>.
+        </figcaption>
+      </figure>
+
+      <p>
+        MLP tarafında 21 koşu boyunca katman sayısı 1'den 6'ya, dropout 0'dan 0.5'e çıkarıldı.
+        Bütün o aramanın getirdiği fark <strong>2.29 puan</strong> — ve bunun büyük kısmı kazanç
+        değil, aşırı dropout'un verdiği <em>kayıp</em>:
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Deney</th><th class="num">Katman</th><th class="num">Dropout</th><th class="num">Accuracy</th><th class="num">Süre (sn)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono-cell">MLP_4_katman_d0.1</td><td class="num">4</td><td class="num">0.1</td><td class="num">97.57</td><td class="num">24.89</td></tr>
+            <tr><td class="mono-cell">MLP_4_katman_d0.3</td><td class="num">4</td><td class="num">0.3</td><td class="num">97.48</td><td class="num">25.43</td></tr>
+            <tr><td class="mono-cell">MLP_4_katman_d0.5</td><td class="num">4</td><td class="num">0.5</td><td class="num">97.45</td><td class="num">25.43</td></tr>
+            <tr><td class="mono-cell">MLP_6_katman_d0.1</td><td class="num">6</td><td class="num">0.1</td><td class="num">97.75</td><td class="num">27.56</td></tr>
+            <tr><td class="mono-cell">MLP_6_katman_d0.3</td><td class="num">6</td><td class="num">0.3</td><td class="num">97.02</td><td class="num">27.94</td></tr>
+            <tr><td class="mono-cell">MLP_6_katman_d0.5</td><td class="num">6</td><td class="num">0.5</td><td class="num">95.63</td><td class="num">28.35</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="footnote">Kaynak: <code>kayitlar/gorev1/sonuclar_no_cnn_gpu.csv</code>. Hepsi 5 epoch, batch 128, Adam, lr 0.001.</p>
+
+      <p>
+        Son satır tablonun en öğretici yeri: <strong>6 katman + dropout 0.5</strong> kombinasyonu
+        95.63 ile bütün 39 koşunun en kötüsü. Dropout tek başına zararlı değil — 4 katmanda 0.5'e
+        çıkmak yalnızca 0.12 puan kaybettiriyor. Ama derinlik arttıkça her katmanda nöron söndürmek
+        birikiyor ve ağ öğrenecek yeterli sinyal bulamıyor. <em>İki düzenlileştirmenin toplamı,
+        ayrı ayrı toplamlarından fazla zarar veriyor.</em>
+      </p>
+
+      <div class="cards">
+        <div class="card">
+          <div class="n">Kazanç 1</div>
+          <div class="t">Mimari · +1.18 puan</div>
+          <div class="d">MLP'nin en iyisinden (97.92) CNN'in en iyisine (99.10). Tek değişiklik:
+          görüntüyü düzleştirmek yerine konvolüsyonla gezmek. 21 koşuluk hiperparametre aramasının
+          tamamından daha fazla getiri.</div>
+        </div>
+        <div class="card">
+          <div class="n">Kazanç 2</div>
+          <div class="t">Eğitim düzeni · +0.57 puan</div>
+          <div class="d">BatchNorm + augmentation + OneCycle + 50 epoch. Daha küçük bir kazanç ve
+          <strong>14 kat</strong> süre: 47 sn yerine 640–725 sn.</div>
+        </div>
+        <div class="card">
+          <div class="n">Kazanç yok</div>
+          <div class="t">Kanal sayısı</div>
+          <div class="d"><code>(8,16)</code> 98.38, <code>(16,32)</code> 98.80, <code>(32,64)</code>
+          98.97 — ama süre 41 sn'den 84 sn'ye çıkıyor. En iyi CNN aslında <code>(16,32) + d0.3</code>
+          (99.10): daha küçük <em>ve</em> daha hızlı.</div>
+        </div>
+      </div>
+
+      <div class="callout dikkat">
+        <span class="tag">XOR'dan MNIST'e taşınan ders</span>
+        <p>Bölüm 01'de aktivasyon olmadan ağın tek bir doğruya çöktüğünü görmüştünüz —
+        problem <em>temsil</em> problemiydi, kapasite değil. MNIST'te aynı şey tekrar ediyor:
+        MLP her pikseli bağımsız bir sayı olarak görüyor ve komşuluk bilgisini baştan atıyor.
+        Ne kadar katman eklerseniz ekleyin, atılmış bilgiyi geri getiremezsiniz. CNN'in +1.18 puanı
+        daha fazla parametreden değil, <strong>doğru temsilden</strong> geliyor: en iyi MLP
+        <code>[512,256,128,64]</code> 575.050 parametre taşıyor, onu geçen CNN
+        <code>(16,32)+fc128</code> ise yalnızca <strong>206.922</strong> — üçte biri kadar
+        parametreyle 1.18 puan daha iyi.</p>
+      </div>
     </section>
 
     <hr class="divider">
@@ -1258,8 +1416,13 @@ z = x @ w + b                        <span class="cm"># -&gt; (1, 3)</span></pre
     <!-- ================= EK C ================= -->
     <section id="ek-c">
       <div class="sec-head">
-        <div class="eyebrow">Ek C</div>
+        <div class="eyebrow">Ek C · sorun giderme</div>
         <h2>Bir şey ters giderse önce buraya bakın</h2>
+        <p class="what">
+          Yukarıdaki üç dosyayı kendiniz çalıştırdığınızda en sık karşılaşacağınız altı durum:
+          dördü hata, ikisi deney önerisi. Her kart bir belirtiyi ve onu hangi satırın
+          ürettiğini gösteriyor.
+        </p>
       </div>
 
       <div class="cards">
